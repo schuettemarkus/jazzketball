@@ -7633,134 +7633,300 @@ function FanPoll() {
 // SECTION: LINEUP BUILDER
 // ============================================================
 function LineupBuilder() {
-  const { teamData } = useTeam();
+  const { config, teamData } = useTeam();
   const players = teamData.players;
   const positions = ['PG', 'SG', 'SF', 'PF', 'C'];
-  const [lineup, setLineup] = useState({ PG: null, SG: null, SF: null, PF: null, C: null });
+
+  // Auto-fill starting lineup on mount
+  const buildStartingLineup = useCallback(() => {
+    const starters = players.filter(p => p.starter);
+    const newLineup = { PG: null, SG: null, SF: null, PF: null, C: null };
+    // First pass: exact position matches
+    for (const p of starters) {
+      const mainPos = p.pos.split('/')[0];
+      if (newLineup[mainPos] === null) newLineup[mainPos] = p;
+    }
+    // Second pass: fill remaining slots
+    for (const p of starters) {
+      if (Object.values(newLineup).some(v => v && v.name === p.name)) continue;
+      for (const pos of p.pos.split('/')) {
+        if (newLineup[pos] === null) { newLineup[pos] = p; break; }
+      }
+      if (!Object.values(newLineup).some(v => v && v.name === p.name)) {
+        for (const pos of positions) { if (!newLineup[pos]) { newLineup[pos] = p; break; } }
+      }
+    }
+    return newLineup;
+  }, [players]);
+
+  const [lineup, setLineup] = useState(buildStartingLineup);
   const [report, setReport] = useState(null);
 
   const assignPlayer = (player) => {
     const posOptions = player.pos.split('/');
     for (const pos of posOptions) {
-      if (lineup[pos] === null) {
-        setLineup(prev => ({ ...prev, [pos]: player }));
-        return;
-      }
+      if (lineup[pos] === null) { setLineup(prev => ({ ...prev, [pos]: player })); return; }
     }
-    // Try any empty slot
     for (const pos of positions) {
-      if (!lineup[pos]) {
-        setLineup(prev => ({ ...prev, [pos]: player }));
-        return;
-      }
+      if (!lineup[pos]) { setLineup(prev => ({ ...prev, [pos]: player })); return; }
     }
+  };
+
+  const removePlayer = (pos) => {
+    setLineup(prev => ({ ...prev, [pos]: null }));
   };
 
   const filledCount = Object.values(lineup).filter(Boolean).length;
   const usedNames = new Set(Object.values(lineup).filter(Boolean).map(p => p.name));
+  const lineupPlayers = Object.values(lineup).filter(Boolean);
+
+  // Generate comprehensive analysis
+  const generateAnalysis = useCallback((lp) => {
+    const ps = Object.entries(lp).filter(([_, v]) => v).map(([pos, p]) => ({ pos, ...p }));
+    if (ps.length < 5) return null;
+
+    const totalPPG = ps.reduce((s, p) => s + p.stats.ppg, 0);
+    const totalRPG = ps.reduce((s, p) => s + p.stats.rpg, 0);
+    const totalAPG = ps.reduce((s, p) => s + p.stats.apg, 0);
+    const avgFG = (ps.reduce((s, p) => s + p.stats.fgPct, 0) / 5);
+    const avg3 = (ps.reduce((s, p) => s + p.stats.threePct, 0) / 5);
+    const avgShot = ps.reduce((s, p) => s + (p.radar?.Shooting || 50), 0) / 5;
+    const avgPlay = ps.reduce((s, p) => s + (p.radar?.Playmaking || 50), 0) / 5;
+    const avgDef = ps.reduce((s, p) => s + (p.radar?.Defense || 50), 0) / 5;
+    const avgScor = ps.reduce((s, p) => s + (p.radar?.Scoring || 50), 0) / 5;
+    const avgAthl = ps.reduce((s, p) => s + (p.radar?.Athleticism || 50), 0) / 5;
+    const avgIQ = ps.reduce((s, p) => s + (p.radar?.IQ || 50), 0) / 5;
+    const starterCount = ps.filter(p => p.starter).length;
+    const topScorer = ps.reduce((a, b) => a.stats.ppg > b.stats.ppg ? a : b);
+    const topAssist = ps.reduce((a, b) => a.stats.apg > b.stats.apg ? a : b);
+    const topReb = ps.reduce((a, b) => a.stats.rpg > b.stats.rpg ? a : b);
+
+    // Identity
+    let identity = 'Balanced';
+    if (avgScor > 70 && avgShot > 60) identity = 'Offensive Juggernaut';
+    else if (avgDef > 65 && avgAthl > 65) identity = 'Defensive Wall';
+    else if (avgPlay > 65 && totalAPG > 25) identity = 'Ball Movement';
+    else if (avgShot > 65) identity = 'Perimeter-Oriented';
+    else if (avgAthl > 70) identity = 'Athletic & Transition';
+    else if (avgIQ > 65) identity = 'High IQ & Disciplined';
+
+    // Chemistry
+    let chemistry = 5 + Math.min(starterCount, 5);
+    if (starterCount >= 4) chemistry += 1;
+    if (avgPlay > 60) chemistry += 1;
+    chemistry = Math.min(10, chemistry);
+
+    // Offensive rating estimate
+    const offRating = (95 + totalPPG * 0.12 + avgShot * 0.08 + avgPlay * 0.05).toFixed(1);
+    const defRating = (108 - avgDef * 0.12 - avgAthl * 0.03).toFixed(1);
+    const netRating = (offRating - defRating).toFixed(1);
+
+    // Strengths
+    const strengths = [];
+    if (totalPPG > 100) strengths.push(`Elite scoring output — ${totalPPG.toFixed(1)} combined PPG across all five positions`);
+    if (avgShot > 62) strengths.push('Multiple three-point threats stretch the floor and create driving lanes');
+    if (avgPlay > 62) strengths.push('Strong playmaking creates high-quality shots through ball movement');
+    if (avgDef > 62) strengths.push('Switchable defense that can guard multiple actions and lineups');
+    if (avgAthl > 65) strengths.push('Athletic lineup that dominates in transition and on the glass');
+    if (starterCount >= 4) strengths.push('Core unit with established chemistry and shared experience');
+    if (totalAPG > 25) strengths.push(`High assist rate (${totalAPG.toFixed(1)} APG) creates efficient team offense`);
+    if (strengths.length === 0) strengths.push('Versatile lineup with multiple ways to generate offense');
+
+    // Weaknesses
+    const weaknesses = [];
+    if (avgShot < 50) weaknesses.push('Limited perimeter shooting — defenses can pack the paint');
+    if (avgDef < 55) weaknesses.push('Defensive concerns — vulnerable to elite scoring teams');
+    if (avgPlay < 45) weaknesses.push('Lack of playmaking — may struggle in half-court execution');
+    if (totalRPG < 30) weaknesses.push('Undersized lineup could be outrebounded by bigger frontcourts');
+    if (avg3 < 30) weaknesses.push('Poor three-point shooting limits floor spacing');
+    if (weaknesses.length === 0) weaknesses.push('No glaring weaknesses — well-constructed on both ends');
+
+    // Coach's analysis paragraph
+    const coachAnalysis = `This ${identity.toLowerCase()} lineup is anchored by ${topScorer.name}'s ${topScorer.stats.ppg} PPG scoring, with ${topAssist.name} orchestrating as the primary facilitator at ${topAssist.stats.apg} APG. ${topReb.name} controls the glass at ${topReb.stats.rpg} RPG, giving this unit a physical presence inside. ` +
+      (avgShot > 58 ? `The perimeter shooting (${avg3.toFixed(1)}% team 3PT) creates the spacing needed for driving lanes and pick-and-roll actions. ` : `The offense will need to generate points through paint touches and transition, as the perimeter shooting (${avg3.toFixed(1)}% team 3PT) is below league average. `) +
+      (avgDef > 60 ? `Defensively, this group can switch across positions and contest shots at the rim. ` : `Defensively, this lineup will need to rely on scheme and effort over individual talent. `) +
+      `With a projected ${offRating} offensive rating and ${defRating} defensive rating, this unit projects as a ${parseFloat(netRating) > 3 ? 'dominant' : parseFloat(netRating) > 0 ? 'positive' : 'negative'} net-rating lineup (${netRating > 0 ? '+' : ''}${netRating}).`;
+
+    return {
+      ppg: totalPPG.toFixed(1), rpg: totalRPG.toFixed(1), apg: totalAPG.toFixed(1),
+      chemistry, identity, offRating, defRating, netRating,
+      topScorer, topAssist, topReb,
+      strengths, weaknesses, coachAnalysis,
+      avgShot: avgShot.toFixed(0), avgDef: avgDef.toFixed(0), avgAthl: avgAthl.toFixed(0),
+      avgPlay: avgPlay.toFixed(0), avgIQ: avgIQ.toFixed(0), avgScor: avgScor.toFixed(0),
+    };
+  }, []);
 
   useEffect(() => {
-    if (filledCount === 5) {
-      const players = Object.values(lineup).filter(Boolean);
-      const totalPPG = players.reduce((s, p) => s + p.stats.ppg, 0).toFixed(1);
-      const totalRPG = players.reduce((s, p) => s + p.stats.rpg, 0).toFixed(1);
-      const avgShot = players.reduce((s, p) => s + p.radar.Shooting, 0) / 5;
-      const avgPlay = players.reduce((s, p) => s + p.radar.Playmaking, 0) / 5;
-      const avgDef = players.reduce((s, p) => s + p.radar.Defense, 0) / 5;
-      const avgScor = players.reduce((s, p) => s + p.radar.Scoring, 0) / 5;
-      const starterCount = players.filter(p => p.starter).length;
-
-      let identity = 'Balanced';
-      let chemistry = 5 + starterCount;
-      const strengths = [];
-
-      if (avgShot > 65) { identity = 'Stretch Offense'; chemistry += 1; strengths.push('Elite floor spacing — multiple shooters warp defensive schemes'); }
-      if (avgPlay > 70) { identity = 'Guard-Driven'; strengths.push('Playmaking-heavy lineup creates open shots and easy buckets'); }
-      if (avgDef > 70) { strengths.push('Top-tier defensive unit — opponents score at a below-average rate'); chemistry += 1; }
-      if (avgScor > 75) { strengths.push('Scoring firepower from multiple positions'); }
-      if (starterCount >= 4) { chemistry += 1; strengths.push('Core lineup — maximum chemistry and continuity'); }
-      if (strengths.length === 0) strengths.push('Versatile lineup with multiple scoring options');
-
-      chemistry = Math.min(chemistry, 10);
-
-      setReport({
-        ppg: totalPPG, rpg: totalRPG, chemistry, identity,
-        defRating: (105 - avgDef * 0.15).toFixed(1), strengths
-      });
-    } else {
-      setReport(null);
-    }
-  }, [lineup, filledCount]);
+    setReport(filledCount === 5 ? generateAnalysis(lineup) : null);
+  }, [lineup, filledCount, generateAnalysis]);
 
   return (
     <section className="py-12 px-4 max-w-5xl mx-auto">
       <h2 className="text-3xl font-black text-center mb-2">
         <span className="text-team-secondary">LINEUP</span> BUILDER
       </h2>
-      <p className="text-center text-gray-400 mb-6">Build your dream Jazz lineup</p>
+      <p className="text-center text-gray-400 mb-6">Build and analyze any {config.name} lineup</p>
 
-      {/* Position Slots */}
-      <div className="flex justify-center gap-3 mb-8 flex-wrap">
+      {/* Position Slots with Player Images */}
+      <div className="flex justify-center gap-3 mb-6 flex-wrap">
         {positions.map(pos => (
-          <div key={pos} className={`glass rounded-xl p-4 w-32 text-center transition-all ${lineup[pos] ? 'border-team-secondary/50' : 'border-dashed border-2 border-team-primary/50'}`}>
+          <div key={pos} className={`glass rounded-xl p-3 w-36 text-center transition-all cursor-pointer ${lineup[pos] ? 'border-team-secondary/50 hover:border-red-500/50' : 'border-dashed border-2 border-team-primary/50'}`}
+            onClick={() => lineup[pos] && removePlayer(pos)}>
             <div className="text-xs text-team-secondary font-bold mb-2">{pos}</div>
             {lineup[pos] ? (
-              <div>
-                <JerseyAvatar number={lineup[pos].number} size={48} />
-                <div className="text-xs font-semibold mt-1 truncate">{lineup[pos].name.split(' ').pop()}</div>
+              <div className="relative group">
+                {lineup[pos].headshot ? (
+                  <div className="w-20 h-20 mx-auto rounded-full overflow-hidden border-2 border-team-primary/40 mb-2" style={{ background: 'linear-gradient(180deg, var(--team-deep), var(--team-midnight))' }}>
+                    <img src={lineup[pos].headshot} alt={lineup[pos].name} loading="lazy" className="w-full h-full object-cover object-top" />
+                  </div>
+                ) : (
+                  <JerseyAvatar number={lineup[pos].number} size={56} />
+                )}
+                <div className="text-xs font-bold truncate">{lineup[pos].name.split(' ').pop()}</div>
+                <div className="text-[10px] text-gray-400">{lineup[pos].stats.ppg} PPG</div>
+                <div className="absolute inset-0 flex items-center justify-center bg-red-900/60 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-white text-xs font-bold">Remove</span>
+                </div>
               </div>
             ) : (
-              <div className="text-3xl text-gray-600">+</div>
+              <div className="py-4">
+                <div className="text-3xl text-gray-600">+</div>
+                <div className="text-[10px] text-gray-500 mt-1">Tap to add</div>
+              </div>
             )}
           </div>
         ))}
       </div>
 
-      {/* Available Players */}
-      <div className="flex flex-wrap gap-2 justify-center mb-6">
-        {players.map(p => (
-          <button key={p.name} onClick={() => assignPlayer(p)}
-            disabled={usedNames.has(p.name)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${usedNames.has(p.name) ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : 'glass text-white hover:bg-team-secondary/20 hover:text-team-secondary'}`}>
-            #{p.number} {p.name.split(' ').pop()}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex justify-center gap-3">
+      {/* Quick Actions */}
+      <div className="flex justify-center gap-3 mb-6">
+        <button onClick={() => setLineup(buildStartingLineup())}
+          className="px-4 py-2 rounded-full glass text-team-secondary hover:bg-team-secondary/20 text-xs font-semibold">
+          Load Starters
+        </button>
         <button onClick={() => setLineup({ PG: null, SG: null, SF: null, PF: null, C: null })}
-          className="px-4 py-2 rounded-full glass text-gray-400 hover:text-white text-sm">Reset</button>
+          className="px-4 py-2 rounded-full glass text-gray-400 hover:text-white text-xs font-semibold">
+          Clear All
+        </button>
       </div>
 
-      {/* Report */}
+      {/* Available Players */}
+      <div className="glass rounded-2xl p-4 mb-8">
+        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 text-center">Available Players</h3>
+        <div className="flex flex-wrap gap-2 justify-center">
+          {players.map(p => (
+            <button key={p.name} onClick={() => assignPlayer(p)}
+              disabled={usedNames.has(p.name)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${usedNames.has(p.name) ? 'bg-gray-800/50 text-gray-600 cursor-not-allowed' : 'glass text-white hover:bg-team-secondary/20 hover:text-team-secondary'}`}>
+              {p.headshot && !usedNames.has(p.name) && (
+                <img src={p.headshot} alt="" className="w-5 h-5 rounded-full object-cover" loading="lazy" />
+              )}
+              {p.name.split(' ').pop()} <span className="text-gray-500">{p.stats.ppg}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Full Analysis Report */}
       {report && (
-        <div className="mt-8 glass rounded-2xl p-6 animate-fade-in">
-          <h3 className="text-lg font-bold text-team-secondary text-center mb-4">Lineup Report</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div className="text-center">
-              <div className="text-2xl font-black text-team-secondary">{report.ppg}</div>
-              <div className="text-xs text-gray-400">Projected PPG</div>
+        <div className="space-y-6 animate-fade-in">
+          {/* Stats Overview */}
+          <div className="glass rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-team-secondary">Lineup Analysis</h3>
+              <span className="px-4 py-1 rounded-full bg-team-secondary/20 text-team-secondary font-bold text-sm">{report.identity}</span>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-black text-team-secondary">{report.rpg}</div>
-              <div className="text-xs text-gray-400">Projected RPG</div>
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6">
+              {[
+                ['PPG', report.ppg], ['RPG', report.rpg], ['APG', report.apg],
+                ['Off Rtg', report.offRating], ['Def Rtg', report.defRating],
+                ['Net', (report.netRating > 0 ? '+' : '') + report.netRating],
+              ].map(([label, val]) => (
+                <div key={label} className="text-center rounded-lg p-2" style={{ background: 'rgba(var(--team-primary-rgb),0.08)' }}>
+                  <div className="text-lg font-black text-team-secondary">{val}</div>
+                  <div className="text-[10px] text-gray-400">{label}</div>
+                </div>
+              ))}
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-black text-team-secondary">{report.chemistry}/10</div>
-              <div className="text-xs text-gray-400">Chemistry</div>
+
+            {/* Chemistry meter */}
+            <div className="mb-4">
+              <div className="flex justify-between text-xs text-gray-400 mb-1">
+                <span>Chemistry</span><span>{report.chemistry}/10</span>
+              </div>
+              <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-700" style={{
+                  width: `${report.chemistry * 10}%`,
+                  background: report.chemistry >= 8 ? 'linear-gradient(90deg, var(--team-secondary), color-mix(in srgb, var(--team-secondary), white 20%))' :
+                    report.chemistry >= 6 ? 'var(--team-primary)' : '#6b7280'
+                }} />
+              </div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-black text-team-secondary">{report.defRating}</div>
-              <div className="text-xs text-gray-400">Def. Rating</div>
+
+            {/* Radar summary */}
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+              {[
+                ['Scoring', report.avgScor], ['Shooting', report.avgShot], ['Playmaking', report.avgPlay],
+                ['Defense', report.avgDef], ['Athleticism', report.avgAthl], ['IQ', report.avgIQ],
+              ].map(([label, val]) => (
+                <div key={label} className="text-center">
+                  <div className="text-sm font-bold text-white">{val}</div>
+                  <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden mt-1">
+                    <div className="h-full bg-team-secondary rounded-full" style={{ width: `${val}%` }} />
+                  </div>
+                  <div className="text-[9px] text-gray-500 mt-1">{label}</div>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="text-center mb-4">
-            <span className="px-4 py-1 rounded-full bg-team-secondary/20 text-team-secondary font-bold text-sm">{report.identity}</span>
+
+          {/* Coach's Analysis */}
+          <div className="glass rounded-2xl p-6">
+            <h3 className="text-lg font-bold text-team-secondary mb-3">Coach's Analysis</h3>
+            <p className="text-sm text-gray-300 leading-relaxed">{report.coachAnalysis}</p>
           </div>
-          <div className="space-y-2">
-            {report.strengths.map((s, i) => (
-              <div key={i} className="flex items-start gap-2 text-sm"><span className="text-green-400">&#10003;</span><span className="text-gray-300">{s}</span></div>
-            ))}
+
+          {/* Strengths & Weaknesses */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="glass rounded-2xl p-5">
+              <h3 className="text-sm font-bold text-green-400 mb-3">STRENGTHS</h3>
+              <div className="space-y-2">
+                {report.strengths.map((s, i) => (
+                  <div key={i} className="flex items-start gap-2 text-sm"><span className="text-green-400 mt-0.5">&#10003;</span><span className="text-gray-300">{s}</span></div>
+                ))}
+              </div>
+            </div>
+            <div className="glass rounded-2xl p-5">
+              <h3 className="text-sm font-bold text-amber-400 mb-3">WEAKNESSES</h3>
+              <div className="space-y-2">
+                {report.weaknesses.map((w, i) => (
+                  <div key={i} className="flex items-start gap-2 text-sm"><span className="text-amber-400 mt-0.5">&#9888;</span><span className="text-gray-300">{w}</span></div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Key Players */}
+          <div className="glass rounded-2xl p-6">
+            <h3 className="text-sm font-bold text-team-secondary mb-3">KEY MATCHUP ADVANTAGES</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-lg p-3" style={{ background: 'rgba(var(--team-primary-rgb),0.08)' }}>
+                <div className="text-[10px] text-gray-500 uppercase">Top Scorer</div>
+                <div className="font-bold text-sm text-white">{report.topScorer.name}</div>
+                <div className="text-xs text-team-secondary">{report.topScorer.stats.ppg} PPG on {report.topScorer.stats.fgPct}% FG</div>
+              </div>
+              <div className="rounded-lg p-3" style={{ background: 'rgba(var(--team-primary-rgb),0.08)' }}>
+                <div className="text-[10px] text-gray-500 uppercase">Primary Facilitator</div>
+                <div className="font-bold text-sm text-white">{report.topAssist.name}</div>
+                <div className="text-xs text-team-secondary">{report.topAssist.stats.apg} APG with {report.topAssist.stats.ppg} PPG</div>
+              </div>
+              <div className="rounded-lg p-3" style={{ background: 'rgba(var(--team-primary-rgb),0.08)' }}>
+                <div className="text-[10px] text-gray-500 uppercase">Glass Cleaner</div>
+                <div className="font-bold text-sm text-white">{report.topReb.name}</div>
+                <div className="text-xs text-team-secondary">{report.topReb.stats.rpg} RPG at {report.topReb.pos}</div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -7883,12 +8049,20 @@ function DraftSimulator() {
   const [showConfetti, setShowConfetti] = useState(false);
 
   const teamFullName = config.fullName.toUpperCase();
-  const teamLotteryName = lotteryTeams.find(t => t.team.includes(config.name.toUpperCase()) || t.team.includes(config.abbr))?.team || teamFullName;
+  const teamLotteryEntry = lotteryTeams.find(t => t.team.includes(config.name.toUpperCase()) || t.team.includes(config.abbr));
+  const teamLotteryName = teamLotteryEntry?.team || teamFullName;
+  const isInLottery = !!teamLotteryEntry;
 
   const startSim = () => {
     const lottery = simulateLottery(lotteryTeams);
-    const teamSlot = lottery.findIndex(t => t.team === teamLotteryName);
-    const teamPick = teamSlot >= 0 ? teamSlot + 1 : 4;
+    let teamPick;
+    if (isInLottery) {
+      const teamSlot = lottery.findIndex(t => t.team === teamLotteryName);
+      teamPick = teamSlot >= 0 ? teamSlot + 1 : 7;
+    } else {
+      // Team not in lottery — give them a random mid-range pick for fun
+      teamPick = 7 + Math.floor(Math.random() * 8);
+    }
 
     setLotteryOrder(lottery);
     setTeamPickNum(teamPick);
@@ -7915,7 +8089,7 @@ function DraftSimulator() {
     }
 
     setTimeout(() => {
-      const team = lottery[pickNum - 1];
+      const team = lottery[pickNum - 1] || { team: `Pick #${pickNum}`, record: '', odds: 0, need: '' };
       // Add some randomness to team picks — sometimes they don't take BPA
       let pickIdx = 0;
       if (Math.random() < 0.25 && avail.length > 2) {
@@ -7962,7 +8136,7 @@ function DraftSimulator() {
             ))}
           </div>
           <div className="text-center mt-4">
-            <div className="text-team-secondary font-bold">{config.name} pick at #{lotteryOrder.findIndex(t => t.team === teamLotteryName) + 1}</div>
+            <div className="text-team-secondary font-bold">{config.name} pick at #{teamPickNum}</div>
             <div className="text-gray-500 text-xs animate-pulse mt-2">Simulating picks...</div>
           </div>
         </div>
