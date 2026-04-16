@@ -7745,6 +7745,11 @@ function LineupBuilder() {
   const [lineup, setLineup] = useState(buildStartingLineup);
   const [report, setReport] = useState(null);
 
+  // Reset lineup when team changes
+  useEffect(() => {
+    setLineup(buildStartingLineup());
+  }, [players]);
+
   const assignPlayer = (player) => {
     const posOptions = player.pos.split('/');
     for (const pos of posOptions) {
