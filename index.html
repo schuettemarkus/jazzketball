@@ -8227,6 +8227,9 @@ function DraftSimulator() {
   const teamLotteryName = teamLotteryEntry?.team || teamFullName;
   const isInLottery = !!teamLotteryEntry;
 
+  // Auto-start simulation on mount
+  useEffect(() => { startSim(); }, []);
+
   const startSim = () => {
     const lottery = simulateLottery(lotteryTeams);
     let teamPick;
@@ -8289,11 +8292,8 @@ function DraftSimulator() {
   return (
     <div className="max-w-4xl mx-auto">
       {simState === 'idle' && (
-        <div className="text-center">
-          <p className="text-gray-400 text-sm mb-4">Lottery odds determine pick order. Results change every run.</p>
-          <button onClick={startSim} className="px-8 py-4 rounded-2xl bg-team-secondary text-black font-bold text-lg hover:opacity-90 transition-all pulse-secondary">
-            Run Mock Draft
-          </button>
+        <div className="text-center py-8">
+          <div className="text-team-secondary font-bold animate-pulse">Starting lottery simulation...</div>
         </div>
       )}
 
