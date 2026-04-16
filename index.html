@@ -3,14 +3,21 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Utah Jazz 2026-27 Season Hub | Jazzketball</title>
+<title>NBA Season Hub</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
   theme: {
     extend: {
       colors: {
-        jazz: { purple: '#4E008E', sky: '#79A3DC', midnight: '#0A0014', deep: '#1A0030', light: '#7B2FBF', black: '#000000' }
+        team: {
+          primary: 'var(--team-primary)',
+          secondary: 'var(--team-secondary)',
+          midnight: 'var(--team-midnight)',
+          deep: 'var(--team-deep)',
+          light: 'var(--team-light)',
+          black: 'var(--team-black)',
+        }
       }
     }
   }
@@ -23,12 +30,25 @@ tailwind.config = {
 <script src="https://unpkg.com/recharts@2.5.0/umd/Recharts.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+:root {
+  --team-primary: #4E008E;
+  --team-secondary: #79A3DC;
+  --team-midnight: #0A0014;
+  --team-deep: #1A0030;
+  --team-light: #7B2FBF;
+  --team-black: #000000;
+  --team-primary-rgb: 78, 0, 142;
+  --team-secondary-rgb: 121, 163, 220;
+  --team-midnight-rgb: 10, 0, 20;
+  --team-deep-rgb: 26, 0, 48;
+  --team-light-rgb: 123, 47, 191;
+}
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Inter', sans-serif; background: #0A0014; color: #fff; overflow-x: hidden; }
+body { font-family: 'Inter', sans-serif; background: var(--team-midnight); color: #fff; overflow-x: hidden; }
 ::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: #0A0014; }
-::-webkit-scrollbar-thumb { background: #4E008E; border-radius: 4px; }
-@keyframes pulse-sky { 0%, 100% { box-shadow: 0 0 0 0 rgba(121,163,220,0.4); } 70% { box-shadow: 0 0 0 15px rgba(121,163,220,0); } }
+::-webkit-scrollbar-track { background: var(--team-midnight); }
+::-webkit-scrollbar-thumb { background: var(--team-primary); border-radius: 4px; }
+@keyframes pulse-secondary { 0%, 100% { box-shadow: 0 0 0 0 rgba(var(--team-secondary-rgb),0.4); } 70% { box-shadow: 0 0 0 15px rgba(var(--team-secondary-rgb),0); } }
 @keyframes float-particle { 0% { transform: translateY(0) translateX(0); opacity: 0; } 25% { opacity: 1; } 75% { opacity: 1; } 100% { transform: translateY(-100vh) translateX(50px); opacity: 0; } }
 @keyframes slide-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
 @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -37,12 +57,12 @@ body { font-family: 'Inter', sans-serif; background: #0A0014; color: #fff; overf
 @keyframes confetti { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(400px) rotate(720deg); opacity: 0; } }
 .animate-slide-in { animation: slide-in-right 0.4s ease-out; }
 .animate-fade-in { animation: fade-in 0.5s ease-out; }
-.pulse-sky { animation: pulse-sky 2s infinite; }
+.pulse-secondary { animation: pulse-secondary 2s infinite; }
 .pulse-dot { animation: pulse-dot 2s infinite; }
-.shimmer { background: linear-gradient(90deg, transparent, rgba(121,163,220,0.1), transparent); background-size: 200% 100%; animation: shimmer 3s infinite; }
-.glass { background: rgba(78,0,142,0.12); backdrop-filter: blur(10px); border: 1px solid rgba(78,0,142,0.25); }
-.sky-gradient { background: linear-gradient(135deg, #79A3DC, #A8C4E8, #79A3DC); }
-.purple-gradient { background: linear-gradient(135deg, #0A0014, #4E008E); }
+.shimmer { background: linear-gradient(90deg, transparent, rgba(var(--team-secondary-rgb),0.1), transparent); background-size: 200% 100%; animation: shimmer 3s infinite; }
+.glass { background: rgba(var(--team-primary-rgb),0.12); backdrop-filter: blur(10px); border: 1px solid rgba(var(--team-primary-rgb),0.25); }
+.team-secondary-gradient { background: linear-gradient(135deg, var(--team-secondary), color-mix(in srgb, var(--team-secondary), white 20%), var(--team-secondary)); }
+.team-primary-gradient { background: linear-gradient(135deg, var(--team-midnight), var(--team-primary)); }
 </style>
 </head>
 <body>
@@ -56,7 +76,7 @@ const { ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, Polar
 // ============================================================
 // DATA: ROSTER
 // ============================================================
-const PLAYERS = [
+const JAZZ_PLAYERS = [
   {
     name: "Keyonte George", pos: "PG", number: 3, badge: null, starter: true,
     headshot: 'https://cdn.nba.com/headshots/nba/latest/1040x760/1641718.png',
@@ -204,6 +224,7 @@ const PLAYERS = [
   },
   {
     name: "Isaiah Collier", pos: "PG", number: 30, badge: null, starter: false,
+    headshot: 'https://cdn.nba.com/headshots/nba/latest/1040x760/1642268.png',
     stats: { ppg: 8.2, rpg: 2.4, apg: 4.8, fgPct: 41.2, threePct: 30.1, tsPct: 52.4 },
     lastYear: { ppg: 4.8, rpg: 1.6, apg: 2.9, fgPct: 37.5, threePct: 24.2, tsPct: 47.1 },
     radar: { Scoring: 55, Playmaking: 72, Defense: 58, Athleticism: 75, Shooting: 45, IQ: 60 },
@@ -232,6 +253,7 @@ const PLAYERS = [
   },
   {
     name: "Cody Williams", pos: "SG/SF", number: 10, badge: null, starter: false,
+    headshot: 'https://cdn.nba.com/headshots/nba/latest/1040x760/1642262.png',
     stats: { ppg: 9.4, rpg: 3.6, apg: 1.5, fgPct: 42.8, threePct: 34.5, tsPct: 54.1 },
     lastYear: { ppg: 5.1, rpg: 2.1, apg: 0.9, fgPct: 39.2, threePct: 29.8, tsPct: 49.5 },
     radar: { Scoring: 58, Playmaking: 48, Defense: 65, Athleticism: 80, Shooting: 62, IQ: 60 },
@@ -260,6 +282,7 @@ const PLAYERS = [
   },
   {
     name: "Kyle Filipowski", pos: "PF/C", number: 22, badge: null, starter: false,
+    headshot: 'https://cdn.nba.com/headshots/nba/latest/1040x760/1642271.png',
     stats: { ppg: 10.1, rpg: 5.8, apg: 2.2, fgPct: 46.5, threePct: 33.8, tsPct: 56.0 },
     lastYear: { ppg: 6.2, rpg: 3.9, apg: 1.4, fgPct: 43.8, threePct: 28.5, tsPct: 51.2 },
     radar: { Scoring: 60, Playmaking: 58, Defense: 55, Athleticism: 55, Shooting: 62, IQ: 75 },
@@ -288,6 +311,7 @@ const PLAYERS = [
   },
   {
     name: "Brice Sensabaugh", pos: "SF/SG", number: 18, badge: null, starter: false,
+    headshot: 'https://cdn.nba.com/headshots/nba/latest/1040x760/1641729.png',
     stats: { ppg: 11.5, rpg: 3.2, apg: 1.8, fgPct: 44.0, threePct: 37.2, tsPct: 57.5 },
     lastYear: { ppg: 7.8, rpg: 2.4, apg: 1.2, fgPct: 41.5, threePct: 34.0, tsPct: 53.8 },
     radar: { Scoring: 68, Playmaking: 45, Defense: 42, Athleticism: 62, Shooting: 75, IQ: 58 },
@@ -316,6 +340,7 @@ const PLAYERS = [
   },
   {
     name: "Will Riley", pos: "SG/SF", number: 21, badge: "ROOKIE", starter: false,
+    headshot: null,
     stats: { ppg: 6.8, rpg: 2.8, apg: 1.2, fgPct: 40.5, threePct: 32.1, tsPct: 52.0 },
     lastYear: null,
     radar: { Scoring: 48, Playmaking: 42, Defense: 60, Athleticism: 78, Shooting: 55, IQ: 55 },
@@ -344,6 +369,7 @@ const PLAYERS = [
   },
   {
     name: "EJ Harkless", pos: "SG/PG", number: 6, badge: null, starter: false,
+    headshot: null,
     stats: { ppg: 5.4, rpg: 1.8, apg: 2.5, fgPct: 39.8, threePct: 31.5, tsPct: 50.8 },
     lastYear: { ppg: 3.1, rpg: 1.2, apg: 1.8, fgPct: 36.5, threePct: 27.3, tsPct: 46.2 },
     radar: { Scoring: 42, Playmaking: 55, Defense: 58, Athleticism: 68, Shooting: 48, IQ: 55 },
@@ -372,6 +398,7 @@ const PLAYERS = [
   },
   {
     name: "John Konchar", pos: "SF", number: 46, badge: "NEW ACQUISITION", starter: false,
+    headshot: 'https://cdn.nba.com/headshots/nba/latest/1040x760/1629723.png',
     stats: { ppg: 5.8, rpg: 4.2, apg: 1.6, fgPct: 45.5, threePct: 35.8, tsPct: 55.2 },
     lastYear: { ppg: 5.2, rpg: 3.8, apg: 1.3, fgPct: 44.1, threePct: 34.2, tsPct: 53.5 },
     radar: { Scoring: 40, Playmaking: 48, Defense: 70, Athleticism: 62, Shooting: 60, IQ: 72 },
@@ -400,6 +427,7 @@ const PLAYERS = [
   },
   {
     name: "Jock Landale", pos: "C", number: 11, badge: "NEW ACQUISITION", starter: false,
+    headshot: 'https://cdn.nba.com/headshots/nba/latest/1040x760/1629111.png',
     stats: { ppg: 7.2, rpg: 4.5, apg: 1.8, fgPct: 52.1, threePct: 36.2, tsPct: 58.5 },
     lastYear: { ppg: 6.8, rpg: 4.0, apg: 1.5, fgPct: 50.5, threePct: 34.8, tsPct: 56.1 },
     radar: { Scoring: 50, Playmaking: 55, Defense: 52, Athleticism: 50, Shooting: 62, IQ: 70 },
@@ -431,7 +459,7 @@ const PLAYERS = [
 // ============================================================
 // DATA: DRAFT PROSPECTS
 // ============================================================
-const PROSPECTS = [
+const JAZZ_PROSPECTS = [
   { rank: 1, name: "AJ Dybantsa", pos: "SF", school: "BYU", height: "6'9\"", age: 19, jazzFit: 9, stars: 5,
     stats: { ppg: 22.9, rpg: 7.1, apg: 3.9 },
     radar: { Scoring: 92, Playmaking: 72, Defense: 68, Athleticism: 90, Shooting: 70, IQ: 78 },
@@ -614,26 +642,26 @@ const PROSPECTS = [
 // ============================================================
 // Lottery teams with real 2026 odds (percentage chance at #1 pick)
 // Based on inverse record — worst record = best odds
-const LOTTERY_TEAMS = [
+const JAZZ_LOTTERY_TEAMS = [
   { team: 'WAS Wizards', record: '17-65', odds: 14.0, need: 'Franchise player' },
-  { team: 'BKN Nets', record: '19-63', odds: 14.0, need: 'Star rebuild piece' },
-  { team: 'CHA Hornets', record: '21-61', odds: 14.0, need: 'LaMelo running mate' },
-  { team: 'TOR Raptors', record: '23-59', odds: 12.5, need: 'Build through the draft' },
-  { team: 'CHI Bulls', record: '24-58', odds: 10.5, need: 'Young talent infusion' },
-  { team: 'NOP Pelicans', record: '26-56', odds: 9.0, need: 'Complement Zion' },
-  { team: 'UTAH JAZZ', record: '28-54', odds: 7.5, need: 'Complete the core' },
-  { team: 'DET Pistons', record: '29-53', odds: 6.0, need: 'Cade backcourt partner' },
-  { team: 'PHI 76ers', record: '30-52', odds: 4.5, need: 'Post-Embiid rebuild' },
-  { team: 'SAS Spurs', record: '31-51', odds: 3.0, need: 'Wemby supporting cast' },
-  { team: 'POR Blazers', record: '32-50', odds: 2.0, need: 'Scoot backcourt help' },
-  { team: 'SAC Kings', record: '33-49', odds: 1.5, need: 'Fox/Sabonis wing help' },
-  { team: 'IND Pacers', record: '34-48', odds: 1.0, need: 'Haliburton complement' },
-  { team: 'ATL Hawks', record: '35-47', odds: 0.5, need: 'Trae Young help' },
+  { team: 'IND Pacers', record: '19-63', odds: 14.0, need: 'Haliburton complement' },
+  { team: 'BKN Nets', record: '20-62', odds: 14.0, need: 'Star rebuild piece' },
+  { team: 'UTAH JAZZ', record: '22-60', odds: 11.5, need: 'Complete the core' },
+  { team: 'SAC Kings', record: '22-60', odds: 11.5, need: 'Fox/Sabonis wing help' },
+  { team: 'MEM Grizzlies', record: '25-57', odds: 9.0, need: 'Ja Morant support' },
+  { team: 'NOP Pelicans', record: '26-56', odds: 6.8, need: 'Complement Zion' },
+  { team: 'DAL Mavericks', record: '26-56', odds: 6.7, need: 'Luka supporting cast' },
+  { team: 'CHI Bulls', record: '31-51', odds: 4.5, need: 'Young talent infusion' },
+  { team: 'MIL Bucks', record: '32-50', odds: 3.0, need: 'Giannis help' },
+  { team: 'GSW Warriors', record: '37-45', odds: 2.0, need: 'Post-Steph transition' },
+  { team: 'LAC Clippers', record: '42-40', odds: 1.5, need: 'Roster refresh' },
+  { team: 'MIA Heat', record: '43-39', odds: 1.0, need: 'Culture addition' },
+  { team: 'CHA Hornets', record: '44-38', odds: 0.5, need: 'LaMelo running mate' },
 ];
 
 // Simulate lottery using weighted random selection
-function simulateLottery() {
-  const teams = LOTTERY_TEAMS.map(t => ({ ...t }));
+function simulateLottery(lotteryTeams) {
+  const teams = lotteryTeams.map(t => ({ ...t }));
   const lotteryResult = [];
 
   // Top 4 picks determined by lottery balls
@@ -659,17 +687,352 @@ function simulateLottery() {
 }
 
 // ============================================================
+// TEAM CONFIGS — All 30 NBA Teams
+// ============================================================
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return `${r}, ${g}, ${b}`;
+}
+
+function applyTeamColors(colors) {
+  const root = document.documentElement.style;
+  root.setProperty('--team-primary', colors.primary);
+  root.setProperty('--team-secondary', colors.secondary);
+  root.setProperty('--team-midnight', colors.midnight);
+  root.setProperty('--team-deep', colors.deep);
+  root.setProperty('--team-light', colors.light);
+  root.setProperty('--team-black', colors.black);
+  root.setProperty('--team-primary-rgb', hexToRgb(colors.primary));
+  root.setProperty('--team-secondary-rgb', hexToRgb(colors.secondary));
+  root.setProperty('--team-midnight-rgb', hexToRgb(colors.midnight));
+  root.setProperty('--team-deep-rgb', hexToRgb(colors.deep));
+  root.setProperty('--team-light-rgb', hexToRgb(colors.light));
+}
+
+const TEAM_CONFIGS = {
+  ATL: { abbr: 'ATL', city: 'Atlanta', name: 'Hawks', fullName: 'Atlanta Hawks', conference: 'East',
+    colors: { primary: '#E03A3E', secondary: '#C1D32F', midnight: '#1A0000', deep: '#2D0A0A', light: '#FF6B6B', black: '#000000' },
+    coach: 'Quin Snyder', gm: 'Landry Fields', arena: 'State Farm Arena',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  BOS: { abbr: 'BOS', city: 'Boston', name: 'Celtics', fullName: 'Boston Celtics', conference: 'East',
+    colors: { primary: '#007A33', secondary: '#BA9653', midnight: '#001A0A', deep: '#002E14', light: '#00B24A', black: '#000000' },
+    coach: 'Joe Mazzulla', gm: 'Brad Stevens', arena: 'TD Garden',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  BKN: { abbr: 'BKN', city: 'Brooklyn', name: 'Nets', fullName: 'Brooklyn Nets', conference: 'East',
+    colors: { primary: '#000000', secondary: '#FFFFFF', midnight: '#0A0A0A', deep: '#1A1A1A', light: '#555555', black: '#000000' },
+    coach: 'Jordi Fernandez', gm: 'Sean Marks', arena: 'Barclays Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  CHA: { abbr: 'CHA', city: 'Charlotte', name: 'Hornets', fullName: 'Charlotte Hornets', conference: 'East',
+    colors: { primary: '#1D1160', secondary: '#00788C', midnight: '#0A0520', deep: '#150D40', light: '#A1A1D5', black: '#000000' },
+    coach: 'Charles Lee', gm: 'Jeff Peterson', arena: 'Spectrum Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  CHI: { abbr: 'CHI', city: 'Chicago', name: 'Bulls', fullName: 'Chicago Bulls', conference: 'East',
+    colors: { primary: '#CE1141', secondary: '#000000', midnight: '#1A0008', deep: '#2D0010', light: '#FF4466', black: '#000000' },
+    coach: 'Billy Donovan', gm: 'Arturas Karnisovas', arena: 'United Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  CLE: { abbr: 'CLE', city: 'Cleveland', name: 'Cavaliers', fullName: 'Cleveland Cavaliers', conference: 'East',
+    colors: { primary: '#860038', secondary: '#FDBB30', midnight: '#1A000B', deep: '#2D0015', light: '#B8004D', black: '#000000' },
+    coach: 'Kenny Atkinson', gm: 'Koby Altman', arena: 'Rocket Mortgage FieldHouse',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  DAL: { abbr: 'DAL', city: 'Dallas', name: 'Mavericks', fullName: 'Dallas Mavericks', conference: 'West',
+    colors: { primary: '#00538C', secondary: '#B8C4CA', midnight: '#001020', deep: '#002040', light: '#0080D0', black: '#000000' },
+    coach: 'Jason Kidd', gm: 'Nico Harrison', arena: 'American Airlines Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  DEN: { abbr: 'DEN', city: 'Denver', name: 'Nuggets', fullName: 'Denver Nuggets', conference: 'West',
+    colors: { primary: '#0E2240', secondary: '#FEC524', midnight: '#050E1A', deep: '#0A1A30', light: '#1D4477', black: '#000000' },
+    coach: 'Michael Malone', gm: 'Calvin Booth', arena: 'Ball Arena',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  DET: { abbr: 'DET', city: 'Detroit', name: 'Pistons', fullName: 'Detroit Pistons', conference: 'East',
+    colors: { primary: '#C8102E', secondary: '#1D42BA', midnight: '#0A0010', deep: '#1A0020', light: '#FF4455', black: '#000000' },
+    coach: 'J.B. Bickerstaff', gm: 'Trajan Langdon', arena: 'Little Caesars Arena',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  GSW: { abbr: 'GSW', city: 'Golden State', name: 'Warriors', fullName: 'Golden State Warriors', conference: 'West',
+    colors: { primary: '#1D428A', secondary: '#FFC72C', midnight: '#0A1020', deep: '#102050', light: '#3366CC', black: '#000000' },
+    coach: 'Steve Kerr', gm: 'Mike Dunleavy Jr.', arena: 'Chase Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  HOU: { abbr: 'HOU', city: 'Houston', name: 'Rockets', fullName: 'Houston Rockets', conference: 'West',
+    colors: { primary: '#CE1141', secondary: '#C4CED4', midnight: '#1A0008', deep: '#2D0010', light: '#FF3355', black: '#000000' },
+    coach: 'Ime Udoka', gm: 'Rafael Stone', arena: 'Toyota Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  IND: { abbr: 'IND', city: 'Indiana', name: 'Pacers', fullName: 'Indiana Pacers', conference: 'East',
+    colors: { primary: '#002D62', secondary: '#FDBB30', midnight: '#001020', deep: '#001840', light: '#0055AA', black: '#000000' },
+    coach: 'Rick Carlisle', gm: 'Chad Buchanan', arena: 'Gainbridge Fieldhouse',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  LAC: { abbr: 'LAC', city: 'LA', name: 'Clippers', fullName: 'LA Clippers', conference: 'West',
+    colors: { primary: '#C8102E', secondary: '#1D428A', midnight: '#1A0008', deep: '#2D0010', light: '#FF3050', black: '#000000' },
+    coach: 'Tyronn Lue', gm: 'Lawrence Frank', arena: 'Intuit Dome',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  LAL: { abbr: 'LAL', city: 'Los Angeles', name: 'Lakers', fullName: 'Los Angeles Lakers', conference: 'West',
+    colors: { primary: '#552583', secondary: '#FDB927', midnight: '#150A20', deep: '#2A1040', light: '#7B3FBB', black: '#000000' },
+    coach: 'JJ Redick', gm: 'Rob Pelinka', arena: 'Crypto.com Arena',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  MEM: { abbr: 'MEM', city: 'Memphis', name: 'Grizzlies', fullName: 'Memphis Grizzlies', conference: 'West',
+    colors: { primary: '#5D76A9', secondary: '#12173F', midnight: '#0A0E20', deep: '#101838', light: '#7B94CC', black: '#000000' },
+    coach: 'Taylor Jenkins', gm: 'Zach Kleiman', arena: 'FedExForum',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  MIA: { abbr: 'MIA', city: 'Miami', name: 'Heat', fullName: 'Miami Heat', conference: 'East',
+    colors: { primary: '#98002E', secondary: '#F9A01B', midnight: '#1A0008', deep: '#2D0010', light: '#CC0044', black: '#000000' },
+    coach: 'Erik Spoelstra', gm: 'Andy Elisburg', arena: 'Kaseya Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  MIL: { abbr: 'MIL', city: 'Milwaukee', name: 'Bucks', fullName: 'Milwaukee Bucks', conference: 'East',
+    colors: { primary: '#00471B', secondary: '#EEE1C6', midnight: '#001A0A', deep: '#002E14', light: '#007A33', black: '#000000' },
+    coach: 'Doc Rivers', gm: 'Jon Horst', arena: 'Fiserv Forum',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  MIN: { abbr: 'MIN', city: 'Minnesota', name: 'Timberwolves', fullName: 'Minnesota Timberwolves', conference: 'West',
+    colors: { primary: '#0C2340', secondary: '#236192', midnight: '#050E1A', deep: '#0A1A30', light: '#1D4477', black: '#000000' },
+    coach: 'Chris Finch', gm: 'Tim Connelly', arena: 'Target Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  NOP: { abbr: 'NOP', city: 'New Orleans', name: 'Pelicans', fullName: 'New Orleans Pelicans', conference: 'West',
+    colors: { primary: '#0C2340', secondary: '#C8102E', midnight: '#050E1A', deep: '#0A1A30', light: '#1D4477', black: '#000000' },
+    coach: 'Willie Green', gm: 'Trajan Langdon', arena: 'Smoothie King Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  NYK: { abbr: 'NYK', city: 'New York', name: 'Knicks', fullName: 'New York Knicks', conference: 'East',
+    colors: { primary: '#006BB6', secondary: '#F58426', midnight: '#001530', deep: '#002550', light: '#3399DD', black: '#000000' },
+    coach: 'Tom Thibodeau', gm: 'Leon Rose', arena: 'Madison Square Garden',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  OKC: { abbr: 'OKC', city: 'Oklahoma City', name: 'Thunder', fullName: 'Oklahoma City Thunder', conference: 'West',
+    colors: { primary: '#007AC1', secondary: '#EF6100', midnight: '#001525', deep: '#002545', light: '#33AAEE', black: '#000000' },
+    coach: 'Mark Daigneault', gm: 'Sam Presti', arena: 'Paycom Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  ORL: { abbr: 'ORL', city: 'Orlando', name: 'Magic', fullName: 'Orlando Magic', conference: 'East',
+    colors: { primary: '#0077C0', secondary: '#C4CED4', midnight: '#001530', deep: '#002550', light: '#33AADD', black: '#000000' },
+    coach: 'Jamahl Mosley', gm: 'Jeff Weltman', arena: 'Kia Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  PHI: { abbr: 'PHI', city: 'Philadelphia', name: '76ers', fullName: 'Philadelphia 76ers', conference: 'East',
+    colors: { primary: '#006BB6', secondary: '#ED174C', midnight: '#001530', deep: '#002550', light: '#3399DD', black: '#000000' },
+    coach: 'Nick Nurse', gm: 'Daryl Morey', arena: 'Wells Fargo Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  PHX: { abbr: 'PHX', city: 'Phoenix', name: 'Suns', fullName: 'Phoenix Suns', conference: 'West',
+    colors: { primary: '#1D1160', secondary: '#E56020', midnight: '#0A0520', deep: '#150D40', light: '#4433AA', black: '#000000' },
+    coach: 'Mike Budenholzer', gm: 'James Jones', arena: 'Footprint Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  POR: { abbr: 'POR', city: 'Portland', name: 'Trail Blazers', fullName: 'Portland Trail Blazers', conference: 'West',
+    colors: { primary: '#E03A3E', secondary: '#000000', midnight: '#1A0008', deep: '#2D0010', light: '#FF6666', black: '#000000' },
+    coach: 'Chauncey Billups', gm: 'Joe Cronin', arena: 'Moda Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  SAC: { abbr: 'SAC', city: 'Sacramento', name: 'Kings', fullName: 'Sacramento Kings', conference: 'West',
+    colors: { primary: '#5A2D81', secondary: '#63727A', midnight: '#150A20', deep: '#2A1040', light: '#7B44AA', black: '#000000' },
+    coach: 'Mike Brown', gm: 'Monte McNair', arena: 'Golden 1 Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  SAS: { abbr: 'SAS', city: 'San Antonio', name: 'Spurs', fullName: 'San Antonio Spurs', conference: 'West',
+    colors: { primary: '#C4CED4', secondary: '#000000', midnight: '#0A0A0A', deep: '#1A1A1A', light: '#E0E8EE', black: '#000000' },
+    coach: 'Gregg Popovich', gm: 'Brian Wright', arena: 'Frost Bank Center',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  TOR: { abbr: 'TOR', city: 'Toronto', name: 'Raptors', fullName: 'Toronto Raptors', conference: 'East',
+    colors: { primary: '#CE1141', secondary: '#000000', midnight: '#1A0008', deep: '#2D0010', light: '#FF3355', black: '#000000' },
+    coach: 'Darko Rajakovic', gm: 'Masai Ujiri', arena: 'Scotiabank Arena',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+  UTA: { abbr: 'UTA', city: 'Utah', name: 'Jazz', fullName: 'Utah Jazz', conference: 'West',
+    colors: { primary: '#4E008E', secondary: '#79A3DC', midnight: '#0A0014', deep: '#1A0030', light: '#7B2FBF', black: '#000000' },
+    coach: 'Will Hardy', gm: 'Danny Ainge', arena: 'Delta Center',
+    players: JAZZ_PLAYERS, prospects: JAZZ_PROSPECTS, pollQuestions: JAZZ_POLL_QUESTIONS, lotteryTeams: JAZZ_LOTTERY_TEAMS },
+  WAS: { abbr: 'WAS', city: 'Washington', name: 'Wizards', fullName: 'Washington Wizards', conference: 'East',
+    colors: { primary: '#002B5C', secondary: '#E31837', midnight: '#001020', deep: '#001840', light: '#0055AA', black: '#000000' },
+    coach: 'Brian Keefe', gm: 'Will Dawkins', arena: 'Capital One Arena',
+    players: null, prospects: null, pollQuestions: null, lotteryTeams: null },
+};
+
+// ============================================================
+// STUB DATA GENERATORS
+// ============================================================
+function generateStubRoster(config) {
+  const stubs = [
+    { pos: 'PG', starter: true }, { pos: 'SG', starter: true }, { pos: 'SF', starter: true },
+    { pos: 'PF', starter: true }, { pos: 'C', starter: true }, { pos: 'PG', starter: false },
+    { pos: 'SG', starter: false }, { pos: 'SF', starter: false }, { pos: 'PF', starter: false },
+    { pos: 'C', starter: false }, { pos: 'SG/SF', starter: false }, { pos: 'PF/C', starter: false },
+    { pos: 'PG/SG', starter: false }, { pos: 'SF/PF', starter: false }
+  ];
+  return stubs.map((s, i) => ({
+    name: `${config.name} Player ${i + 1}`, pos: s.pos, number: i + 1, badge: null, starter: s.starter,
+    headshot: null,
+    stats: { ppg: +(10 + Math.random() * 15).toFixed(1), rpg: +(2 + Math.random() * 7).toFixed(1), apg: +(1 + Math.random() * 6).toFixed(1), fgPct: +(40 + Math.random() * 10).toFixed(1), threePct: +(30 + Math.random() * 12).toFixed(1), tsPct: +(50 + Math.random() * 10).toFixed(1) },
+    lastYear: null,
+    radar: { Scoring: 55 + Math.floor(Math.random() * 25), Playmaking: 50 + Math.floor(Math.random() * 25), Defense: 50 + Math.floor(Math.random() * 25), Athleticism: 55 + Math.floor(Math.random() * 25), Shooting: 50 + Math.floor(Math.random() * 25), IQ: 55 + Math.floor(Math.random() * 20) },
+    zones: { Rim: 30, Midrange: 25, Three: 25, FreeThrow: 20 },
+    monthly: [], strengths: ['Full data coming soon'], weaknesses: ['Full data coming soon'],
+    scoutReport: `Detailed scouting data for the ${config.fullName} is coming soon. Check back for full player analysis.`,
+    ceiling: { label: 'TBD', pct: 50 }, comps: [],
+    streak: Array.from({ length: 10 }, (_, j) => {
+      const r = Math.random();
+      return { result: r > 0.6 ? 'hot' : r > 0.3 ? 'avg' : 'cold', opp: '???', pts: Math.floor(8 + Math.random() * 20), reb: Math.floor(1 + Math.random() * 8), ast: Math.floor(Math.random() * 8), win: Math.random() > 0.5 };
+    })
+  }));
+}
+
+function generateStubProspects(config) {
+  return JAZZ_PROSPECTS.map(p => ({
+    ...p,
+    teamFit: p.jazzFit != null ? p.jazzFit : 5,
+    teamFitAnalysis: `Fit analysis for the ${config.fullName} coming soon.`
+  }));
+}
+
+function generatePollQuestions(config) {
+  return [
+    { id: 'gen1', q: `Is the ${config.fullName} rebuild on track?`, opts: ['Ahead of schedule', 'Right on track', 'Behind schedule', 'What rebuild?'], cat: 'Team' },
+    { id: 'gen2', q: `Rate ${config.coach} as head coach:`, opts: ['Top 5', 'Top 10', 'Above average', 'Average', 'Below average'], cat: 'Team' },
+    { id: 'gen3', q: `What is the ${config.fullName}'s biggest need?`, opts: ['Scoring wing', 'Playmaker', 'Rim protector', 'Shooting', '3-and-D wing'], cat: 'Roster' },
+    { id: 'gen4', q: `How many wins will the ${config.name} get next season?`, opts: ['50+', '40-49', '30-39', '20-29', 'Under 20'], cat: 'Team' },
+    { id: 'gen5', q: `Should the ${config.name} be buyers or sellers at the deadline?`, opts: ['Aggressive buyers', 'Cautious buyers', 'Stand pat', 'Sellers'], cat: 'Trade' },
+    { id: 'gen6', q: `What's the ${config.name}'s ceiling this season?`, opts: ['Championship', 'Conference Finals', 'Second Round', 'First Round', 'Lottery'], cat: 'Team' },
+    { id: 'gen7', q: `Best ${config.name} draft pick in the last 10 years?`, opts: ['Too early to tell', 'Multiple good ones', 'Mostly misses'], cat: 'Draft' },
+    { id: 'gen8', q: `Rate the ${config.arena} atmosphere:`, opts: ['Electric', 'Good', 'Average', 'Needs work'], cat: 'Culture' },
+    { id: 'gen9', q: `Is ${config.gm} doing a good job?`, opts: ['Excellent', 'Above average', 'Average', 'Below average'], cat: 'Team' },
+    { id: 'gen10', q: `Should the ${config.name} focus on the draft or free agency?`, opts: ['Draft all the way', 'Mostly draft', 'Balance of both', 'Free agency focus'], cat: 'Draft' },
+    { id: 'gen11', q: `Who is the ${config.name}'s most untouchable player?`, opts: ['Best player', 'Young prospect', 'Nobody is untouchable'], cat: 'Trade' },
+    { id: 'gen12', q: `Rate the ${config.name}'s jersey designs:`, opts: ['Love them', 'They are solid', 'Need updating', 'Bring back retros'], cat: 'Culture' },
+    { id: 'gen13', q: `How is the ${config.name}'s player development?`, opts: ['Elite', 'Above average', 'Average', 'Needs improvement'], cat: 'Roster' },
+    { id: 'gen14', q: `Would you trade up in the draft for a franchise player?`, opts: ['Yes, go all in', 'Only if the price is right', 'No, stay put'], cat: 'Draft' },
+    { id: 'gen15', q: `What type of player should the ${config.name} draft?`, opts: ['Best available', 'Biggest need', 'High ceiling project', 'NBA-ready contributor'], cat: 'Draft' },
+    { id: 'gen16', q: `Rate your fandom level:`, opts: ['Die-hard', 'Dedicated', 'Casual', 'New fan'], cat: 'Culture' },
+    { id: 'gen17', q: `Best rivalry for the ${config.name}?`, opts: ['Division rival', 'Conference rival', 'Historic rival', 'No real rival yet'], cat: 'Culture' },
+    { id: 'gen18', q: `Should the ${config.name} go after a max free agent?`, opts: ['Absolutely', 'Only the right fit', 'No, build through the draft'], cat: 'Trade' },
+    { id: 'gen19', q: `Rate the ${config.name}'s depth this season:`, opts: ['Deep squad', 'Solid rotation', 'Thin bench', 'Starters or bust'], cat: 'Roster' },
+    { id: 'gen20', q: `What's most exciting about the ${config.name} right now?`, opts: ['Young core', 'Draft picks', 'New coaching', 'Cap space', 'Culture shift'], cat: 'Culture' },
+  ];
+}
+
+function getTeamData(config, field) {
+  if (field === 'prospects') {
+    if (config.prospects) {
+      return config.prospects.map(p => ({ ...p, teamFit: p.jazzFit || p.teamFit || 5, teamFitAnalysis: p.jazzFitAnalysis || p.teamFitAnalysis || '' }));
+    }
+    return generateStubProspects(config);
+  }
+  if (config[field]) return config[field];
+  switch (field) {
+    case 'players': return generateStubRoster(config);
+    case 'pollQuestions': return generatePollQuestions(config);
+    case 'lotteryTeams': return JAZZ_LOTTERY_TEAMS;
+    default: return null;
+  }
+}
+
+// ============================================================
+// TEAM CONTEXT
+// ============================================================
+const TeamContext = React.createContext(null);
+
+function useTeam() {
+  return React.useContext(TeamContext);
+}
+
+function storageKey(abbr, suffix) {
+  return `nbahub_${abbr.toLowerCase()}_${suffix}`;
+}
+
+// ============================================================
 // COMPONENTS
 // ============================================================
 
 // Mountain SVG Background
-function MountainBg() {
-  return (
+// Team-specific SVG hero backgrounds
+const TEAM_BACKGROUNDS = {
+  // Mountains — Utah Jazz
+  UTA: (c1, c2) => (
     <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 1440 320" preserveAspectRatio="none" style={{height:'200px'}}>
-      <path d="M0,320 L120,240 L240,280 L360,200 L480,260 L600,180 L720,220 L840,160 L960,200 L1080,140 L1200,180 L1320,120 L1440,160 L1440,320 Z" fill="rgba(78,0,142,0.3)" />
-      <path d="M0,320 L100,260 L200,300 L300,220 L400,280 L500,200 L600,240 L700,180 L800,240 L900,200 L1000,260 L1100,200 L1200,240 L1300,180 L1440,220 L1440,320 Z" fill="rgba(78,0,142,0.5)" />
-      <path d="M0,320 L80,280 L160,310 L240,260 L320,300 L400,240 L480,280 L560,220 L640,260 L720,230 L800,270 L880,240 L960,280 L1040,250 L1120,290 L1200,260 L1280,300 L1360,270 L1440,300 L1440,320 Z" fill="rgba(45,22,84,0.8)" />
+      <path d="M0,320 L120,240 L240,280 L360,200 L480,260 L600,180 L720,220 L840,160 L960,200 L1080,140 L1200,180 L1320,120 L1440,160 L1440,320 Z" fill={c1} />
+      <path d="M0,320 L100,260 L200,300 L300,220 L400,280 L500,200 L600,240 L700,180 L800,240 L900,200 L1000,260 L1100,200 L1200,240 L1300,180 L1440,220 L1440,320 Z" fill={c2} />
+      <path d="M0,320 L80,280 L160,310 L240,260 L320,300 L400,240 L480,280 L560,220 L640,260 L720,230 L800,270 L880,240 L960,280 L1040,250 L1120,290 L1200,260 L1280,300 L1360,270 L1440,300 L1440,320 Z" fill="rgba(var(--team-deep-rgb),0.85)" />
     </svg>
+  ),
+  // City skyline — generic urban
+  skyline: (c1, c2) => (
+    <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 1440 320" preserveAspectRatio="none" style={{height:'200px'}}>
+      <rect x="60" y="140" width="50" height="180" fill={c1} /><rect x="65" y="145" width="8" height="12" fill={c2} opacity="0.5" /><rect x="80" y="155" width="8" height="12" fill={c2} opacity="0.3" /><rect x="65" y="170" width="8" height="12" fill={c2} opacity="0.4" /><rect x="80" y="180" width="8" height="12" fill={c2} opacity="0.5" />
+      <rect x="130" y="100" width="60" height="220" fill={c2} /><rect x="135" y="108" width="10" height="14" fill={c1} opacity="0.4" /><rect x="155" y="108" width="10" height="14" fill={c1} opacity="0.3" /><rect x="175" y="108" width="10" height="14" fill={c1} opacity="0.5" /><rect x="135" y="135" width="10" height="14" fill={c1} opacity="0.3" /><rect x="155" y="145" width="10" height="14" fill={c1} opacity="0.5" />
+      <rect x="210" y="170" width="45" height="150" fill={c1} />
+      <rect x="280" y="80" width="70" height="240" fill={c2} /><polygon points="280,80 315,50 350,80" fill={c2} /><rect x="290" y="90" width="10" height="14" fill={c1} opacity="0.4" /><rect x="310" y="100" width="10" height="14" fill={c1} opacity="0.3" /><rect x="330" y="90" width="10" height="14" fill={c1} opacity="0.5" />
+      <rect x="370" y="160" width="55" height="160" fill={c1} />
+      <rect x="450" y="120" width="80" height="200" fill={c2} /><rect x="460" y="130" width="12" height="16" fill={c1} opacity="0.4" /><rect x="485" y="130" width="12" height="16" fill={c1} opacity="0.3" /><rect x="510" y="130" width="12" height="16" fill={c1} opacity="0.5" />
+      <rect x="560" y="90" width="55" height="230" fill={c1} /><polygon points="560,90 587,60 615,90" fill={c1} />
+      <rect x="640" y="150" width="50" height="170" fill={c2} />
+      <rect x="720" y="110" width="65" height="210" fill={c1} /><rect x="730" y="118" width="10" height="14" fill={c2} opacity="0.4" /><rect x="750" y="128" width="10" height="14" fill={c2} opacity="0.5" />
+      <rect x="810" y="170" width="40" height="150" fill={c2} />
+      <rect x="870" y="130" width="60" height="190" fill={c1} /><rect x="880" y="140" width="10" height="14" fill={c2} opacity="0.3" /><rect x="905" y="140" width="10" height="14" fill={c2} opacity="0.5" />
+      <rect x="960" y="160" width="45" height="160" fill={c2} />
+      <rect x="1030" y="100" width="70" height="220" fill={c1} /><polygon points="1030,100 1065,65 1100,100" fill={c1} /><rect x="1040" y="110" width="10" height="14" fill={c2} opacity="0.4" /><rect x="1065" y="120" width="10" height="14" fill={c2} opacity="0.3" />
+      <rect x="1120" y="150" width="50" height="170" fill={c2} />
+      <rect x="1200" y="120" width="60" height="200" fill={c1} /><rect x="1210" y="130" width="10" height="14" fill={c2} opacity="0.4" /><rect x="1235" y="130" width="10" height="14" fill={c2} opacity="0.3" />
+      <rect x="1290" y="170" width="45" height="150" fill={c2} />
+      <rect x="1360" y="140" width="80" height="180" fill={c1} />
+      <rect x="0" y="300" width="1440" height="20" fill="rgba(var(--team-deep-rgb),0.9)" />
+    </svg>
+  ),
+  // Rolling hills / plains
+  plains: (c1, c2) => (
+    <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 1440 320" preserveAspectRatio="none" style={{height:'200px'}}>
+      <path d="M0,320 C200,260 400,280 600,270 C800,260 1000,240 1200,260 C1300,270 1400,280 1440,275 L1440,320 Z" fill={c1} />
+      <path d="M0,320 C150,280 350,300 550,290 C750,280 950,260 1150,275 C1300,285 1400,295 1440,290 L1440,320 Z" fill={c2} />
+      <path d="M0,320 C100,300 300,310 500,305 C700,300 900,290 1100,298 C1300,305 1400,310 1440,308 L1440,320 Z" fill="rgba(var(--team-deep-rgb),0.85)" />
+    </svg>
+  ),
+  // Ocean waves — beach / coastal teams
+  waves: (c1, c2) => (
+    <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 1440 320" preserveAspectRatio="none" style={{height:'200px'}}>
+      <path d="M0,320 C60,260 120,280 180,260 C240,240 300,260 360,250 C420,240 480,260 540,245 C600,230 660,255 720,240 C780,225 840,250 900,235 C960,220 1020,245 1080,230 C1140,215 1200,240 1260,225 C1320,210 1380,235 1440,220 L1440,320 Z" fill={c1} />
+      <path d="M0,320 C80,280 160,295 240,280 C320,265 400,285 480,270 C560,255 640,275 720,260 C800,245 880,265 960,255 C1040,245 1120,265 1200,250 C1280,235 1360,255 1440,245 L1440,320 Z" fill={c2} />
+      <path d="M0,320 C100,295 200,305 300,295 C400,285 500,300 600,290 C700,280 800,295 900,285 C1000,275 1100,290 1200,280 C1300,270 1400,285 1440,278 L1440,320 Z" fill="rgba(var(--team-deep-rgb),0.85)" />
+    </svg>
+  ),
+  // Desert / mesa — Phoenix, etc.
+  desert: (c1, c2) => (
+    <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 1440 320" preserveAspectRatio="none" style={{height:'200px'}}>
+      <path d="M0,320 L0,260 L200,260 L250,180 L300,260 L500,255 L550,160 L600,255 L800,250 L850,190 L900,250 L1100,248 L1150,170 L1200,248 L1440,245 L1440,320 Z" fill={c1} />
+      <path d="M0,320 L0,280 L300,278 L350,230 L380,278 L700,275 L750,220 L790,275 L1100,272 L1150,225 L1190,272 L1440,270 L1440,320 Z" fill={c2} />
+      <path d="M0,320 L0,300 L1440,298 L1440,320 Z" fill="rgba(var(--team-deep-rgb),0.85)" />
+      <circle cx="1300" cy="100" r="30" fill={c2} opacity="0.15" />
+    </svg>
+  ),
+  // Pine forest / trees — Pacific NW, Minnesota, etc.
+  forest: (c1, c2) => (
+    <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 1440 320" preserveAspectRatio="none" style={{height:'200px'}}>
+      {Array.from({length: 18}, (_, i) => {
+        const x = 40 + i * 80 + (i % 2 ? 20 : 0);
+        const h = 100 + Math.sin(i * 1.3) * 40;
+        return <polygon key={i} points={`${x},320 ${x + 25},${320 - h} ${x + 50},320`} fill={i % 2 === 0 ? c1 : c2} />;
+      })}
+      <rect x="0" y="300" width="1440" height="20" fill="rgba(var(--team-deep-rgb),0.85)" />
+    </svg>
+  ),
+  // Bridge (Golden Gate, Brooklyn, etc.)
+  bridge: (c1, c2) => (
+    <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 1440 320" preserveAspectRatio="none" style={{height:'200px'}}>
+      <rect x="300" y="100" width="20" height="220" fill={c1} />
+      <rect x="1120" y="100" width="20" height="220" fill={c1} />
+      <path d="M310,110 Q720,200 1120,110" stroke={c2} strokeWidth="6" fill="none" />
+      <path d="M310,120 Q720,210 1120,120" stroke={c2} strokeWidth="4" fill="none" opacity="0.5" />
+      {Array.from({length: 12}, (_, i) => {
+        const x = 350 + i * 70;
+        const y1 = 110 + Math.sin((x - 310) / 810 * Math.PI) * 90;
+        return <line key={i} x1={x} y1={y1} x2={x} y2="260" stroke={c1} strokeWidth="2" opacity="0.5" />;
+      })}
+      <rect x="0" y="260" width="1440" height="60" fill={c1} rx="2" />
+      <rect x="0" y="300" width="1440" height="20" fill="rgba(var(--team-deep-rgb),0.9)" />
+    </svg>
+  ),
+};
+
+// Map each team to a background style
+const TEAM_BG_MAP = {
+  ATL: 'skyline', BOS: 'skyline', BKN: 'bridge', CHA: 'skyline', CHI: 'skyline',
+  CLE: 'skyline', DAL: 'skyline', DEN: 'UTA', DET: 'skyline', GSW: 'bridge',
+  HOU: 'skyline', IND: 'skyline', LAC: 'waves', LAL: 'waves', MEM: 'plains',
+  MIA: 'waves', MIL: 'skyline', MIN: 'forest', NOP: 'waves', NYK: 'skyline',
+  OKC: 'plains', ORL: 'waves', PHI: 'skyline', PHX: 'desert', POR: 'forest',
+  SAC: 'skyline', SAS: 'desert', TOR: 'skyline', UTA: 'UTA', WAS: 'skyline',
+};
+
+function HeroBg() {
+  const { config } = useTeam();
+  const bgKey = TEAM_BG_MAP[config.abbr] || 'skyline';
+  const renderer = TEAM_BACKGROUNDS[bgKey] || TEAM_BACKGROUNDS.skyline;
+  return renderer(
+    'rgba(var(--team-primary-rgb),0.3)',
+    'rgba(var(--team-primary-rgb),0.5)'
   );
 }
 
@@ -689,7 +1052,7 @@ function Particles() {
         <div key={p.id} className="absolute rounded-full" style={{
           left: `${p.left}%`, bottom: '-10px',
           width: p.size, height: p.size,
-          background: `rgba(121,163,220,${p.opacity})`,
+          background: `rgba(var(--team-secondary-rgb),${p.opacity})`,
           animation: `float-particle ${p.duration}s ${p.delay}s infinite linear`
         }} />
       ))}
@@ -698,11 +1061,11 @@ function Particles() {
 }
 
 // Player Jersey Avatar SVG
-function JerseyAvatar({ number, size = 80, color = '#4E008E' }) {
+function JerseyAvatar({ number, size = 80, color = 'var(--team-primary)' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 80 80">
-      <circle cx="40" cy="40" r="38" fill={color} stroke="#79A3DC" strokeWidth="2" />
-      <text x="40" y="48" textAnchor="middle" fill="#79A3DC" fontSize="28" fontWeight="800" fontFamily="Inter">
+      <circle cx="40" cy="40" r="38" fill={color} stroke="var(--team-secondary)" strokeWidth="2" />
+      <text x="40" y="48" textAnchor="middle" fill="var(--team-secondary)" fontSize="28" fontWeight="800" fontFamily="Inter">
         {number}
       </text>
     </svg>
@@ -759,10 +1122,10 @@ function PlayerRadar({ data, size = 280 }) {
   return (
     <ResponsiveContainer width="100%" height={size}>
       <RadarChart data={chartData}>
-        <PolarGrid stroke="rgba(78,0,142,0.5)" />
+        <PolarGrid stroke="rgba(var(--team-primary-rgb),0.5)" />
         <PolarAngleAxis dataKey="subject" tick={{ fill: '#ccc', fontSize: 11 }} />
         <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
-        <Radar dataKey="value" stroke="#79A3DC" fill="#79A3DC" fillOpacity={0.3} strokeWidth={2} />
+        <Radar dataKey="value" stroke="var(--team-secondary)" fill="var(--team-secondary)" fillOpacity={0.3} strokeWidth={2} />
       </RadarChart>
     </ResponsiveContainer>
   );
@@ -775,11 +1138,11 @@ function ScoutingPanel({ player, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60" />
-      <div className="relative w-full max-w-lg bg-jazz-midnight border-l border-jazz-purple overflow-y-auto animate-slide-in"
+      <div className="relative w-full max-w-lg bg-team-midnight border-l border-team-primary overflow-y-auto animate-slide-in"
            onClick={e => e.stopPropagation()}>
-        <div className="sticky top-0 bg-jazz-midnight/95 backdrop-blur-sm border-b border-jazz-purple p-4 flex justify-between items-center z-10">
+        <div className="sticky top-0 bg-team-midnight/95 backdrop-blur-sm border-b border-team-primary p-4 flex justify-between items-center z-10">
           <div>
-            <h2 className="text-xl font-bold text-jazz-sky">{player.name}</h2>
+            <h2 className="text-xl font-bold text-team-secondary">{player.name}</h2>
             <p className="text-sm text-gray-400">{player.pos} | #{player.number}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button>
@@ -792,7 +1155,7 @@ function ScoutingPanel({ player, onClose }) {
               const delta = prev != null && prev > 0 ? Math.round(((val - prev) / prev) * 100) : null;
               return (
                 <div key={label} className="glass rounded-lg p-3 text-center">
-                  <div className="text-lg font-bold text-jazz-sky">{val}</div>
+                  <div className="text-lg font-bold text-team-secondary">{val}</div>
                   <div className="text-xs text-gray-400">{label}</div>
                   {delta !== null && (
                     <div className={`text-[10px] font-bold mt-0.5 ${delta > 0 ? 'text-green-400' : delta < 0 ? 'text-red-400' : 'text-gray-500'}`}>
@@ -809,20 +1172,20 @@ function ScoutingPanel({ player, onClose }) {
 
           {/* Radar Chart */}
           <div className="glass rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-jazz-sky mb-2">Skill Breakdown</h3>
+            <h3 className="text-sm font-semibold text-team-secondary mb-2">Skill Breakdown</h3>
             <PlayerRadar data={player.radar} />
           </div>
 
           {/* Scoring Zones */}
           <div className="glass rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-jazz-sky mb-3">Scoring Zones</h3>
+            <h3 className="text-sm font-semibold text-team-secondary mb-3">Scoring Zones</h3>
             {zoneData.map(z => (
               <div key={z.zone} className="mb-2">
                 <div className="flex justify-between text-xs text-gray-400 mb-1">
                   <span>{z.zone}</span><span>{z.pct}%</span>
                 </div>
                 <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-jazz-sky rounded-full transition-all duration-500" style={{ width: `${z.pct}%` }} />
+                  <div className="h-full bg-team-secondary rounded-full transition-all duration-500" style={{ width: `${z.pct}%` }} />
                 </div>
               </div>
             ))}
@@ -830,25 +1193,25 @@ function ScoutingPanel({ player, onClose }) {
 
           {/* Monthly PPG */}
           <div className="glass rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-jazz-sky mb-2">Monthly PPG Trend</h3>
+            <h3 className="text-sm font-semibold text-team-secondary mb-2">Monthly PPG Trend</h3>
             <ResponsiveContainer width="100%" height={180}>
               <LineChart data={player.monthly.filter(m => m.ppg > 0)}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(78,0,142,0.3)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(var(--team-primary-rgb),0.3)" />
                 <XAxis dataKey="month" tick={{ fill: '#aaa', fontSize: 11 }} />
                 <YAxis tick={{ fill: '#aaa', fontSize: 11 }} domain={['auto', 'auto']} />
-                <Tooltip contentStyle={{ background: '#0A0014', border: '1px solid #4E008E', borderRadius: 8 }} />
-                <Line type="monotone" dataKey="ppg" stroke="#79A3DC" strokeWidth={2} dot={{ fill: '#79A3DC' }} />
+                <Tooltip contentStyle={{ background: 'var(--team-midnight)', border: '1px solid var(--team-primary)', borderRadius: 8 }} />
+                <Line type="monotone" dataKey="ppg" stroke="var(--team-secondary)" strokeWidth={2} dot={{ fill: 'var(--team-secondary)' }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
 
           {/* Strengths & Weaknesses */}
           <div className="glass rounded-xl p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-jazz-sky">Strengths</h3>
+            <h3 className="text-sm font-semibold text-team-secondary">Strengths</h3>
             {player.strengths.map((s, i) => (
               <div key={i} className="flex items-start gap-2 text-sm"><span className="text-green-400 mt-0.5">&#10003;</span><span className="text-gray-300">{s}</span></div>
             ))}
-            <h3 className="text-sm font-semibold text-jazz-sky mt-4">Weaknesses</h3>
+            <h3 className="text-sm font-semibold text-team-secondary mt-4">Weaknesses</h3>
             {player.weaknesses.map((w, i) => (
               <div key={i} className="flex items-start gap-2 text-sm"><span className="text-amber-400 mt-0.5">&#9888;</span><span className="text-gray-300">{w}</span></div>
             ))}
@@ -856,7 +1219,7 @@ function ScoutingPanel({ player, onClose }) {
 
           {/* Scout Report */}
           <div className="glass rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-jazz-sky mb-2">Scout Report</h3>
+            <h3 className="text-sm font-semibold text-team-secondary mb-2">Scout Report</h3>
             {player.scoutReport.split('\n\n').map((p, i) => (
               <p key={i} className="text-sm text-gray-300 leading-relaxed mb-3">{p}</p>
             ))}
@@ -864,32 +1227,32 @@ function ScoutingPanel({ player, onClose }) {
 
           {/* Ceiling */}
           <div className="glass rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-jazz-sky mb-2">Development Ceiling</h3>
+            <h3 className="text-sm font-semibold text-team-secondary mb-2">Development Ceiling</h3>
             <div className="flex justify-between text-xs text-gray-400 mb-1">
               <span>{player.ceiling.label}</span><span>{player.ceiling.pct}%</span>
             </div>
             <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
               <div className="h-full rounded-full transition-all duration-700" style={{
                 width: `${player.ceiling.pct}%`,
-                background: player.ceiling.pct >= 80 ? 'linear-gradient(90deg, #79A3DC, #A8C4E8)' :
-                  player.ceiling.pct >= 60 ? 'linear-gradient(90deg, #4E008E, #7B2FBF)' : '#6b7280'
+                background: player.ceiling.pct >= 80 ? 'linear-gradient(90deg, var(--team-secondary), color-mix(in srgb, var(--team-secondary), white 20%))' :
+                  player.ceiling.pct >= 60 ? 'linear-gradient(90deg, var(--team-primary), var(--team-light))' : '#6b7280'
               }} />
             </div>
           </div>
 
           {/* Comps */}
           <div className="glass rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-jazz-sky mb-2">NBA Comparisons</h3>
+            <h3 className="text-sm font-semibold text-team-secondary mb-2">NBA Comparisons</h3>
             <div className="flex gap-2">
               {player.comps.map((c, i) => (
-                <span key={i} className="px-3 py-1 rounded-full text-sm font-medium bg-jazz-purple/50 text-jazz-sky border border-jazz-purple">{c}</span>
+                <span key={i} className="px-3 py-1 rounded-full text-sm font-medium bg-team-primary/50 text-team-secondary border border-team-primary">{c}</span>
               ))}
             </div>
           </div>
 
           {/* Hot/Cold Streak */}
           <div className="glass rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-jazz-sky mb-3">Last 10 Games</h3>
+            <h3 className="text-sm font-semibold text-team-secondary mb-3">Last 10 Games</h3>
             <StreakDots streak={player.streak} />
           </div>
         </div>
@@ -902,9 +1265,11 @@ function ScoutingPanel({ player, onClose }) {
 // SECTION: ROSTER
 // ============================================================
 function RosterSection() {
+  const { teamData } = useTeam();
+  const players = teamData.players;
   const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const starters = PLAYERS.filter(p => p.starter);
-  const bench = PLAYERS.filter(p => !p.starter);
+  const starters = players.filter(p => p.starter);
+  const bench = players.filter(p => !p.starter);
 
   const pctChange = (curr, prev) => {
     if (!prev || prev === 0) return null;
@@ -928,23 +1293,30 @@ function RosterSection() {
   const PlayerTile = ({ player, large }) => (
     <div
       onClick={() => setSelectedPlayer(player)}
-      className={`glass rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:border-jazz-sky/50 group overflow-hidden ${large ? '' : 'p-3'}`}
+      className={`glass rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:border-team-secondary/50 group overflow-hidden ${large ? '' : 'p-3'}`}
     >
       <div className="flex flex-col items-center text-center">
-        {large && player.headshot ? (
-          <div className="w-full h-48 overflow-hidden rounded-t-xl mb-3 relative" style={{ background: 'linear-gradient(180deg, #1A0030 0%, #0A0014 100%)' }}>
-            <img src={player.headshot} alt={player.name}
-              className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-110"
-              style={{ objectPosition: 'top center' }} />
-            <div className="absolute bottom-0 left-0 right-0 h-16" style={{ background: 'linear-gradient(transparent, rgba(26,10,46,0.95))' }} />
-          </div>
+        {player.headshot ? (
+          large ? (
+            <div className="w-full h-48 overflow-hidden rounded-t-xl mb-3 relative" style={{ background: 'linear-gradient(180deg, var(--team-deep) 0%, var(--team-midnight) 100%)' }}>
+              <img src={player.headshot} alt={player.name}
+                className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-110"
+                style={{ objectPosition: 'top center' }} />
+              <div className="absolute bottom-0 left-0 right-0 h-16" style={{ background: 'linear-gradient(transparent, rgba(var(--team-deep-rgb),0.95))' }} />
+            </div>
+          ) : (
+            <div className="w-14 h-14 rounded-full overflow-hidden mt-2 border-2 border-team-primary/40" style={{ background: 'linear-gradient(180deg, var(--team-deep) 0%, var(--team-midnight) 100%)' }}>
+              <img src={player.headshot} alt={player.name}
+                className="w-full h-full object-cover object-top" />
+            </div>
+          )
         ) : (
           <div className={large ? 'pt-5' : ''}>
             <JerseyAvatar number={player.number} size={large ? 80 : 56} />
           </div>
         )}
         <div className={large ? 'px-4 pb-4' : ''}>
-          <h3 className={`font-bold ${large ? '' : 'mt-2'} group-hover:text-jazz-sky transition-colors ${large ? 'text-lg' : 'text-sm'}`}>
+          <h3 className={`font-bold ${large ? '' : 'mt-2'} group-hover:text-team-secondary transition-colors ${large ? 'text-lg' : 'text-sm'}`}>
             {player.name}
           </h3>
           <p className="text-xs text-gray-400">{player.pos} | #{player.number}</p>
@@ -963,14 +1335,14 @@ function RosterSection() {
   return (
     <section className="py-12 px-4 max-w-7xl mx-auto">
       <h2 className="text-3xl font-black text-center mb-2">
-        <span className="text-jazz-sky">STARTING</span> FIVE
+        <span className="text-team-secondary">STARTING</span> FIVE
       </h2>
       <p className="text-center text-gray-400 mb-8 text-sm">Click any player for full scouting report</p>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-10">
         {starters.map(p => <PlayerTile key={p.name} player={p} large />)}
       </div>
       <h2 className="text-2xl font-bold text-center mb-6">
-        <span className="text-jazz-light">BENCH</span> ROTATION
+        <span className="text-team-light">BENCH</span> ROTATION
       </h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {bench.map(p => <PlayerTile key={p.name} player={p} />)}
@@ -984,52 +1356,65 @@ function RosterSection() {
 // SECTION: DRAFT ROOM
 // ============================================================
 function DraftRoom() {
+  const { config, teamData } = useTeam();
+  const prospects = teamData.prospects;
   const [filter, setFilter] = useState('All');
   const [selectedProspect, setSelectedProspect] = useState(null);
   const [draftView, setDraftView] = useState('board'); // board, mock, intel
   const positions = ['All', 'PG', 'SG', 'SF', 'PF', 'C'];
 
-  const filtered = filter === 'All' ? PROSPECTS : PROSPECTS.filter(p => p.pos.includes(filter));
+  const filtered = filter === 'All' ? prospects : prospects.filter(p => p.pos.includes(filter));
 
-  // Position need scores for Jazz
-  const posNeeds = [
+  // Position need scores
+  const posNeeds = config.abbr === 'UTA' ? [
     { pos: 'SG/SF (Wing)', need: 9, reason: 'Biggest need — shooter to space the floor alongside JJJ/Markkanen' },
     { pos: 'PG', need: 6, reason: 'George is locked in, but backup PG depth thin behind Collier' },
     { pos: 'SF/PF (Forward)', need: 4, reason: 'Markkanen and JJJ fill both spots; depth nice but not critical' },
     { pos: 'C', need: 3, reason: 'Kessler and Filipowski provide solid center rotation' },
+  ] : [
+    { pos: 'SG/SF (Wing)', need: 7, reason: 'Wing depth is always valuable in the modern NBA' },
+    { pos: 'PG', need: 5, reason: 'Playmaking is a premium skill' },
+    { pos: 'SF/PF (Forward)', need: 5, reason: 'Versatile forwards fit any system' },
+    { pos: 'C', need: 4, reason: 'Rim protection and rebounding depth' },
   ];
 
   return (
     <section className="py-12 px-4 max-w-7xl mx-auto">
       {/* Header Banner */}
-      <div className="rounded-2xl p-6 mb-8 text-center border-2 border-jazz-sky/40" style={{ background: 'linear-gradient(135deg, rgba(78,0,142,0.4) 0%, rgba(10,0,20,0.9) 50%, rgba(78,0,142,0.4) 100%)' }}>
-        <h2 className="text-3xl font-black text-jazz-sky">2026 NBA DRAFT</h2>
+      <div className="rounded-2xl p-6 mb-8 text-center border-2 border-team-secondary/40" style={{ background: 'linear-gradient(135deg, rgba(var(--team-primary-rgb),0.4) 0%, rgba(var(--team-midnight-rgb),0.9) 50%, rgba(var(--team-primary-rgb),0.4) 100%)' }}>
+        <h2 className="text-3xl font-black text-team-secondary">2026 NBA DRAFT</h2>
         <p className="text-gray-300 mt-2">NBA Draft Lottery: May 10, 2026 &bull; NBA Draft: June 25, 2026</p>
-        <div className="flex justify-center gap-4 mt-4 flex-wrap">
-          <div className="rounded-lg px-5 py-3 border border-jazz-sky/30" style={{ background: 'rgba(121,163,220,0.08)' }}>
-            <div className="text-jazz-sky font-bold text-xl">#6 – #9</div>
-            <div className="text-xs text-gray-400">Projected Pick Range</div>
-          </div>
-          <div className="rounded-lg px-5 py-3 border border-jazz-sky/30" style={{ background: 'rgba(121,163,220,0.08)' }}>
-            <div className="text-jazz-sky font-bold text-xl">7.5%</div>
-            <div className="text-xs text-gray-400">Lottery Odds (#1 Pick)</div>
-          </div>
-          <div className="rounded-lg px-5 py-3 border border-amber-500/30" style={{ background: 'rgba(121,163,220,0.08)' }}>
-            <div className="text-amber-400 font-bold text-xl">3 FRPs</div>
-            <div className="text-xs text-gray-400">Sent to MEM for JJJ</div>
-          </div>
-          <div className="rounded-lg px-5 py-3 border border-jazz-sky/30" style={{ background: 'rgba(121,163,220,0.08)' }}>
-            <div className="text-jazz-sky font-bold text-xl">28-54</div>
-            <div className="text-xs text-gray-400">Jazz Record</div>
-          </div>
-        </div>
+        {(() => {
+          const lt = teamData.lotteryTeams;
+          const teamEntry = lt.find(t => t.team.includes(config.abbr) || t.team.includes(config.name.toUpperCase()));
+          const teamIdx = teamEntry ? lt.indexOf(teamEntry) : -1;
+          const odds = teamEntry ? teamEntry.odds : '—';
+          const record = teamEntry ? teamEntry.record : '—';
+          const pickLow = Math.max(1, teamIdx - 1);
+          const pickHigh = Math.min(14, teamIdx + 4);
+          return (
+          <div className="flex justify-center gap-4 mt-4 flex-wrap">
+            <div className="rounded-lg px-5 py-3 border border-team-secondary/30" style={{ background: 'rgba(var(--team-secondary-rgb),0.08)' }}>
+              <div className="text-team-secondary font-bold text-xl">#{pickLow} – #{pickHigh}</div>
+              <div className="text-xs text-gray-400">Projected Pick Range</div>
+            </div>
+            <div className="rounded-lg px-5 py-3 border border-team-secondary/30" style={{ background: 'rgba(var(--team-secondary-rgb),0.08)' }}>
+              <div className="text-team-secondary font-bold text-xl">{odds}%</div>
+              <div className="text-xs text-gray-400">Lottery Odds (#1 Pick)</div>
+            </div>
+            <div className="rounded-lg px-5 py-3 border border-team-secondary/30" style={{ background: 'rgba(var(--team-secondary-rgb),0.08)' }}>
+              <div className="text-team-secondary font-bold text-xl">{record}</div>
+              <div className="text-xs text-gray-400">{config.name} Record</div>
+            </div>
+          </div>);
+        })()}
       </div>
 
       {/* Draft sub-navigation */}
       <div className="flex justify-center gap-2 mb-6">
         {[['board', 'Big Board'], ['mock', 'Mock Draft Simulator'], ['intel', 'Draft Intel']].map(([key, label]) => (
           <button key={key} onClick={() => setDraftView(key)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${draftView === key ? 'bg-jazz-sky text-black' : 'glass text-gray-400 hover:text-white'}`}>
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${draftView === key ? 'bg-team-secondary text-black' : 'glass text-gray-400 hover:text-white'}`}>
             {label}
           </button>
         ))}
@@ -1041,26 +1426,27 @@ function DraftRoom() {
       {/* DRAFT INTEL VIEW */}
       {draftView === 'intel' && (
         <div className="space-y-6 max-w-4xl mx-auto">
-          {/* Jazz needs */}
+          {/* Team needs */}
           <div className="glass rounded-2xl p-6">
-            <h3 className="text-lg font-bold text-jazz-sky mb-4">Jazz Positional Needs</h3>
+            <h3 className="text-lg font-bold text-team-secondary mb-4">{config.name} Positional Needs</h3>
             {posNeeds.map((n, i) => (
               <div key={i} className="mb-4">
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-sm font-semibold">{n.pos}</span>
-                  <span className="text-jazz-sky font-bold">{n.need}/10</span>
+                  <span className="text-team-secondary font-bold">{n.need}/10</span>
                 </div>
                 <div className="h-2.5 bg-gray-800 rounded-full overflow-hidden mb-1">
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${n.need * 10}%`, background: n.need >= 7 ? '#79A3DC' : n.need >= 5 ? '#4E008E' : '#333' }} />
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${n.need * 10}%`, background: n.need >= 7 ? 'var(--team-secondary)' : n.need >= 5 ? 'var(--team-primary)' : '#333' }} />
                 </div>
                 <p className="text-xs text-gray-500">{n.reason}</p>
               </div>
             ))}
           </div>
 
-          {/* Trade assets sent */}
+          {/* Trade assets sent — Jazz-specific */}
+          {config.abbr === 'UTA' && (
           <div className="glass rounded-2xl p-6">
-            <h3 className="text-lg font-bold text-jazz-sky mb-4">JJJ Trade — What Utah Sent</h3>
+            <h3 className="text-lg font-bold text-team-secondary mb-4">JJJ Trade — What Utah Sent</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 { name: 'Walter Clayton Jr.', detail: 'Guard prospect' },
@@ -1078,20 +1464,21 @@ function DraftRoom() {
               ))}
             </div>
           </div>
+          )}
 
           {/* Lottery odds breakdown */}
           <div className="glass rounded-2xl p-6">
-            <h3 className="text-lg font-bold text-jazz-sky mb-4">2026 Lottery Odds</h3>
+            <h3 className="text-lg font-bold text-team-secondary mb-4">2026 Lottery Odds</h3>
             <div className="space-y-2">
-              {LOTTERY_TEAMS.map((t, i) => (
-                <div key={i} className={`flex items-center gap-3 rounded-lg p-2 ${t.team === 'UTAH JAZZ' ? 'bg-jazz-sky/10 border border-jazz-sky/30' : ''}`}>
+              {teamData.lotteryTeams.map((t, i) => (
+                <div key={i} className={`flex items-center gap-3 rounded-lg p-2 ${t.team.includes(config.abbr) || t.team.includes(config.name.toUpperCase()) ? 'bg-team-secondary/10 border border-team-secondary/30' : ''}`}>
                   <span className="text-xs text-gray-500 w-6">{i + 1}</span>
-                  <span className={`text-sm font-semibold flex-1 ${t.team === 'UTAH JAZZ' ? 'text-jazz-sky' : 'text-gray-300'}`}>{t.team}</span>
+                  <span className={`text-sm font-semibold flex-1 ${t.team.includes(config.abbr) || t.team.includes(config.name.toUpperCase()) ? 'text-team-secondary' : 'text-gray-300'}`}>{t.team}</span>
                   <span className="text-xs text-gray-400">{t.record}</span>
                   <div className="w-20 h-2 bg-gray-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-jazz-sky rounded-full" style={{ width: `${t.odds * 7}%` }} />
+                    <div className="h-full bg-team-secondary rounded-full" style={{ width: `${t.odds * 7}%` }} />
                   </div>
-                  <span className="text-xs text-jazz-sky font-bold w-12 text-right">{t.odds}%</span>
+                  <span className="text-xs text-team-secondary font-bold w-12 text-right">{t.odds}%</span>
                 </div>
               ))}
             </div>
@@ -1099,17 +1486,17 @@ function DraftRoom() {
 
           {/* Best fits quick list */}
           <div className="glass rounded-2xl p-6">
-            <h3 className="text-lg font-bold text-jazz-sky mb-4">Best Jazz Fits in This Draft</h3>
+            <h3 className="text-lg font-bold text-team-secondary mb-4">Best {config.name} Fits in This Draft</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {PROSPECTS.filter(p => p.jazzFit >= 8).sort((a, b) => b.jazzFit - a.jazzFit).map(p => (
-                <div key={p.rank} className="glass rounded-lg p-3 flex items-center gap-3 cursor-pointer hover:border-jazz-sky/30 transition-all"
+              {prospects.filter(p => p.teamFit >= 8).sort((a, b) => b.teamFit - a.teamFit).map(p => (
+                <div key={p.rank} className="glass rounded-lg p-3 flex items-center gap-3 cursor-pointer hover:border-team-secondary/30 transition-all"
                   onClick={() => { setDraftView('board'); setTimeout(() => setSelectedProspect(p), 100); }}>
-                  <div className="w-8 h-8 rounded-full bg-jazz-purple flex items-center justify-center text-jazz-sky text-xs font-bold">#{p.rank}</div>
+                  <div className="w-8 h-8 rounded-full bg-team-primary flex items-center justify-center text-team-secondary text-xs font-bold">#{p.rank}</div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold truncate">{p.name}</div>
                     <div className="text-xs text-gray-400">{p.pos} | {p.school}</div>
                   </div>
-                  <span className="text-xs font-bold text-green-400 bg-green-600/20 px-2 py-0.5 rounded-full">Fit: {p.jazzFit}/10</span>
+                  <span className="text-xs font-bold text-green-400 bg-green-600/20 px-2 py-0.5 rounded-full">Fit: {p.teamFit}/10</span>
                 </div>
               ))}
             </div>
@@ -1123,7 +1510,7 @@ function DraftRoom() {
       <div className="flex justify-center gap-2 mb-6 flex-wrap">
         {positions.map(pos => (
           <button key={pos} onClick={() => setFilter(pos)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${filter === pos ? 'bg-jazz-sky text-black' : 'glass text-gray-300 hover:text-white'}`}>
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${filter === pos ? 'bg-team-secondary text-black' : 'glass text-gray-300 hover:text-white'}`}>
             {pos}
           </button>
         ))}
@@ -1133,13 +1520,13 @@ function DraftRoom() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {filtered.map(p => (
           <div key={p.rank} onClick={() => setSelectedProspect(p)}
-            className="glass rounded-xl p-4 cursor-pointer transition-all duration-300 hover:scale-105 hover:border-jazz-sky/50 group">
+            className="glass rounded-xl p-4 cursor-pointer transition-all duration-300 hover:scale-105 hover:border-team-secondary/50 group">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-jazz-purple flex items-center justify-center text-jazz-sky font-bold text-sm">
+              <div className="w-10 h-10 rounded-full bg-team-primary flex items-center justify-center text-team-secondary font-bold text-sm">
                 #{p.rank}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-sm group-hover:text-jazz-sky truncate">{p.name}</h3>
+                <h3 className="font-bold text-sm group-hover:text-team-secondary truncate">{p.name}</h3>
                 <p className="text-xs text-gray-400">{p.pos} | {p.school}</p>
               </div>
             </div>
@@ -1147,7 +1534,7 @@ function DraftRoom() {
               <span>{p.height} | Age {p.age}</span>
               <div className="flex">
                 {Array.from({length: 5}, (_, i) => (
-                  <span key={i} className={i < Math.floor(p.stars) ? 'text-jazz-sky' : 'text-gray-600'}>&#9733;</span>
+                  <span key={i} className={i < Math.floor(p.stars) ? 'text-team-secondary' : 'text-gray-600'}>&#9733;</span>
                 ))}
               </div>
             </div>
@@ -1158,8 +1545,8 @@ function DraftRoom() {
             </div>
             <div className="mt-2 flex justify-between items-center">
               <span className="text-xs text-gray-500">{p.projected}</span>
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${p.jazzFit >= 8 ? 'bg-green-600/30 text-green-400' : p.jazzFit >= 6 ? 'bg-yellow-600/30 text-yellow-400' : 'bg-red-600/30 text-red-400'}`}>
-                Fit: {p.jazzFit}/10
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${p.teamFit >= 8 ? 'bg-green-600/30 text-green-400' : p.teamFit >= 6 ? 'bg-yellow-600/30 text-yellow-400' : 'bg-red-600/30 text-red-400'}`}>
+                Fit: {p.teamFit}/10
               </span>
             </div>
           </div>
@@ -1170,11 +1557,11 @@ function DraftRoom() {
       {selectedProspect && (
         <div className="fixed inset-0 z-50 flex justify-end" onClick={() => setSelectedProspect(null)}>
           <div className="absolute inset-0 bg-black/60" />
-          <div className="relative w-full max-w-lg bg-jazz-midnight border-l border-jazz-purple overflow-y-auto animate-slide-in"
+          <div className="relative w-full max-w-lg bg-team-midnight border-l border-team-primary overflow-y-auto animate-slide-in"
                onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-jazz-midnight/95 backdrop-blur-sm border-b border-jazz-purple p-4 flex justify-between items-center z-10">
+            <div className="sticky top-0 bg-team-midnight/95 backdrop-blur-sm border-b border-team-primary p-4 flex justify-between items-center z-10">
               <div>
-                <h2 className="text-xl font-bold text-jazz-sky">#{selectedProspect.rank} {selectedProspect.name}</h2>
+                <h2 className="text-xl font-bold text-team-secondary">#{selectedProspect.rank} {selectedProspect.name}</h2>
                 <p className="text-sm text-gray-400">{selectedProspect.pos} | {selectedProspect.school} | {selectedProspect.height}</p>
               </div>
               <button onClick={() => setSelectedProspect(null)} className="text-gray-400 hover:text-white text-2xl">&times;</button>
@@ -1183,46 +1570,46 @@ function DraftRoom() {
               <div className="grid grid-cols-3 gap-2">
                 {[['PPG', selectedProspect.stats.ppg], ['RPG', selectedProspect.stats.rpg], ['APG', selectedProspect.stats.apg]].map(([l, v]) => (
                   <div key={l} className="glass rounded-lg p-3 text-center">
-                    <div className="text-lg font-bold text-jazz-sky">{v}</div>
+                    <div className="text-lg font-bold text-team-secondary">{v}</div>
                     <div className="text-xs text-gray-400">{l}</div>
                   </div>
                 ))}
               </div>
               <div className="glass rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-jazz-sky mb-2">Skill Projection</h3>
+                <h3 className="text-sm font-semibold text-team-secondary mb-2">Skill Projection</h3>
                 <PlayerRadar data={selectedProspect.radar} />
               </div>
               <div className="glass rounded-xl p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-jazz-sky">Strengths</h3>
+                <h3 className="text-sm font-semibold text-team-secondary">Strengths</h3>
                 {selectedProspect.strengths.map((s, i) => (
                   <div key={i} className="flex gap-2 text-sm"><span className="text-green-400">&#10003;</span><span className="text-gray-300">{s}</span></div>
                 ))}
-                <h3 className="text-sm font-semibold text-jazz-sky mt-3">Concerns</h3>
+                <h3 className="text-sm font-semibold text-team-secondary mt-3">Concerns</h3>
                 {selectedProspect.concerns.map((c, i) => (
                   <div key={i} className="flex gap-2 text-sm"><span className="text-amber-400">&#9888;</span><span className="text-gray-300">{c}</span></div>
                 ))}
               </div>
               <div className="glass rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-jazz-sky mb-2">Jazz Fit Analysis</h3>
+                <h3 className="text-sm font-semibold text-team-secondary mb-2">{config.name} Fit Analysis</h3>
                 <div className="flex items-center gap-2 mb-3">
-                  <span className={`text-2xl font-black ${selectedProspect.jazzFit >= 8 ? 'text-green-400' : selectedProspect.jazzFit >= 6 ? 'text-yellow-400' : 'text-red-400'}`}>
-                    {selectedProspect.jazzFit}/10
+                  <span className={`text-2xl font-black ${selectedProspect.teamFit >= 8 ? 'text-green-400' : selectedProspect.teamFit >= 6 ? 'text-yellow-400' : 'text-red-400'}`}>
+                    {selectedProspect.teamFit}/10
                   </span>
-                  <span className="text-sm text-gray-400">Jazz Fit Score</span>
+                  <span className="text-sm text-gray-400">{config.name} Fit Score</span>
                 </div>
-                <p className="text-sm text-gray-300 leading-relaxed">{selectedProspect.jazzFitAnalysis}</p>
+                <p className="text-sm text-gray-300 leading-relaxed">{selectedProspect.teamFitAnalysis}</p>
               </div>
               <div className="glass rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-jazz-sky mb-2">NBA Comparisons</h3>
+                <h3 className="text-sm font-semibold text-team-secondary mb-2">NBA Comparisons</h3>
                 <div className="flex gap-2 flex-wrap">
                   {selectedProspect.comps.map((c, i) => (
-                    <span key={i} className="px-3 py-1 rounded-full text-sm bg-jazz-purple/50 text-jazz-sky border border-jazz-purple">{c}</span>
+                    <span key={i} className="px-3 py-1 rounded-full text-sm bg-team-primary/50 text-team-secondary border border-team-primary">{c}</span>
                   ))}
                 </div>
               </div>
               <div className="glass rounded-xl p-4 text-center">
                 <span className="text-xs text-gray-400">Projected Range</span>
-                <div className="text-lg font-bold text-jazz-sky">{selectedProspect.projected}</div>
+                <div className="text-lg font-bold text-team-secondary">{selectedProspect.projected}</div>
               </div>
             </div>
           </div>
@@ -1281,6 +1668,7 @@ function saveVisitors(visitors) {
 }
 
 function FanMap() {
+  const { config } = useTeam();
   const [visitors, setVisitors] = useState(() => loadVisitors());
   const [userLoc, setUserLoc] = useState(null);
   const [hovCity, setHovCity] = useState(null);
@@ -1367,7 +1755,7 @@ function FanMap() {
   return (
     <section className="py-12 px-4 max-w-7xl mx-auto">
       <h2 className="text-3xl font-black text-center mb-2">
-        <span className="text-jazz-sky">JAZZ</span> NATION
+        <span className="text-team-secondary">{config.name.toUpperCase()}</span> NATION
       </h2>
       <p className="text-center text-gray-400 mb-6">
         {visitors.length === 0 ? 'Be the first fan on the map — allow location access below' :
@@ -1381,7 +1769,7 @@ function FanMap() {
             {!hasIntl ? (
               <>
                 {/* US continental outline */}
-                <polygon points={usOutline} fill="rgba(78,0,142,0.12)" stroke="rgba(78,0,142,0.5)" strokeWidth="1.5" strokeLinejoin="round" />
+                <polygon points={usOutline} fill="rgba(var(--team-primary-rgb),0.12)" stroke="rgba(var(--team-primary-rgb),0.5)" strokeWidth="1.5" strokeLinejoin="round" />
                 {/* State boundary lines */}
                 {[
                   // Major vertical state lines (west to east longitude boundaries)
@@ -1418,20 +1806,20 @@ function FanMap() {
                 ].map(([[lng1, lat1], [lng2, lat2]], i) => {
                   const p1 = projectPoint(lat1, lng1, US_BOUNDS, mapWidth, mapHeight);
                   const p2 = projectPoint(lat2, lng2, US_BOUNDS, mapWidth, mapHeight);
-                  return <line key={`sb${i}`} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="rgba(78,0,142,0.25)" strokeWidth="0.5" />;
+                  return <line key={`sb${i}`} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="rgba(var(--team-primary-rgb),0.25)" strokeWidth="0.5" />;
                 })}
                 {/* SLC home marker */}
-                <circle cx={slcPt.x} cy={slcPt.y} r="4" fill="none" stroke="rgba(121,163,220,0.3)" strokeWidth="1" strokeDasharray="3 2" />
-                <text x={slcPt.x} y={slcPt.y - 8} textAnchor="middle" fill="rgba(121,163,220,0.35)" fontSize="9" fontWeight="600" fontFamily="Inter">SLC</text>
+                <circle cx={slcPt.x} cy={slcPt.y} r="4" fill="none" stroke="rgba(var(--team-secondary-rgb),0.3)" strokeWidth="1" strokeDasharray="3 2" />
+                <text x={slcPt.x} y={slcPt.y - 8} textAnchor="middle" fill="rgba(var(--team-secondary-rgb),0.35)" fontSize="9" fontWeight="600" fontFamily="Inter">SLC</text>
               </>
             ) : (
               <>
                 {/* Simplified world continents */}
-                <polygon points={usOutline} fill="rgba(78,0,142,0.12)" stroke="rgba(78,0,142,0.3)" strokeWidth="0.8" />
-                <ellipse cx="420" cy="160" rx="90" ry="100" fill="rgba(78,0,142,0.1)" stroke="rgba(78,0,142,0.25)" strokeWidth="0.5" />
-                <ellipse cx="430" cy="75" rx="120" ry="55" fill="rgba(78,0,142,0.1)" stroke="rgba(78,0,142,0.25)" strokeWidth="0.5" />
-                <ellipse cx="600" cy="180" rx="80" ry="80" fill="rgba(78,0,142,0.1)" stroke="rgba(78,0,142,0.25)" strokeWidth="0.5" />
-                <ellipse cx="700" cy="330" rx="50" ry="40" fill="rgba(78,0,142,0.1)" stroke="rgba(78,0,142,0.25)" strokeWidth="0.5" />
+                <polygon points={usOutline} fill="rgba(var(--team-primary-rgb),0.12)" stroke="rgba(var(--team-primary-rgb),0.3)" strokeWidth="0.8" />
+                <ellipse cx="420" cy="160" rx="90" ry="100" fill="rgba(var(--team-primary-rgb),0.1)" stroke="rgba(var(--team-primary-rgb),0.25)" strokeWidth="0.5" />
+                <ellipse cx="430" cy="75" rx="120" ry="55" fill="rgba(var(--team-primary-rgb),0.1)" stroke="rgba(var(--team-primary-rgb),0.25)" strokeWidth="0.5" />
+                <ellipse cx="600" cy="180" rx="80" ry="80" fill="rgba(var(--team-primary-rgb),0.1)" stroke="rgba(var(--team-primary-rgb),0.25)" strokeWidth="0.5" />
+                <ellipse cx="700" cy="330" rx="50" ry="40" fill="rgba(var(--team-primary-rgb),0.1)" stroke="rgba(var(--team-primary-rgb),0.25)" strokeWidth="0.5" />
               </>
             )}
 
@@ -1444,13 +1832,13 @@ function FanMap() {
               return (
                 <g key={i} onMouseEnter={() => setHovCity(v)} onMouseLeave={() => setHovCity(null)} className="cursor-pointer">
                   {/* Outer glow */}
-                  <circle cx={x} cy={y} r={r * 2.5} fill="rgba(121,163,220,0.08)" />
-                  <circle cx={x} cy={y} r={r * 1.5} fill="rgba(121,163,220,0.15)" className={isUser && isNewVisit ? 'pulse-dot' : ''} />
+                  <circle cx={x} cy={y} r={r * 2.5} fill="rgba(var(--team-secondary-rgb),0.08)" />
+                  <circle cx={x} cy={y} r={r * 1.5} fill="rgba(var(--team-secondary-rgb),0.15)" className={isUser && isNewVisit ? 'pulse-dot' : ''} />
                   {/* Core dot */}
-                  <circle cx={x} cy={y} r={r} fill="#79A3DC" opacity={0.7 + Math.min(v.count / 20, 0.3)} />
+                  <circle cx={x} cy={y} r={r} fill="var(--team-secondary)" opacity={0.7 + Math.min(v.count / 20, 0.3)} />
                   {/* "You" label for user's dot */}
                   {isUser && (
-                    <text x={x} y={y - r - 6} textAnchor="middle" fill="#79A3DC" fontSize="10" fontWeight="700" fontFamily="Inter">YOU</text>
+                    <text x={x} y={y - r - 6} textAnchor="middle" fill="var(--team-secondary)" fontSize="10" fontWeight="700" fontFamily="Inter">YOU</text>
                   )}
                 </g>
               );
@@ -1459,7 +1847,7 @@ function FanMap() {
 
           {hovCity && (
             <div className="absolute top-4 left-4 glass rounded-lg px-4 py-3 text-sm z-10">
-              <div className="font-bold text-jazz-sky">{flags[hovCity.country] || '🌍'} {hovCity.country === 'US' && hovCity.city.includes(', ') ? hovCity.city.split(', ').pop() : hovCity.city}</div>
+              <div className="font-bold text-team-secondary">{flags[hovCity.country] || '🌍'} {hovCity.country === 'US' && hovCity.city.includes(', ') ? hovCity.city.split(', ').pop() : hovCity.city}</div>
               <div className="text-gray-400">{hovCity.count} visit{hovCity.count !== 1 ? 's' : ''} &bull; Last: {new Date(hovCity.lastVisit).toLocaleDateString()}</div>
             </div>
           )}
@@ -1467,8 +1855,8 @@ function FanMap() {
           {geoStatus === 'pending' && visitors.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="glass rounded-xl px-6 py-4 text-center">
-                <div className="text-jazz-sky font-semibold mb-1">Allow location access</div>
-                <div className="text-sm text-gray-400">to put yourself on the Jazz Nation map</div>
+                <div className="text-team-secondary font-semibold mb-1">Allow location access</div>
+                <div className="text-sm text-gray-400">to put yourself on the {config.name} Nation map</div>
               </div>
             </div>
           )}
@@ -1476,8 +1864,8 @@ function FanMap() {
           {geoStatus === 'denied' && visitors.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="glass rounded-xl px-6 py-4 text-center">
-                <div className="text-gray-400 text-sm">We know you're out there, Jazz fan 👀</div>
-                <div className="text-gray-500 text-xs mt-1">Enable location to join Jazz Nation</div>
+                <div className="text-gray-400 text-sm">We know you're out there, {config.name} fan</div>
+                <div className="text-gray-500 text-xs mt-1">Enable location to join {config.name} Nation</div>
               </div>
             </div>
           )}
@@ -1490,12 +1878,12 @@ function FanMap() {
 
         {/* Leaderboard */}
         <div className="glass rounded-2xl p-4">
-          <h3 className="text-sm font-bold text-jazz-sky mb-4">TOP LOCATIONS</h3>
+          <h3 className="text-sm font-bold text-team-secondary mb-4">TOP LOCATIONS</h3>
           {top5.length === 0 ? (
             <div className="text-center text-gray-500 text-sm py-8">No visitors yet. Be the first!</div>
           ) : top5.map((v, i) => (
-            <div key={i} className="flex items-center gap-3 mb-3 pb-3 border-b border-jazz-purple/30 last:border-0">
-              <span className="text-lg font-black text-jazz-sky w-6">#{i + 1}</span>
+            <div key={i} className="flex items-center gap-3 mb-3 pb-3 border-b border-team-primary/30 last:border-0">
+              <span className="text-lg font-black text-team-secondary w-6">#{i + 1}</span>
               <span className="text-lg">{flags[v.country] || '🌍'}</span>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-sm truncate">{v.country === 'US' && v.city.includes(', ') ? v.city.split(', ').pop() : v.city}</div>
@@ -1512,7 +1900,7 @@ function FanMap() {
 // ============================================================
 // SECTION: FAN POLL — 50 questions, one at a time, with dashboards
 // ============================================================
-const ALL_POLL_QUESTIONS = [
+const JAZZ_POLL_QUESTIONS = [
   { id: 1, q: "With their 2026 first-round pick, the Jazz should select:", opts: ["AJ Dybantsa", "Darryn Peterson", "Cameron Boozer", "Keaton Wagler", "Best Available Player"], cat: "Draft" },
   { id: 2, q: "Is the Jazz rebuild officially over?", opts: ["Yes", "Not yet", "Getting close"], cat: "Team" },
   { id: 3, q: "Who is the Jazz's most important player?", opts: ["Keyonte George", "Lauri Markkanen", "Jaren Jackson Jr.", "Ace Bailey", "Walker Kessler"], cat: "Roster" },
@@ -1581,34 +1969,36 @@ function loadAnswered() {
 function saveAnswered(data) {
   try { localStorage.setItem(POLL_ANSWERED_KEY, JSON.stringify(data)); } catch {}
 }
-function getShuffledOrder() {
+function getShuffledOrder(questions) {
   try {
     const saved = JSON.parse(localStorage.getItem(POLL_ORDER_KEY));
-    if (saved && saved.length === ALL_POLL_QUESTIONS.length) return saved;
+    if (saved && saved.length === questions.length) return saved;
   } catch {}
-  const order = ALL_POLL_QUESTIONS.map((_, i) => i);
+  const order = questions.map((_, i) => i);
   for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
   try { localStorage.setItem(POLL_ORDER_KEY, JSON.stringify(order)); } catch {}
   return order;
 }
 
-const POLL_COLORS = ['#79A3DC', '#4E008E', '#7B2FBF', '#A8C4E8', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B'];
+const POLL_COLORS = ['var(--team-secondary)', 'var(--team-primary)', 'var(--team-light)', 'color-mix(in srgb, var(--team-secondary), white 20%)', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B'];
 
 function FanPoll() {
+  const { config, teamData } = useTeam();
+  const pollQuestions = teamData.pollQuestions;
   const [pollData, setPollData] = useState(() => loadPollData());
   const [answered, setAnswered] = useState(() => loadAnswered());
-  const [order] = useState(() => getShuffledOrder());
+  const [order] = useState(() => getShuffledOrder(pollQuestions));
   const [showDashboard, setShowDashboard] = useState(false);
 
   // Find first unanswered question in this user's shuffled order
-  const currentIdx = order.findIndex(i => !answered[ALL_POLL_QUESTIONS[i].id]);
-  const currentQ = currentIdx >= 0 ? ALL_POLL_QUESTIONS[order[currentIdx]] : null;
+  const currentIdx = order.findIndex(i => pollQuestions[i] && answered[pollQuestions[i].id] === undefined);
+  const currentQ = currentIdx >= 0 ? pollQuestions[order[currentIdx]] : null;
   const answeredCount = Object.keys(answered).length;
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [selectedQId, setSelectedQId] = useState(null);
 
   const vote = (qId, optIdx) => {
-    if (answered[qId]) return;
+    if (answered[qId] !== undefined) return;
     setSelectedAnswer(optIdx);
     setSelectedQId(qId);
 
@@ -1642,12 +2032,12 @@ function FanPoll() {
   // Category stats for dashboard
   const cats = ['Draft', 'Roster', 'Team', 'Trade', 'Culture'];
   const catCounts = {};
-  cats.forEach(c => { catCounts[c] = ALL_POLL_QUESTIONS.filter(q => q.cat === c && answered[q.id] !== undefined).length; });
+  cats.forEach(c => { catCounts[c] = pollQuestions.filter(q => q.cat === c && answered[q.id] !== undefined).length; });
   const catTotals = {};
-  cats.forEach(c => { catTotals[c] = ALL_POLL_QUESTIONS.filter(q => q.cat === c).length; });
+  cats.forEach(c => { catTotals[c] = pollQuestions.filter(q => q.cat === c).length; });
 
   // Most voted questions
-  const mostVoted = ALL_POLL_QUESTIONS
+  const mostVoted = pollQuestions
     .map(q => ({ ...q, total: getTotalVotes(q.id) }))
     .filter(q => q.total > 0)
     .sort((a, b) => b.total - a.total)
@@ -1656,28 +2046,28 @@ function FanPoll() {
   return (
     <section className="py-12 px-4 max-w-5xl mx-auto">
       <h2 className="text-3xl font-black text-center mb-2">
-        <span className="text-jazz-sky">FAN</span> POLL
+        <span className="text-team-secondary">FAN</span> POLL
       </h2>
 
       {/* Progress bar */}
       <div className="max-w-md mx-auto mb-2">
         <div className="flex justify-between text-xs text-gray-400 mb-1">
-          <span>{answeredCount} of {ALL_POLL_QUESTIONS.length} answered</span>
-          <span>{Math.round((answeredCount / ALL_POLL_QUESTIONS.length) * 100)}%</span>
+          <span>{answeredCount} of {pollQuestions.length} answered</span>
+          <span>{Math.round((answeredCount / pollQuestions.length) * 100)}%</span>
         </div>
         <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-          <div className="h-full bg-jazz-sky rounded-full transition-all duration-500" style={{ width: `${(answeredCount / ALL_POLL_QUESTIONS.length) * 100}%` }} />
+          <div className="h-full bg-team-secondary rounded-full transition-all duration-500" style={{ width: `${(answeredCount / pollQuestions.length) * 100}%` }} />
         </div>
       </div>
 
       {/* Toggle */}
       <div className="flex justify-center gap-3 mb-8">
         <button onClick={() => setShowDashboard(false)}
-          className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${!showDashboard ? 'bg-jazz-sky text-black' : 'glass text-gray-400 hover:text-white'}`}>
+          className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${!showDashboard ? 'bg-team-secondary text-black' : 'glass text-gray-400 hover:text-white'}`}>
           Vote
         </button>
         <button onClick={() => setShowDashboard(true)}
-          className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${showDashboard ? 'bg-jazz-sky text-black' : 'glass text-gray-400 hover:text-white'}`}>
+          className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${showDashboard ? 'bg-team-secondary text-black' : 'glass text-gray-400 hover:text-white'}`}>
           Dashboard
         </button>
       </div>
@@ -1688,7 +2078,7 @@ function FanPoll() {
           <div className="max-w-2xl mx-auto">
             <div className="glass rounded-2xl p-6 animate-fade-in" key={currentQ.id}>
               <div className="flex items-center justify-between mb-4">
-                <span className="px-3 py-1 rounded-full text-xs font-bold border border-jazz-purple text-jazz-light">{currentQ.cat}</span>
+                <span className="px-3 py-1 rounded-full text-xs font-bold border border-team-primary text-team-light">{currentQ.cat}</span>
                 <span className="text-xs text-gray-500">Q{answeredCount + 1}</span>
               </div>
               <h3 className="text-xl font-bold text-center mb-6">{currentQ.q}</h3>
@@ -1704,15 +2094,15 @@ function FanPoll() {
                     <button key={i} onClick={() => vote(currentQ.id, i)}
                       disabled={hasVoted}
                       className={`w-full text-left rounded-xl p-4 transition-all duration-300 relative overflow-hidden
-                        ${isSelected ? 'border-2 border-jazz-sky bg-jazz-sky/10' : hasVoted ? 'glass opacity-80' : 'glass hover:border-jazz-sky/30 cursor-pointer'}`}>
+                        ${isSelected ? 'border-2 border-team-secondary bg-team-secondary/10' : hasVoted ? 'glass opacity-80' : 'glass hover:border-team-secondary/30 cursor-pointer'}`}>
                       {hasVoted && (
                         <div className="absolute inset-0 rounded-xl overflow-hidden">
-                          <div className="h-full bg-jazz-purple/20 transition-all duration-700" style={{ width: `${pct}%` }} />
+                          <div className="h-full bg-team-primary/20 transition-all duration-700" style={{ width: `${pct}%` }} />
                         </div>
                       )}
                       <div className="relative flex justify-between items-center">
-                        <span className={`font-semibold ${isSelected ? 'text-jazz-sky' : ''}`}>{opt}</span>
-                        {hasVoted && <span className="text-jazz-sky font-bold text-lg">{pct}%</span>}
+                        <span className={`font-semibold ${isSelected ? 'text-team-secondary' : ''}`}>{opt}</span>
+                        {hasVoted && <span className="text-team-secondary font-bold text-lg">{pct}%</span>}
                       </div>
                       {hasVoted && <div className="relative text-xs text-gray-500 mt-1">{votes} vote{votes !== 1 ? 's' : ''}</div>}
                     </button>
@@ -1722,7 +2112,7 @@ function FanPoll() {
               {answered[currentQ.id] !== undefined && (
                 <div className="mt-6 text-center animate-fade-in">
                   <button onClick={goNext}
-                    className="px-8 py-3 rounded-xl bg-jazz-sky text-black font-bold text-lg hover:bg-yellow-400 transition-all">
+                    className="px-8 py-3 rounded-xl bg-team-secondary text-black font-bold text-lg hover:bg-yellow-400 transition-all">
                     Next Question &rarr;
                   </button>
                 </div>
@@ -1733,9 +2123,9 @@ function FanPoll() {
         ) : (
           <div className="text-center glass rounded-2xl p-8 max-w-md mx-auto">
             <div className="text-4xl mb-3">🏆</div>
-            <h3 className="text-xl font-bold text-jazz-sky mb-2">All Done!</h3>
+            <h3 className="text-xl font-bold text-team-secondary mb-2">All Done!</h3>
             <p className="text-gray-400">You've answered all 50 questions. Check the Dashboard for results!</p>
-            <button onClick={() => setShowDashboard(true)} className="mt-4 px-6 py-2 rounded-xl bg-jazz-sky text-black font-bold hover:bg-yellow-400 transition-all">
+            <button onClick={() => setShowDashboard(true)} className="mt-4 px-6 py-2 rounded-xl bg-team-secondary text-black font-bold hover:bg-yellow-400 transition-all">
               View Dashboard
             </button>
           </div>
@@ -1746,30 +2136,30 @@ function FanPoll() {
           {/* Overview stats */}
           <div className="grid grid-cols-3 gap-4">
             <div className="glass rounded-xl p-4 text-center">
-              <div className="text-3xl font-black text-jazz-sky">
-                {ALL_POLL_QUESTIONS.reduce((s, q) => s + getTotalVotes(q.id), 0)}
+              <div className="text-3xl font-black text-team-secondary">
+                {pollQuestions.reduce((s, q) => s + getTotalVotes(q.id), 0)}
               </div>
               <div className="text-xs text-gray-400">Total Community Votes</div>
             </div>
             <div className="glass rounded-xl p-4 text-center">
-              <div className="text-3xl font-black text-jazz-sky">
-                {ALL_POLL_QUESTIONS.filter(q => getTotalVotes(q.id) > 0).length}
+              <div className="text-3xl font-black text-team-secondary">
+                {pollQuestions.filter(q => getTotalVotes(q.id) > 0).length}
               </div>
               <div className="text-xs text-gray-400">Questions With Votes</div>
             </div>
             <div className="glass rounded-xl p-4 text-center">
-              <div className="text-3xl font-black text-jazz-sky">{answeredCount}/50</div>
+              <div className="text-3xl font-black text-team-secondary">{answeredCount}/50</div>
               <div className="text-xs text-gray-400">Your Progress</div>
             </div>
           </div>
 
           {/* Community consensus — top winning answers by category */}
           {cats.map(cat => {
-            const catQs = ALL_POLL_QUESTIONS.filter(q => q.cat === cat && getTotalVotes(q.id) > 0);
+            const catQs = pollQuestions.filter(q => q.cat === cat && getTotalVotes(q.id) > 0);
             if (catQs.length === 0) return null;
             return (
               <div key={cat} className="glass rounded-2xl p-6">
-                <h3 className="text-lg font-bold text-jazz-sky mb-1">{cat}</h3>
+                <h3 className="text-lg font-bold text-team-secondary mb-1">{cat}</h3>
                 <p className="text-xs text-gray-500 mb-4">{catQs.length} question{catQs.length !== 1 ? 's' : ''} voted on</p>
                 <div className="space-y-4">
                   {catQs.map(q => {
@@ -1786,10 +2176,10 @@ function FanPoll() {
                         </div>
                         {/* Winner highlight */}
                         <div className="flex items-center gap-2 mb-3">
-                          <span className="text-jazz-sky font-bold">{winner.opt}</span>
-                          <span className="text-jazz-sky font-black text-lg">{winPct}%</span>
-                          {winPct >= 60 && <span className="text-xs px-2 py-0.5 rounded-full bg-jazz-sky/20 text-jazz-sky">Strong consensus</span>}
-                          {winPct >= 40 && winPct < 60 && <span className="text-xs px-2 py-0.5 rounded-full bg-jazz-purple/30 text-jazz-light">Split vote</span>}
+                          <span className="text-team-secondary font-bold">{winner.opt}</span>
+                          <span className="text-team-secondary font-black text-lg">{winPct}%</span>
+                          {winPct >= 60 && <span className="text-xs px-2 py-0.5 rounded-full bg-team-secondary/20 text-team-secondary">Strong consensus</span>}
+                          {winPct >= 40 && winPct < 60 && <span className="text-xs px-2 py-0.5 rounded-full bg-team-primary/30 text-team-light">Split vote</span>}
                         </div>
                         {/* All options as bars */}
                         <div className="space-y-1.5">
@@ -1801,7 +2191,7 @@ function FanPoll() {
                                 <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
                                   <div className="h-full rounded-full transition-all duration-500" style={{
                                     width: `${pct}%`,
-                                    background: si === 0 ? '#79A3DC' : si === 1 ? '#4E008E' : '#7B2FBF'
+                                    background: si === 0 ? 'var(--team-secondary)' : si === 1 ? 'var(--team-primary)' : 'var(--team-light)'
                                   }} />
                                 </div>
                                 <span className="text-xs text-gray-500 w-10 text-right">{pct}%</span>
@@ -1821,19 +2211,19 @@ function FanPoll() {
           {(() => {
             const chartData = cats.map(c => ({
               name: c,
-              votes: ALL_POLL_QUESTIONS.filter(q => q.cat === c).reduce((s, q) => s + getTotalVotes(q.id), 0)
+              votes: pollQuestions.filter(q => q.cat === c).reduce((s, q) => s + getTotalVotes(q.id), 0)
             })).filter(d => d.votes > 0);
             return chartData.length > 0 && (
               <div className="glass rounded-2xl p-6">
-                <h3 className="text-lg font-bold text-jazz-sky mb-4">Votes by Category</h3>
+                <h3 className="text-lg font-bold text-team-secondary mb-4">Votes by Category</h3>
                 <div style={{ height: 250 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(78,0,142,0.2)" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(var(--team-primary-rgb),0.2)" />
                       <XAxis dataKey="name" tick={{ fill: '#aaa', fontSize: 11 }} />
                       <YAxis tick={{ fill: '#aaa', fontSize: 11 }} />
-                      <Tooltip contentStyle={{ background: '#0A0014', border: '1px solid #4E008E', borderRadius: 8 }} />
-                      <Bar dataKey="votes" fill="#79A3DC" radius={[4, 4, 0, 0]} />
+                      <Tooltip contentStyle={{ background: 'var(--team-midnight)', border: '1px solid var(--team-primary)', borderRadius: 8 }} />
+                      <Bar dataKey="votes" fill="var(--team-secondary)" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -1842,8 +2232,8 @@ function FanPoll() {
           })()}
 
           <div className="text-center">
-            <button onClick={() => setShowDashboard(false)} className="px-6 py-2 rounded-xl glass text-jazz-sky hover:bg-jazz-sky/20 font-semibold">
-              {answeredCount < ALL_POLL_QUESTIONS.length ? 'Keep Voting' : 'Review Questions'}
+            <button onClick={() => setShowDashboard(false)} className="px-6 py-2 rounded-xl glass text-team-secondary hover:bg-team-secondary/20 font-semibold">
+              {answeredCount < pollQuestions.length ? 'Keep Voting' : 'Review Questions'}
             </button>
           </div>
         </div>
@@ -1856,6 +2246,8 @@ function FanPoll() {
 // SECTION: LINEUP BUILDER
 // ============================================================
 function LineupBuilder() {
+  const { teamData } = useTeam();
+  const players = teamData.players;
   const positions = ['PG', 'SG', 'SF', 'PF', 'C'];
   const [lineup, setLineup] = useState({ PG: null, SG: null, SF: null, PF: null, C: null });
   const [report, setReport] = useState(null);
@@ -1885,23 +2277,21 @@ function LineupBuilder() {
       const players = Object.values(lineup).filter(Boolean);
       const totalPPG = players.reduce((s, p) => s + p.stats.ppg, 0).toFixed(1);
       const totalRPG = players.reduce((s, p) => s + p.stats.rpg, 0).toFixed(1);
-      const hasJJJ = players.some(p => p.name.includes('Jackson'));
-      const hasKessler = players.some(p => p.name.includes('Kessler'));
-      const hasMarkkanen = players.some(p => p.name.includes('Markkanen'));
-      const hasGeorge = players.some(p => p.name.includes('George'));
+      const avgShot = players.reduce((s, p) => s + p.radar.Shooting, 0) / 5;
+      const avgPlay = players.reduce((s, p) => s + p.radar.Playmaking, 0) / 5;
       const avgDef = players.reduce((s, p) => s + p.radar.Defense, 0) / 5;
+      const avgScor = players.reduce((s, p) => s + p.radar.Scoring, 0) / 5;
+      const starterCount = players.filter(p => p.starter).length;
 
       let identity = 'Balanced';
-      let chemistry = 7;
+      let chemistry = 5 + starterCount;
       const strengths = [];
 
-      if (hasMarkkanen && players.some(p => p.radar.Shooting > 70)) {
-        identity = 'Stretch Offense'; chemistry += 1;
-      }
-      if (hasGeorge) { identity = 'Guard-Driven'; strengths.push('Elite playmaking from Keyonte George drives the offense'); }
-      if (hasJJJ && hasKessler) { strengths.push('Elite defensive frontcourt — DPOY meets shot-blocking menace'); chemistry += 1; }
-      if (hasJJJ && hasMarkkanen) { strengths.push('Twin stretch-big spacing warps every defensive scheme'); identity = 'Inside-Out'; }
+      if (avgShot > 65) { identity = 'Stretch Offense'; chemistry += 1; strengths.push('Elite floor spacing — multiple shooters warp defensive schemes'); }
+      if (avgPlay > 70) { identity = 'Guard-Driven'; strengths.push('Playmaking-heavy lineup creates open shots and easy buckets'); }
       if (avgDef > 70) { strengths.push('Top-tier defensive unit — opponents score at a below-average rate'); chemistry += 1; }
+      if (avgScor > 75) { strengths.push('Scoring firepower from multiple positions'); }
+      if (starterCount >= 4) { chemistry += 1; strengths.push('Core lineup — maximum chemistry and continuity'); }
       if (strengths.length === 0) strengths.push('Versatile lineup with multiple scoring options');
 
       chemistry = Math.min(chemistry, 10);
@@ -1918,15 +2308,15 @@ function LineupBuilder() {
   return (
     <section className="py-12 px-4 max-w-5xl mx-auto">
       <h2 className="text-3xl font-black text-center mb-2">
-        <span className="text-jazz-sky">LINEUP</span> BUILDER
+        <span className="text-team-secondary">LINEUP</span> BUILDER
       </h2>
       <p className="text-center text-gray-400 mb-6">Build your dream Jazz lineup</p>
 
       {/* Position Slots */}
       <div className="flex justify-center gap-3 mb-8 flex-wrap">
         {positions.map(pos => (
-          <div key={pos} className={`glass rounded-xl p-4 w-32 text-center transition-all ${lineup[pos] ? 'border-jazz-sky/50' : 'border-dashed border-2 border-jazz-purple/50'}`}>
-            <div className="text-xs text-jazz-sky font-bold mb-2">{pos}</div>
+          <div key={pos} className={`glass rounded-xl p-4 w-32 text-center transition-all ${lineup[pos] ? 'border-team-secondary/50' : 'border-dashed border-2 border-team-primary/50'}`}>
+            <div className="text-xs text-team-secondary font-bold mb-2">{pos}</div>
             {lineup[pos] ? (
               <div>
                 <JerseyAvatar number={lineup[pos].number} size={48} />
@@ -1941,10 +2331,10 @@ function LineupBuilder() {
 
       {/* Available Players */}
       <div className="flex flex-wrap gap-2 justify-center mb-6">
-        {PLAYERS.map(p => (
+        {players.map(p => (
           <button key={p.name} onClick={() => assignPlayer(p)}
             disabled={usedNames.has(p.name)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${usedNames.has(p.name) ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : 'glass text-white hover:bg-jazz-sky/20 hover:text-jazz-sky'}`}>
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${usedNames.has(p.name) ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : 'glass text-white hover:bg-team-secondary/20 hover:text-team-secondary'}`}>
             #{p.number} {p.name.split(' ').pop()}
           </button>
         ))}
@@ -1958,27 +2348,27 @@ function LineupBuilder() {
       {/* Report */}
       {report && (
         <div className="mt-8 glass rounded-2xl p-6 animate-fade-in">
-          <h3 className="text-lg font-bold text-jazz-sky text-center mb-4">Lineup Report</h3>
+          <h3 className="text-lg font-bold text-team-secondary text-center mb-4">Lineup Report</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div className="text-center">
-              <div className="text-2xl font-black text-jazz-sky">{report.ppg}</div>
+              <div className="text-2xl font-black text-team-secondary">{report.ppg}</div>
               <div className="text-xs text-gray-400">Projected PPG</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-black text-jazz-sky">{report.rpg}</div>
+              <div className="text-2xl font-black text-team-secondary">{report.rpg}</div>
               <div className="text-xs text-gray-400">Projected RPG</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-black text-jazz-sky">{report.chemistry}/10</div>
+              <div className="text-2xl font-black text-team-secondary">{report.chemistry}/10</div>
               <div className="text-xs text-gray-400">Chemistry</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-black text-jazz-sky">{report.defRating}</div>
+              <div className="text-2xl font-black text-team-secondary">{report.defRating}</div>
               <div className="text-xs text-gray-400">Def. Rating</div>
             </div>
           </div>
           <div className="text-center mb-4">
-            <span className="px-4 py-1 rounded-full bg-jazz-sky/20 text-jazz-sky font-bold text-sm">{report.identity}</span>
+            <span className="px-4 py-1 rounded-full bg-team-secondary/20 text-team-secondary font-bold text-sm">{report.identity}</span>
           </div>
           <div className="space-y-2">
             {report.strengths.map((s, i) => (
@@ -1995,17 +2385,21 @@ function LineupBuilder() {
 // SECTION: TRADE MACHINE
 // ============================================================
 function TradeMachine() {
-  const [jazzOut, setJazzOut] = useState([]);
+  const { config, teamData } = useTeam();
+  const players = teamData.players;
+  const [teamOut, setTeamOut] = useState([]);
   const [incoming, setIncoming] = useState('');
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const toggleJazzPlayer = (name) => {
-    setJazzOut(prev => prev.includes(name) ? prev.filter(n => n !== name) : prev.length < 2 ? [...prev, name] : prev);
+  const toggleTeamPlayer = (name) => {
+    setTeamOut(prev => prev.includes(name) ? prev.filter(n => n !== name) : prev.length < 2 ? [...prev, name] : prev);
   };
 
+  const coreStr = players.filter(p => p.starter).map(p => `${p.name} (${p.pos})`).join(', ');
+
   const analyzeTrade = async () => {
-    if (!jazzOut.length || !incoming.trim()) return;
+    if (!teamOut.length || !incoming.trim()) return;
     setLoading(true);
     try {
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -2013,8 +2407,8 @@ function TradeMachine() {
         headers: { 'Content-Type': 'application/json', 'x-api-key': prompt('Enter your Anthropic API key:'), 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514', max_tokens: 1000,
-          system: "You are an NBA trade analyst. Evaluate trades for the Utah Jazz. Current core: Keyonte George (PG), Ace Bailey (SG, rookie), Lauri Markkanen (SF, All-Star), Jaren Jackson Jr (PF, DPOY), Walker Kessler (C). Be specific and analytical. Format: Start with a letter grade (A+ to F), then 3 bullet points for the trade, then 3 bullet points against. End with a Danny Ainge Approval rating (1-10).",
-          messages: [{ role: 'user', content: `Jazz trade away: ${jazzOut.join(', ')}. Jazz receive: ${incoming}. Analyze this trade.` }]
+          system: `You are an NBA trade analyst. Evaluate trades for the ${config.fullName}. Current core: ${coreStr}. Head coach: ${config.coach}. GM: ${config.gm}. Be specific and analytical. Format: Start with a letter grade (A+ to F), then 3 bullet points for the trade, then 3 bullet points against. End with a ${config.gm} Approval rating (1-10).`,
+          messages: [{ role: 'user', content: `${config.name} trade away: ${teamOut.join(', ')}. ${config.name} receive: ${incoming}. Analyze this trade.` }]
         })
       });
       const data = await resp.json();
@@ -2028,32 +2422,32 @@ function TradeMachine() {
   return (
     <section className="py-12 px-4 max-w-4xl mx-auto">
       <h2 className="text-3xl font-black text-center mb-2">
-        <span className="text-jazz-sky">TRADE</span> MACHINE
+        <span className="text-team-secondary">TRADE</span> MACHINE
       </h2>
       <p className="text-center text-gray-400 mb-6">What if? Simulate trades with AI analysis</p>
 
       <div className="glass rounded-2xl p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Jazz sends */}
+          {/* Team sends */}
           <div>
-            <h3 className="text-sm font-bold text-red-400 mb-3">JAZZ SEND (select 1-2)</h3>
+            <h3 className="text-sm font-bold text-red-400 mb-3">{config.name.toUpperCase()} SEND (select 1-2)</h3>
             <div className="space-y-2">
-              {PLAYERS.map(p => (
-                <button key={p.name} onClick={() => toggleJazzPlayer(p.name)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${jazzOut.includes(p.name) ? 'bg-red-600/20 border border-red-500/50 text-red-300' : 'glass text-gray-300 hover:text-white'}`}>
+              {players.map(p => (
+                <button key={p.name} onClick={() => toggleTeamPlayer(p.name)}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${teamOut.includes(p.name) ? 'bg-red-600/20 border border-red-500/50 text-red-300' : 'glass text-gray-300 hover:text-white'}`}>
                   #{p.number} {p.name} <span className="text-gray-500">({p.pos})</span>
                 </button>
               ))}
             </div>
           </div>
-          {/* Jazz receives */}
+          {/* Team receives */}
           <div>
-            <h3 className="text-sm font-bold text-green-400 mb-3">JAZZ RECEIVE</h3>
+            <h3 className="text-sm font-bold text-green-400 mb-3">{config.name.toUpperCase()} RECEIVE</h3>
             <textarea value={incoming} onChange={e => setIncoming(e.target.value)}
               placeholder="Type player names (e.g., 'Zach LaVine, 2027 1st round pick')"
-              className="w-full h-32 bg-gray-900/50 border border-jazz-purple rounded-xl p-3 text-sm text-white placeholder-gray-500 resize-none focus:outline-none focus:border-jazz-sky" />
-            <button onClick={analyzeTrade} disabled={loading || !jazzOut.length || !incoming.trim()}
-              className="mt-3 w-full py-3 rounded-xl font-bold text-sm transition-all bg-jazz-sky text-black hover:bg-yellow-400 disabled:opacity-40 disabled:cursor-not-allowed">
+              className="w-full h-32 bg-gray-900/50 border border-team-primary rounded-xl p-3 text-sm text-white placeholder-gray-500 resize-none focus:outline-none focus:border-team-secondary" />
+            <button onClick={analyzeTrade} disabled={loading || !teamOut.length || !incoming.trim()}
+              className="mt-3 w-full py-3 rounded-xl font-bold text-sm transition-all bg-team-secondary text-black hover:bg-yellow-400 disabled:opacity-40 disabled:cursor-not-allowed">
               {loading ? 'Analyzing...' : '🔄 Analyze Trade'}
             </button>
           </div>
@@ -2061,10 +2455,10 @@ function TradeMachine() {
 
         {analysis && (
           <div className="mt-6 glass rounded-xl p-4 animate-fade-in">
-            <h3 className="text-sm font-bold text-jazz-sky mb-3">AI TRADE ANALYSIS</h3>
+            <h3 className="text-sm font-bold text-team-secondary mb-3">AI TRADE ANALYSIS</h3>
             <div className="text-sm text-gray-300 leading-relaxed space-y-2"
               dangerouslySetInnerHTML={{ __html: analysis
-                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-jazz-sky font-semibold">$1</strong>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-team-secondary font-semibold">$1</strong>')
                 .replace(/\n\n/g, '</p><p class="mt-2">')
                 .replace(/\n- /g, '<br/>\u2022 ')
                 .replace(/\n/g, '<br/>')
@@ -2080,40 +2474,44 @@ function TradeMachine() {
 // SECTION: DRAFT SIMULATOR (lottery odds-based)
 // ============================================================
 function DraftSimulator() {
+  const { config, teamData } = useTeam();
+  const prospects = teamData.prospects;
+  const lotteryTeams = teamData.lotteryTeams;
   const [simState, setSimState] = useState('idle');
   const [lotteryOrder, setLotteryOrder] = useState([]);
   const [picks, setPicks] = useState([]);
-  const [available, setAvailable] = useState([...PROSPECTS]);
-  const [jazzOptions, setJazzOptions] = useState([]);
-  const [jazzPickNum, setJazzPickNum] = useState(7);
+  const [available, setAvailable] = useState([...prospects]);
+  const [teamOptions, setTeamOptions] = useState([]);
+  const [teamPickNum, setTeamPickNum] = useState(4);
   const [userPick, setUserPick] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [fanReactions, setFanReactions] = useState([]);
+
+  const teamFullName = config.fullName.toUpperCase();
+  const teamLotteryName = lotteryTeams.find(t => t.team.includes(config.name.toUpperCase()) || t.team.includes(config.abbr))?.team || teamFullName;
 
   const startSim = () => {
-    const lottery = simulateLottery();
-    const jazzSlot = lottery.findIndex(t => t.team === 'UTAH JAZZ');
-    const jazzPick = jazzSlot + 1;
+    const lottery = simulateLottery(lotteryTeams);
+    const teamSlot = lottery.findIndex(t => t.team === teamLotteryName);
+    const teamPick = teamSlot >= 0 ? teamSlot + 1 : 4;
 
     setLotteryOrder(lottery);
-    setJazzPickNum(jazzPick);
+    setTeamPickNum(teamPick);
     setSimState('lottery');
     setPicks([]);
-    setAvailable([...PROSPECTS]);
+    setAvailable([...prospects]);
     setUserPick(null);
-    setFanReactions([]);
 
     // Show lottery results for 3s then start picks
     setTimeout(() => {
       setSimState('simulating');
-      simulatePicks([...PROSPECTS], [], 1, lottery, jazzPick);
+      simulatePicks([...prospects], [], 1, lottery, teamPick);
     }, 3000);
   };
 
-  const simulatePicks = (avail, currentPicks, pickNum, lottery, jazzPick) => {
-    if (pickNum >= jazzPick) {
+  const simulatePicks = (avail, currentPicks, pickNum, lottery, teamPick) => {
+    if (pickNum >= teamPick) {
       const top3 = avail.slice(0, 3);
-      setJazzOptions(top3);
+      setTeamOptions(top3);
       setAvailable(avail);
       setPicks(currentPicks);
       setSimState('picking');
@@ -2133,7 +2531,7 @@ function DraftSimulator() {
       const newPicks = [...currentPicks, { ...team, player: picked }];
       setPicks(newPicks);
       setAvailable(newAvail);
-      simulatePicks(newAvail, newPicks, pickNum + 1, lottery, jazzPick);
+      simulatePicks(newAvail, newPicks, pickNum + 1, lottery, teamPick);
     }, 700);
   };
 
@@ -2141,14 +2539,6 @@ function DraftSimulator() {
     setUserPick(prospect);
     setShowConfetti(true);
     setSimState('done');
-    const reactions = [
-      { user: '@JazzFanForever', text: `${prospect.name}?! LET'S GOOOOO! This is the one! 🔥🔥🔥` },
-      { user: '@UtahHoops2026', text: `Interesting pick. I was hoping for someone else but I trust Danny Ainge.` },
-      { user: '@WasatchWarrior', text: `${prospect.name} + JJJ + Markkanen = CHAMPIONSHIP WINDOW OPEN 🏆` },
-      { user: '@JazzBear_SLC', text: `Not sure about this one... hope I'm wrong tho 😬` },
-      { user: '@NoteNation801', text: `Welcome to Utah, ${prospect.name.split(' ').pop()}!!! The Delta Center is ROCKING! 💜` }
-    ];
-    setFanReactions(reactions);
     setTimeout(() => setShowConfetti(false), 3000);
   };
 
@@ -2157,7 +2547,7 @@ function DraftSimulator() {
       {simState === 'idle' && (
         <div className="text-center">
           <p className="text-gray-400 text-sm mb-4">Lottery odds determine pick order. Results change every run.</p>
-          <button onClick={startSim} className="px-8 py-4 rounded-2xl bg-jazz-sky text-black font-bold text-lg hover:opacity-90 transition-all pulse-sky">
+          <button onClick={startSim} className="px-8 py-4 rounded-2xl bg-team-secondary text-black font-bold text-lg hover:opacity-90 transition-all pulse-secondary">
             Run Mock Draft
           </button>
         </div>
@@ -2165,18 +2555,18 @@ function DraftSimulator() {
 
       {simState === 'lottery' && (
         <div className="glass rounded-2xl p-6 animate-fade-in">
-          <h3 className="text-lg font-bold text-jazz-sky text-center mb-4">Lottery Results</h3>
+          <h3 className="text-lg font-bold text-team-secondary text-center mb-4">Lottery Results</h3>
           <p className="text-center text-gray-400 text-sm mb-4">The ping pong balls have spoken...</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {lotteryOrder.slice(0, 14).map((t, i) => (
-              <div key={i} className={`rounded-lg p-2 text-center text-sm ${t.team === 'UTAH JAZZ' ? 'bg-jazz-sky/20 border border-jazz-sky/50' : 'glass'}`}>
-                <div className="font-black text-jazz-sky">#{i + 1}</div>
-                <div className={`text-xs font-semibold ${t.team === 'UTAH JAZZ' ? 'text-jazz-sky' : 'text-gray-300'}`}>{t.team}</div>
+              <div key={i} className={`rounded-lg p-2 text-center text-sm ${t.team === teamLotteryName ? 'bg-team-secondary/20 border border-team-secondary/50' : 'glass'}`}>
+                <div className="font-black text-team-secondary">#{i + 1}</div>
+                <div className={`text-xs font-semibold ${t.team === teamLotteryName ? 'text-team-secondary' : 'text-gray-300'}`}>{t.team}</div>
               </div>
             ))}
           </div>
           <div className="text-center mt-4">
-            <div className="text-jazz-sky font-bold">Jazz pick at #{lotteryOrder.findIndex(t => t.team === 'UTAH JAZZ') + 1}</div>
+            <div className="text-team-secondary font-bold">{config.name} pick at #{lotteryOrder.findIndex(t => t.team === teamLotteryName) + 1}</div>
             <div className="text-gray-500 text-xs animate-pulse mt-2">Simulating picks...</div>
           </div>
         </div>
@@ -2185,9 +2575,9 @@ function DraftSimulator() {
       {(simState === 'simulating' || simState === 'picking' || simState === 'done') && (
         <div className="glass rounded-2xl p-6">
           {/* Lottery result summary */}
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-jazz-purple/30">
-            <span className="text-xs text-gray-500">Jazz lottery position: <span className="text-jazz-sky font-bold">#{jazzPickNum}</span></span>
-            <span className="text-xs text-gray-600">{jazzPickNum <= 4 ? 'Lottery winner!' : jazzPickNum <= 7 ? 'Solid range' : 'Fell in the draft'}</span>
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-team-primary/30">
+            <span className="text-xs text-gray-500">{config.name} lottery position: <span className="text-team-secondary font-bold">#{teamPickNum}</span></span>
+            <span className="text-xs text-gray-600">{teamPickNum <= 4 ? 'Lottery winner!' : teamPickNum <= 7 ? 'Solid range' : 'Fell in the draft'}</span>
           </div>
 
           {/* Previous picks */}
@@ -2199,7 +2589,7 @@ function DraftSimulator() {
                   <div className="font-bold text-xs truncate">{p.team}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-jazz-sky text-xs">{p.player.name}</div>
+                  <div className="font-bold text-team-secondary text-xs">{p.player.name}</div>
                   <div className="text-[10px] text-gray-500">{p.player.pos} | {p.player.school}</div>
                 </div>
               </div>
@@ -2208,25 +2598,25 @@ function DraftSimulator() {
 
           {simState === 'simulating' && (
             <div className="text-center py-6">
-              <div className="text-jazz-sky font-bold animate-pulse">Picks {picks.length + 1}–{jazzPickNum - 1} loading...</div>
+              <div className="text-team-secondary font-bold animate-pulse">Picks {picks.length + 1}–{jazzPickNum - 1} loading...</div>
             </div>
           )}
 
           {simState === 'picking' && (
             <div className="animate-fade-in">
               <div className="text-center mb-4">
-                <div className="text-jazz-sky font-black text-xl">WITH THE #{jazzPickNum} PICK...</div>
-                <div className="text-gray-400 text-sm">The Utah Jazz select:</div>
+                <div className="text-team-secondary font-black text-xl">WITH THE #{teamPickNum} PICK...</div>
+                <div className="text-gray-400 text-sm">The {config.fullName} select:</div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {jazzOptions.map(p => (
+                {teamOptions.map(p => (
                   <button key={p.rank} onClick={() => makeJazzPick(p)}
-                    className="glass rounded-xl p-4 text-center hover:border-jazz-sky/50 hover:scale-105 transition-all">
-                    <div className="text-2xl font-black text-jazz-sky mb-1">#{p.rank}</div>
+                    className="glass rounded-xl p-4 text-center hover:border-team-secondary/50 hover:scale-105 transition-all">
+                    <div className="text-2xl font-black text-team-secondary mb-1">#{p.rank}</div>
                     <div className="font-bold text-sm">{p.name}</div>
                     <div className="text-xs text-gray-400">{p.pos} | {p.school}</div>
                     <div className="text-xs text-gray-400 mt-1">{p.stats.ppg} PPG | {p.stats.rpg} RPG</div>
-                    <div className={`text-xs font-bold mt-2 ${p.jazzFit >= 8 ? 'text-green-400' : 'text-yellow-400'}`}>Fit: {p.jazzFit}/10</div>
+                    <div className={`text-xs font-bold mt-2 ${p.teamFit >= 8 ? 'text-green-400' : 'text-yellow-400'}`}>Fit: {p.teamFit}/10</div>
                   </button>
                 ))}
               </div>
@@ -2241,7 +2631,7 @@ function DraftSimulator() {
                     <div key={i} className="absolute" style={{
                       left: `${Math.random() * 100}%`, top: '-20px',
                       width: 10, height: 10, borderRadius: Math.random() > 0.5 ? '50%' : '0',
-                      background: ['#79A3DC', '#4E008E', '#A8C4E8', '#fff'][Math.floor(Math.random() * 4)],
+                      background: ['var(--team-secondary)', 'var(--team-primary)', 'var(--team-light)', '#fff'][Math.floor(Math.random() * 4)],
                       animation: `confetti ${1 + Math.random() * 2}s ${Math.random()}s forwards`
                     }} />
                   ))}
@@ -2249,39 +2639,100 @@ function DraftSimulator() {
               )}
 
               <div className="glass rounded-xl p-3 mb-4 flex items-center gap-4">
-                <div className="w-8 h-8 rounded-full bg-jazz-sky flex items-center justify-center text-black text-sm font-bold">#{jazzPickNum}</div>
+                <div className="w-8 h-8 rounded-full bg-team-secondary flex items-center justify-center text-black text-sm font-bold">#{teamPickNum}</div>
                 <div className="flex-1">
-                  <div className="font-bold text-sm text-jazz-sky">UTAH JAZZ</div>
+                  <div className="font-bold text-sm text-team-secondary">{config.fullName.toUpperCase()}</div>
                   <div className="text-xs text-gray-400">select</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-jazz-sky text-lg">{userPick.name}</div>
+                  <div className="font-bold text-team-secondary text-lg">{userPick.name}</div>
                   <div className="text-xs text-gray-400">{userPick.pos} | {userPick.school}</div>
                 </div>
               </div>
 
               <div className="glass rounded-xl p-4 mb-4">
-                <h3 className="text-sm font-bold text-jazz-sky mb-2">Why {userPick.name.split(' ').pop()} Fits</h3>
-                <p className="text-sm text-gray-300 leading-relaxed">{userPick.jazzFitAnalysis}</p>
+                <h3 className="text-sm font-bold text-team-secondary mb-2">{config.name} Fit Analysis</h3>
+                <p className="text-sm text-gray-300 leading-relaxed">{userPick.teamFitAnalysis}</p>
               </div>
 
-              <div className="glass rounded-xl p-4">
-                <h3 className="text-sm font-bold text-jazz-sky mb-3">Fan Reactions</h3>
-                <div className="space-y-3">
-                  {fanReactions.map((r, i) => (
-                    <div key={i} className="flex gap-3 animate-fade-in" style={{ animationDelay: `${i * 0.2}s` }}>
-                      <div className="w-8 h-8 rounded-full bg-jazz-purple/50 flex items-center justify-center text-xs text-jazz-sky">{r.user[1].toUpperCase()}</div>
-                      <div>
-                        <div className="text-xs text-jazz-sky font-semibold">{r.user}</div>
-                        <div className="text-sm text-gray-300">{r.text}</div>
+              {/* Projected Roster Impact */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="glass rounded-xl p-4">
+                  <h3 className="text-sm font-bold text-team-secondary mb-3">Projected Lineup With {userPick.name.split(' ').pop()}</h3>
+                  <div className="space-y-2">
+                    {(() => {
+                      const starters = teamData.players.filter(p => p.starter);
+                      const posMap = {};
+                      ['PG', 'SG', 'SF', 'PF', 'C'].forEach(pos => {
+                        const starter = starters.find(p => p.pos === pos || p.pos.includes(pos));
+                        posMap[pos] = starter ? { name: starter.name, ppg: starter.stats.ppg } : { name: `${config.name} ${pos}`, ppg: 10 };
+                      });
+                      return ['PG', 'SG', 'SF', 'PF', 'C'].map(pos => {
+                        const pickFits = userPick.pos.includes(pos);
+                        return { pos, name: pickFits ? userPick.name : posMap[pos].name, ppg: pickFits ? userPick.stats.ppg : posMap[pos].ppg };
+                      });
+                    })().map((slot, i) => (
+                      <div key={i} className={`flex items-center gap-2 rounded-lg p-2 ${slot.name === userPick.name ? 'bg-team-secondary/15 border border-team-secondary/30' : 'bg-gray-900/30'}`}>
+                        <span className="text-[10px] font-bold text-gray-500 w-6">{slot.pos}</span>
+                        <span className={`text-sm font-semibold flex-1 ${slot.name === userPick.name ? 'text-team-secondary' : 'text-gray-300'}`}>{slot.name}</span>
+                        <span className="text-xs text-gray-400">{slot.ppg} PPG</span>
                       </div>
-                    </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="glass rounded-xl p-4">
+                  <h3 className="text-sm font-bold text-team-secondary mb-3">Skill Projection</h3>
+                  <PlayerRadar data={userPick.radar} size={200} />
+                </div>
+              </div>
+
+              {/* Prospect details */}
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="glass rounded-lg p-3 text-center">
+                  <div className="text-lg font-black text-team-secondary">{userPick.stats.ppg}</div>
+                  <div className="text-[10px] text-gray-400">College PPG</div>
+                </div>
+                <div className="glass rounded-lg p-3 text-center">
+                  <div className="text-lg font-black text-team-secondary">{userPick.stats.rpg}</div>
+                  <div className="text-[10px] text-gray-400">College RPG</div>
+                </div>
+                <div className="glass rounded-lg p-3 text-center">
+                  <div className="text-lg font-black text-team-secondary">{userPick.stats.apg}</div>
+                  <div className="text-[10px] text-gray-400">College APG</div>
+                </div>
+              </div>
+
+              {/* Strengths/Concerns */}
+              <div className="glass rounded-xl p-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-xs font-bold text-green-400 mb-2">STRENGTHS</h4>
+                    {userPick.strengths.map((s, i) => (
+                      <div key={i} className="flex gap-2 text-sm mb-1.5"><span className="text-green-400">&#10003;</span><span className="text-gray-300">{s}</span></div>
+                    ))}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-amber-400 mb-2">CONCERNS</h4>
+                    {userPick.concerns.map((c, i) => (
+                      <div key={i} className="flex gap-2 text-sm mb-1.5"><span className="text-amber-400">&#9888;</span><span className="text-gray-300">{c}</span></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* NBA Comps */}
+              <div className="glass rounded-xl p-4">
+                <h3 className="text-sm font-bold text-team-secondary mb-2">NBA Comparisons</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {userPick.comps.map((c, i) => (
+                    <span key={i} className="px-3 py-1 rounded-full text-sm bg-team-primary/40 text-team-secondary border border-team-primary">{c}</span>
                   ))}
                 </div>
               </div>
 
               <div className="text-center mt-6">
-                <button onClick={startSim} className="px-6 py-2 rounded-full glass text-jazz-sky hover:bg-jazz-sky/20 text-sm font-semibold">
+                <button onClick={startSim} className="px-6 py-2 rounded-full glass text-team-secondary hover:bg-team-secondary/20 text-sm font-semibold">
                   Run Again (New Lottery)
                 </button>
               </div>
@@ -2297,6 +2748,7 @@ function DraftSimulator() {
 // SECTION: AI CHAT SCOUT
 // ============================================================
 function AIChatScout() {
+  const { config, teamData } = useTeam();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -2304,7 +2756,8 @@ function AIChatScout() {
   const [apiKey, setApiKey] = useState('');
   const chatRef = useRef(null);
 
-  const systemPrompt = "You are the Utah Jazz's expert AI scout for the 2026-27 season. The Jazz's core is Keyonte George (#3, PG), Ace Bailey (#5, SG/SF, 2025 #5 pick), Lauri Markkanen (#23, SF/PF, All-Star), Jaren Jackson Jr. (#8, PF, 2x All-Star, 2023 DPOY, acquired from Memphis Feb 2026), and Walker Kessler (#24, C). JJJ was traded for Walter Clayton Jr., Kyle Anderson, Taylor Hendricks, Georges Niang, and 3 first-round picks. The 2026 draft's top prospects are Dybantsa, Peterson, and Boozer. Be confident, use analytics lingo, reference Utah's mountain identity. Keep answers concise (2-3 paragraphs max).";
+  const coreStr = teamData.players.filter(p => p.starter).map(p => `${p.name} (#${p.number}, ${p.pos})`).join(', ');
+  const systemPrompt = `You are the ${config.fullName}'s expert AI scout for the 2026-27 season. The ${config.name}'s core is ${coreStr}. Head coach: ${config.coach}. GM: ${config.gm}. Arena: ${config.arena}. The 2026 draft's top prospects are Dybantsa, Peterson, and Boozer. Be confident, use analytics lingo. Keep answers concise (2-3 paragraphs max).`;
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -2343,15 +2796,15 @@ function AIChatScout() {
     <>
       {/* Floating Button */}
       <button onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-jazz-sky text-black flex items-center justify-center text-xl font-bold shadow-lg pulse-sky hover:scale-110 transition-transform">
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-team-secondary text-black flex items-center justify-center text-xl font-bold shadow-lg pulse-secondary hover:scale-110 transition-transform">
         {open ? '✕' : '🤖'}
       </button>
 
       {/* Chat Panel */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-40 w-96 max-w-[90vw] bg-jazz-midnight border border-jazz-purple rounded-2xl shadow-2xl animate-fade-in overflow-hidden">
-          <div className="bg-jazz-purple/30 p-4 border-b border-jazz-purple">
-            <h3 className="font-bold text-jazz-sky">Ask the Scout 🤖</h3>
+        <div className="fixed bottom-24 right-6 z-40 w-96 max-w-[90vw] bg-team-midnight border border-team-primary rounded-2xl shadow-2xl animate-fade-in overflow-hidden">
+          <div className="bg-team-primary/30 p-4 border-b border-team-primary">
+            <h3 className="font-bold text-team-secondary">Ask the Scout 🤖</h3>
             <p className="text-xs text-gray-400">AI-powered Jazz analysis</p>
           </div>
 
@@ -2363,7 +2816,7 @@ function AIChatScout() {
             )}
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${m.role === 'user' ? 'bg-jazz-sky text-black' : 'glass text-gray-200'}`}>
+                <div className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${m.role === 'user' ? 'bg-team-secondary text-black' : 'glass text-gray-200'}`}>
                   {m.content}
                 </div>
               </div>
@@ -2375,13 +2828,13 @@ function AIChatScout() {
             )}
           </div>
 
-          <div className="p-3 border-t border-jazz-purple flex gap-2">
+          <div className="p-3 border-t border-team-primary flex gap-2">
             <input value={input} onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendMessage()}
               placeholder="Ask about Jazz basketball..."
-              className="flex-1 bg-gray-900/50 border border-jazz-purple rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-jazz-sky" />
+              className="flex-1 bg-gray-900/50 border border-team-primary rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-team-secondary" />
             <button onClick={sendMessage} disabled={loading}
-              className="px-4 py-2 rounded-lg bg-jazz-sky text-black font-bold text-sm hover:bg-yellow-400 disabled:opacity-40">
+              className="px-4 py-2 rounded-lg bg-team-secondary text-black font-bold text-sm hover:bg-yellow-400 disabled:opacity-40">
               Send
             </button>
           </div>
@@ -2392,37 +2845,261 @@ function AIChatScout() {
 }
 
 // ============================================================
-// MAIN APP
+// SECTION: WIKI
 // ============================================================
-function App() {
-  const [activeTab, setActiveTab] = useState('ROSTER');
-  const tabs = ['ROSTER', 'DRAFT ROOM', 'POLL', 'TRADES', 'LINEUPS', 'FAN MAP'];
+function WikiPage() {
+  const { config } = useTeam();
+  return (
+    <section className="py-12 px-4 max-w-4xl mx-auto">
+      <h2 className="text-3xl font-black text-center mb-8">
+        <span className="text-team-secondary">WIKI</span> &amp; TECH STACK
+      </h2>
+
+      <div className="space-y-6">
+        <div className="glass rounded-2xl p-6">
+          <h3 className="text-lg font-bold text-team-secondary mb-4">About This Hub</h3>
+          <p className="text-gray-300 text-sm leading-relaxed mb-3">
+            This is an all-in-one NBA season hub — a fan-built dashboard covering roster breakdowns, draft analysis, trade simulators, lineup builders, and community polls for all 30 NBA teams. Built as a single-page React application that runs entirely in the browser with no backend server required.
+          </p>
+          <p className="text-gray-300 text-sm leading-relaxed">
+            Each team gets its own themed experience with dynamically swappable colors, data, and content. The Utah Jazz edition features complete roster scouting reports, 25 draft prospect analyses, and 50 custom fan poll questions. Other teams launch with generated placeholder data that can be fleshed out over time.
+          </p>
+        </div>
+
+        <div className="glass rounded-2xl p-6">
+          <h3 className="text-lg font-bold text-team-secondary mb-4">Tech Stack</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { name: 'React 18', desc: 'UI framework loaded via CDN — no build step, no Node.js required', url: 'https://react.dev' },
+              { name: 'Tailwind CSS (CDN)', desc: 'Utility-first CSS with custom team color theming via CSS custom properties', url: 'https://tailwindcss.com' },
+              { name: 'Recharts', desc: 'Composable charting library for radar charts, bar charts, line charts, and pie charts', url: 'https://recharts.org' },
+              { name: 'Babel Standalone', desc: 'In-browser JSX transpilation — enables modern React syntax without a build pipeline', url: 'https://babeljs.io' },
+              { name: 'CSS Custom Properties', desc: 'Dynamic theming system — all 30 team color palettes swap instantly via :root variables' },
+              { name: 'localStorage', desc: 'Client-side persistence for team preference, poll votes, fan map data, and session state' },
+              { name: 'Geolocation API', desc: 'Browser native API for the Fan Map feature — plots visitor locations on an SVG map' },
+              { name: 'Claude API (Anthropic)', desc: 'Powers the AI Trade Analyst and AI Chat Scout features — requires user-provided API key', url: 'https://docs.anthropic.com' },
+            ].map((t, i) => (
+              <div key={i} className="rounded-xl p-4 border border-team-primary/20" style={{ background: 'rgba(var(--team-primary-rgb),0.06)' }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-bold text-sm text-team-secondary">{t.name}</span>
+                </div>
+                <p className="text-xs text-gray-400">{t.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="glass rounded-2xl p-6">
+          <h3 className="text-lg font-bold text-team-secondary mb-4">Data Sources</h3>
+          <div className="space-y-3">
+            {[
+              { source: 'NBA.com / cdn.nba.com', desc: 'Player headshot images via the official NBA CDN (public, no auth required)' },
+              { source: 'Tankathon.com', desc: '2026 NBA Draft lottery odds, team records, and pick probabilities' },
+              { source: 'Manual Scouting Data', desc: 'Player stats, radar ratings, scout reports, strengths/weaknesses, and draft prospect analyses are editorially curated' },
+              { source: 'OpenStreetMap Nominatim', desc: 'Reverse geocoding API for the Fan Map feature — converts lat/lng coordinates to city/country names' },
+              { source: 'Team Color References', desc: 'Official NBA team colors sourced from team brand guidelines and public style guides' },
+            ].map((d, i) => (
+              <div key={i} className="flex items-start gap-3 p-3 rounded-lg" style={{ background: 'rgba(var(--team-primary-rgb),0.06)' }}>
+                <div className="w-2 h-2 rounded-full bg-team-secondary mt-1.5 shrink-0" />
+                <div>
+                  <span className="text-sm font-semibold text-white">{d.source}</span>
+                  <p className="text-xs text-gray-400 mt-0.5">{d.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="glass rounded-2xl p-6">
+          <h3 className="text-lg font-bold text-team-secondary mb-4">Architecture</h3>
+          <div className="space-y-3 text-sm text-gray-300">
+            <p><span className="text-team-secondary font-semibold">Single File:</span> The entire application lives in one <code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">index.html</code> file (~180KB). No build step, no bundler, no server — just open the file in a browser.</p>
+            <p><span className="text-team-secondary font-semibold">30-Team Theming:</span> A <code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">TEAM_CONFIGS</code> object holds metadata for all 30 NBA teams. CSS custom properties enable instant color swaps via <code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">applyTeamColors()</code>.</p>
+            <p><span className="text-team-secondary font-semibold">Context-Driven:</span> A React Context (<code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">TeamContext</code>) propagates the active team config, data, and switch function to all child components.</p>
+            <p><span className="text-team-secondary font-semibold">URL Routing:</span> Hash-based routing (<code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">#roster</code>, <code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">#draft</code>, etc.) enables shareable deep links to each section.</p>
+            <p><span className="text-team-secondary font-semibold">Stub System:</span> Teams without full data get auto-generated rosters, generic poll questions, and placeholder scouting reports — ready to be replaced with real data.</p>
+          </div>
+        </div>
+
+        <div className="glass rounded-2xl p-6">
+          <h3 className="text-lg font-bold text-team-secondary mb-4">Features Overview</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              { feature: 'Roster', desc: 'Player cards with stats, radar charts, monthly trends, scout reports, streak tracking, and ceiling projections' },
+              { feature: 'Draft Room', desc: 'Big board with 25 ranked prospects, team fit analysis, positional needs, and lottery odds breakdown' },
+              { feature: 'Mock Draft Simulator', desc: 'Lottery simulation with weighted odds, AI pick logic, and interactive team selection with roster impact projections' },
+              { feature: 'Fan Poll', desc: '50 team-specific questions across 5 categories with real-time vote tracking and results dashboard' },
+              { feature: 'Trade Machine', desc: 'Select players to trade, type incoming assets, and get AI-powered analysis with grades and GM approval ratings' },
+              { feature: 'Lineup Builder', desc: '5-position lineup constructor with auto-calculated chemistry scores, identity labels, and projected stats' },
+              { feature: 'Fan Map', desc: 'Geolocation-based visitor tracking with US and world map visualizations and city leaderboards' },
+              { feature: 'AI Chat Scout', desc: 'Floating chatbot powered by Claude for real-time basketball analysis and team-specific Q&A' },
+            ].map((f, i) => (
+              <div key={i} className="rounded-lg p-3 border border-team-primary/15" style={{ background: 'rgba(var(--team-primary-rgb),0.04)' }}>
+                <span className="text-sm font-bold text-team-secondary">{f.feature}</span>
+                <p className="text-xs text-gray-400 mt-1">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================================
+// SECTION: FAQ
+// ============================================================
+function FAQPage() {
+  const { config } = useTeam();
+  const [openIdx, setOpenIdx] = useState(null);
+
+  const faqs = [
+    { q: 'How do I switch teams?', a: 'Use the team selector dropdown in the top-left of the navigation bar. Your selection is saved automatically and persists across sessions.' },
+    { q: 'Why do some teams show "Preview mode"?', a: 'The Utah Jazz has complete data including full scouting reports, 25 draft prospects with team-fit analysis, and 50 custom poll questions. Other teams launch with auto-generated placeholder data. Real data for more teams will be added over time.' },
+    { q: 'Is my poll data saved?', a: 'Yes. Your votes and poll progress are saved in your browser\'s localStorage. They persist across page reloads but are local to your browser — clearing browser data will reset them.' },
+    { q: 'How does the Mock Draft Simulator work?', a: 'The simulator uses real lottery odds from Tankathon.com to randomly determine draft order (top 4 picks by lottery, picks 5-14 by inverse record). Then AI logic simulates each team\'s pick before your team selects. Each run produces different results.' },
+    { q: 'Do the Trade Machine and AI Scout require an API key?', a: 'Yes. Both features use the Claude API (Anthropic) for real-time analysis. You\'ll be prompted to enter your API key when you first use either feature. Your key is stored only in your browser session — it\'s never sent anywhere except directly to the Anthropic API.' },
+    { q: 'How does the Fan Map work?', a: 'The Fan Map uses your browser\'s Geolocation API (with your permission) to plot your location on an SVG map. Visitor data is stored in localStorage. It\'s a fun visualization of where fans are checking in from — entirely client-side, no data leaves your browser.' },
+    { q: 'Can I share a specific section?', a: 'Yes! Each tab has its own URL. For example, share the Draft Room by sending someone the URL ending in #draft. The page will open directly to that section.' },
+    { q: 'How are player ratings calculated?', a: 'Player radar charts (Scoring, Playmaking, Defense, Athleticism, Shooting, IQ) are editorially assigned on a 0-100 scale based on scouting analysis. They represent current ability, not potential.' },
+    { q: 'Where does the lottery odds data come from?', a: 'Draft lottery odds, team records, and probabilities are sourced from Tankathon.com, which tracks the official NBA lottery odds format.' },
+    { q: 'Is this an official NBA product?', a: 'No. This is an independent fan project with no affiliation to the NBA, any NBA team, or the National Basketball Players Association. All team names, logos, and player likenesses are property of their respective owners.' },
+    { q: 'What browsers are supported?', a: 'Any modern browser (Chrome, Firefox, Safari, Edge) with JavaScript enabled. The app uses CSS custom properties, ES6+, and the Geolocation API — all widely supported since ~2018.' },
+    { q: 'Can I contribute data for my team?', a: 'The codebase is a single HTML file. To add full data for a team, you\'d add player objects to that team\'s config in the TEAM_CONFIGS object, following the same structure as the Jazz data (JAZZ_PLAYERS, JAZZ_PROSPECTS, etc.).' },
+  ];
 
   return (
+    <section className="py-12 px-4 max-w-3xl mx-auto">
+      <h2 className="text-3xl font-black text-center mb-8">
+        <span className="text-team-secondary">FAQ</span>
+      </h2>
+
+      <div className="space-y-3">
+        {faqs.map((faq, i) => (
+          <div key={i} className="glass rounded-xl overflow-hidden">
+            <button onClick={() => setOpenIdx(openIdx === i ? null : i)}
+              className="w-full text-left px-5 py-4 flex items-center justify-between hover:bg-team-primary/10 transition-colors">
+              <span className="font-semibold text-sm pr-4">{faq.q}</span>
+              <span className={`text-team-secondary text-lg transition-transform duration-200 ${openIdx === i ? 'rotate-45' : ''}`}>+</span>
+            </button>
+            {openIdx === i && (
+              <div className="px-5 pb-4 animate-fade-in">
+                <p className="text-sm text-gray-300 leading-relaxed">{faq.a}</p>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ============================================================
+// MAIN APP
+// ============================================================
+const TAB_SLUGS = {
+  'ROSTER': 'roster', 'DRAFT ROOM': 'draft', 'POLL': 'poll',
+  'TRADES': 'trades', 'LINEUPS': 'lineups', 'FAN MAP': 'fanmap',
+  'WIKI': 'wiki', 'FAQ': 'faq'
+};
+const SLUG_TO_TAB = Object.fromEntries(Object.entries(TAB_SLUGS).map(([k, v]) => [v, k]));
+
+function getTabFromHash() {
+  const hash = window.location.hash.replace('#', '');
+  return SLUG_TO_TAB[hash] || 'ROSTER';
+}
+
+function App() {
+  const [activeTab, setActiveTab] = useState(getTabFromHash);
+  const [selectedTeam, setSelectedTeam] = useState(() => {
+    return localStorage.getItem('nbahub_selected_team') || 'UTA';
+  });
+  const tabs = ['ROSTER', 'DRAFT ROOM', 'POLL', 'TRADES', 'LINEUPS', 'FAN MAP'];
+
+  const navigateTo = useCallback((tab) => {
+    setActiveTab(tab);
+    window.location.hash = TAB_SLUGS[tab] || '';
+  }, []);
+
+  useEffect(() => {
+    const onHash = () => setActiveTab(getTabFromHash());
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  const config = TEAM_CONFIGS[selectedTeam];
+  const isStub = !config.players;
+
+  const teamData = useMemo(() => ({
+    players: getTeamData(config, 'players'),
+    prospects: getTeamData(config, 'prospects'),
+    pollQuestions: getTeamData(config, 'pollQuestions'),
+    lotteryTeams: getTeamData(config, 'lotteryTeams'),
+  }), [selectedTeam]);
+
+  const switchTeam = useCallback((abbr) => {
+    setSelectedTeam(abbr);
+    localStorage.setItem('nbahub_selected_team', abbr);
+    const c = TEAM_CONFIGS[abbr].colors;
+    applyTeamColors(c);
+    document.title = `${TEAM_CONFIGS[abbr].fullName} Season Hub`;
+  }, []);
+
+  useEffect(() => {
+    applyTeamColors(config.colors);
+    document.title = `${config.fullName} Season Hub`;
+  }, []);
+
+  const ctxValue = useMemo(() => ({ config, teamData, isStub, switchTeam }), [selectedTeam]);
+
+  const westTeams = Object.values(TEAM_CONFIGS).filter(t => t.conference === 'West').sort((a, b) => a.fullName.localeCompare(b.fullName));
+  const eastTeams = Object.values(TEAM_CONFIGS).filter(t => t.conference === 'East').sort((a, b) => a.fullName.localeCompare(b.fullName));
+
+  return (
+    <TeamContext.Provider value={ctxValue}>
     <div className="min-h-screen">
       {/* Header */}
-      <header className="relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #1A0030, #0A0014)' }}>
+      <header className="relative overflow-hidden" style={{ background: 'linear-gradient(180deg, var(--team-deep), var(--team-midnight))' }}>
         <Particles />
-        <MountainBg />
+        <HeroBg />
         <div className="relative z-10 text-center py-10 px-4">
           <h1 className="text-4xl md:text-5xl font-black tracking-tight">
-            <span className="text-jazz-sky">UTAH</span> <span className="text-white">JAZZ</span>
+            <span className="text-team-secondary">{config.city.toUpperCase()}</span> <span className="text-white">{config.name.toUpperCase()}</span>
           </h1>
           <p className="text-xs md:text-sm text-gray-400 tracking-widest mt-1">2026-27 SEASON HUB</p>
         </div>
       </header>
 
       {/* Sticky Navigation */}
-      <nav className="sticky top-0 z-30 border-b border-jazz-purple/30" style={{ background: 'rgba(26,10,46,0.95)', backdropFilter: 'blur(12px)' }}>
-        <div className="flex items-center justify-center gap-1 py-2.5 px-4 flex-wrap">
-          {tabs.map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 ${activeTab === tab ? 'bg-jazz-sky text-black shadow-lg shadow-jazz-sky/20' : 'text-gray-400 hover:text-white hover:bg-jazz-purple/30'}`}>
-              {tab}
-            </button>
-          ))}
+      <nav className="sticky top-0 z-30 border-b border-team-primary/30" style={{ background: 'rgba(var(--team-deep-rgb),0.95)', backdropFilter: 'blur(12px)' }}>
+        <div className="flex items-center justify-between py-2.5 px-4">
+          <div className="w-[120px] hidden md:block" />
+          <div className="flex items-center gap-1 flex-wrap justify-center">
+            {tabs.map(tab => (
+              <button key={tab} onClick={() => navigateTo(tab)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 ${activeTab === tab ? 'bg-team-secondary text-black shadow-lg shadow-team-secondary/20' : 'text-gray-400 hover:text-white hover:bg-team-primary/30'}`}>
+                {tab}
+              </button>
+            ))}
+          </div>
+          <select value={selectedTeam} onChange={e => switchTeam(e.target.value)}
+            className="bg-transparent border border-team-primary/40 rounded-lg px-2 py-1.5 text-xs font-semibold text-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-team-secondary/50" style={{ background: 'var(--team-midnight)' }}>
+            <optgroup label="Western Conference">
+              {westTeams.map(t => <option key={t.abbr} value={t.abbr} style={{ background: '#111' }}>{t.fullName}{t.players ? '' : ' *'}</option>)}
+            </optgroup>
+            <optgroup label="Eastern Conference">
+              {eastTeams.map(t => <option key={t.abbr} value={t.abbr} style={{ background: '#111' }}>{t.fullName}{t.players ? '' : ' *'}</option>)}
+            </optgroup>
+          </select>
         </div>
       </nav>
+
+      {/* Stub team banner */}
+      {isStub && (
+        <div className="text-center py-2 px-4 text-xs text-gray-400 border-b border-team-primary/10" style={{ background: 'rgba(var(--team-primary-rgb),0.08)' }}>
+          Preview mode &mdash; full {config.fullName} roster data coming soon
+        </div>
+      )}
 
       {/* Content */}
       <main>
@@ -2432,17 +3109,25 @@ function App() {
         {activeTab === 'POLL' && <FanPoll />}
         {activeTab === 'TRADES' && <TradeMachine />}
         {activeTab === 'LINEUPS' && <LineupBuilder />}
+        {activeTab === 'WIKI' && <WikiPage />}
+        {activeTab === 'FAQ' && <FAQPage />}
       </main>
 
       {/* Footer */}
-      <footer className="text-center py-8 px-4 border-t border-jazz-purple/20">
-        <p className="text-gray-500 text-sm">Jazzketball &mdash; Utah Jazz 2026-27 Season Hub</p>
-        <p className="text-gray-600 text-xs mt-1">Built with React, Recharts, and Jazz purple passion</p>
+      <footer className="text-center py-8 px-4 border-t border-team-primary/20">
+        <p className="text-gray-500 text-sm">{config.fullName} &mdash; 2026-27 Season Hub</p>
+        <div className="flex justify-center gap-4 mt-2">
+          <button onClick={() => navigateTo('WIKI')} className="text-team-secondary/70 hover:text-team-secondary text-xs transition-colors">Wiki &amp; Tech Stack</button>
+          <span className="text-gray-700">|</span>
+          <button onClick={() => navigateTo('FAQ')} className="text-team-secondary/70 hover:text-team-secondary text-xs transition-colors">FAQ</button>
+        </div>
+        <p className="text-gray-600 text-xs mt-2">Built with React &amp; Recharts &bull; Select any team above</p>
       </footer>
 
       {/* AI Chat Scout - Always visible */}
       <AIChatScout />
     </div>
+    </TeamContext.Provider>
   );
 }
 
