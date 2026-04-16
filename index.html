@@ -1,0 +1,2278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Utah Jazz 2026-27 Season Hub | Jazzketball</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        jazz: { purple: '#4E008E', sky: '#79A3DC', midnight: '#0A0014', deep: '#1A0030', light: '#7B2FBF', black: '#000000' }
+      }
+    }
+  }
+}
+</script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/prop-types@15/prop-types.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/recharts@2.5.0/umd/Recharts.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: #0A0014; color: #fff; overflow-x: hidden; }
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #0A0014; }
+::-webkit-scrollbar-thumb { background: #4E008E; border-radius: 4px; }
+@keyframes pulse-sky { 0%, 100% { box-shadow: 0 0 0 0 rgba(121,163,220,0.4); } 70% { box-shadow: 0 0 0 15px rgba(121,163,220,0); } }
+@keyframes float-particle { 0% { transform: translateY(0) translateX(0); opacity: 0; } 25% { opacity: 1; } 75% { opacity: 1; } 100% { transform: translateY(-100vh) translateX(50px); opacity: 0; } }
+@keyframes slide-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse-dot { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.5); opacity: 1; } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes confetti { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(400px) rotate(720deg); opacity: 0; } }
+.animate-slide-in { animation: slide-in-right 0.4s ease-out; }
+.animate-fade-in { animation: fade-in 0.5s ease-out; }
+.pulse-sky { animation: pulse-sky 2s infinite; }
+.pulse-dot { animation: pulse-dot 2s infinite; }
+.shimmer { background: linear-gradient(90deg, transparent, rgba(121,163,220,0.1), transparent); background-size: 200% 100%; animation: shimmer 3s infinite; }
+.glass { background: rgba(78,0,142,0.12); backdrop-filter: blur(10px); border: 1px solid rgba(78,0,142,0.25); }
+.sky-gradient { background: linear-gradient(135deg, #79A3DC, #A8C4E8, #79A3DC); }
+.purple-gradient { background: linear-gradient(135deg, #0A0014, #4E008E); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+const { ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid, Legend, Cell,
+  PieChart, Pie } = window.Recharts;
+
+// ============================================================
+// DATA: ROSTER
+// ============================================================
+const PLAYERS = [
+  {
+    name: "Keyonte George", pos: "PG", number: 3, badge: null, starter: true,
+    headshot: 'https://cdn.nba.com/headshots/nba/latest/1040x760/1641718.png',
+    stats: { ppg: 20.4, rpg: 3.8, apg: 6.2, fgPct: 44.1, threePct: 36.8, tsPct: 57.2 },
+    lastYear: { ppg: 16.4, rpg: 3.0, apg: 5.0, fgPct: 41.8, threePct: 33.5, tsPct: 53.1 },
+    radar: { Scoring: 82, Playmaking: 80, Defense: 62, Athleticism: 78, Shooting: 75, IQ: 74 },
+    zones: { Rim: 35, Midrange: 22, Three: 28, FreeThrow: 15 },
+    monthly: [
+      { month: 'Oct', ppg: 17.2 }, { month: 'Nov', ppg: 19.1 }, { month: 'Dec', ppg: 21.3 },
+      { month: 'Jan', ppg: 22.5 }, { month: 'Feb', ppg: 20.8 }, { month: 'Mar', ppg: 21.1 }, { month: 'Apr', ppg: 20.4 }
+    ],
+    strengths: ["Elite pick-and-roll navigator with advanced reads", "Improved catch-and-shoot efficiency (37% from three)", "Growing leadership and on-court command"],
+    weaknesses: ["Turnover-prone in transition (3.4 TOV/game)", "Defensive effort inconsistent off-ball", "Shot selection can get wild in crunch time"],
+    scoutReport: "George has taken a significant leap in year three, establishing himself as a legitimate starting point guard in the Western Conference. His ability to manipulate defenses in the pick-and-roll has become his calling card — he reads the drop, the hedge, and the switch with equal comfort, and his floater package is now among the best in the league.\n\nThe addition of Jaren Jackson Jr. has been transformative for George's game. With a legitimate lob threat and a big who can space to the arc, George's assist numbers have surged. The Jazz need him to tighten his handle in traffic and commit more consistently on the defensive end, but the franchise point guard ceiling is very much in play.",
+    ceiling: { label: "All-Star Caliber", pct: 72 },
+    comps: ["Jamal Murray", "Jalen Brunson"],
+    streak: [
+      { result: 'hot', opp: 'LAL', pts: 28, reb: 4, ast: 8, win: true },
+      { result: 'hot', opp: 'DEN', pts: 24, reb: 5, ast: 7, win: true },
+      { result: 'avg', opp: 'PHX', pts: 18, reb: 3, ast: 5, win: false },
+      { result: 'cold', opp: 'OKC', pts: 12, reb: 2, ast: 4, win: false },
+      { result: 'hot', opp: 'POR', pts: 31, reb: 6, ast: 9, win: true },
+      { result: 'avg', opp: 'SAC', pts: 19, reb: 4, ast: 6, win: true },
+      { result: 'hot', opp: 'SAS', pts: 26, reb: 3, ast: 7, win: true },
+      { result: 'cold', opp: 'MIN', pts: 14, reb: 2, ast: 3, win: false },
+      { result: 'avg', opp: 'GSW', pts: 20, reb: 4, ast: 5, win: false },
+      { result: 'hot', opp: 'HOU', pts: 27, reb: 5, ast: 8, win: true }
+    ]
+  },
+  {
+    name: "Ace Bailey", pos: "SG/SF", number: 5, badge: "ROOKIE", starter: true,
+    headshot: 'https://cdn.nba.com/headshots/nba/latest/1040x760/1642846.png',
+    stats: { ppg: 16.8, rpg: 5.2, apg: 2.1, fgPct: 43.5, threePct: 35.2, tsPct: 55.8 },
+    lastYear: null,
+    radar: { Scoring: 76, Playmaking: 55, Defense: 68, Athleticism: 88, Shooting: 70, IQ: 65 },
+    zones: { Rim: 40, Midrange: 18, Three: 25, FreeThrow: 17 },
+    monthly: [
+      { month: 'Oct', ppg: 13.4 }, { month: 'Nov', ppg: 14.8 }, { month: 'Dec', ppg: 16.2 },
+      { month: 'Jan', ppg: 17.5 }, { month: 'Feb', ppg: 18.9 }, { month: 'Mar', ppg: 18.1 }, { month: 'Apr', ppg: 16.8 }
+    ],
+    strengths: ["Freakish athleticism — elite vertical and lateral quickness", "Improved three-point shot from college (35%+)", "Switchable defender across 1-3"],
+    weaknesses: ["Playmaking still developing — limited reads in traffic", "Shot selection regression in high-pressure moments", "Fouling rate too high (4.2 fouls/36)"],
+    scoutReport: "Bailey has lived up to the #5 pick billing and then some. His physical tools are absurd — the Jazz have a 6'8\" wing who can guard point guards in a switch and then throw down a poster on the other end. He's already the team's most versatile perimeter defender, and his three-point shot has translated better than most expected.\n\nThe rookie wall hit in February, but Bailey responded with his best stretch of basketball in March. His ability to attack closeouts and finish through contact is already elite. The Jazz need him to develop as a secondary playmaker — right now he's a finisher, but the All-Star ceiling requires more creation off the dribble. The Dwyane Wade comparisons aren't as outlandish as they seemed on draft night.",
+    ceiling: { label: "All-Star Caliber", pct: 68 },
+    comps: ["Dwyane Wade", "Andrew Wiggins"],
+    streak: [
+      { result: 'avg', opp: 'LAL', pts: 16, reb: 5, ast: 2, win: true },
+      { result: 'hot', opp: 'DEN', pts: 24, reb: 7, ast: 3, win: true },
+      { result: 'cold', opp: 'PHX', pts: 10, reb: 4, ast: 1, win: false },
+      { result: 'hot', opp: 'OKC', pts: 22, reb: 6, ast: 2, win: false },
+      { result: 'avg', opp: 'POR', pts: 17, reb: 5, ast: 2, win: true },
+      { result: 'hot', opp: 'SAC', pts: 21, reb: 8, ast: 3, win: true },
+      { result: 'cold', opp: 'SAS', pts: 11, reb: 3, ast: 1, win: true },
+      { result: 'avg', opp: 'MIN', pts: 15, reb: 5, ast: 2, win: false },
+      { result: 'hot', opp: 'GSW', pts: 25, reb: 6, ast: 4, win: false },
+      { result: 'avg', opp: 'HOU', pts: 18, reb: 5, ast: 2, win: true }
+    ]
+  },
+  {
+    name: "Lauri Markkanen", pos: "SF/PF", number: 23, badge: "ALL-STAR", starter: true,
+    headshot: 'https://cdn.nba.com/headshots/nba/latest/1040x760/1628374.png',
+    stats: { ppg: 24.1, rpg: 8.4, apg: 2.8, fgPct: 48.2, threePct: 39.1, tsPct: 61.5 },
+    lastYear: { ppg: 23.2, rpg: 8.2, apg: 2.0, fgPct: 47.5, threePct: 38.3, tsPct: 59.8 },
+    radar: { Scoring: 90, Playmaking: 58, Defense: 65, Athleticism: 72, Shooting: 92, IQ: 78 },
+    zones: { Rim: 25, Midrange: 28, Three: 32, FreeThrow: 15 },
+    monthly: [
+      { month: 'Oct', ppg: 22.5 }, { month: 'Nov', ppg: 24.8 }, { month: 'Dec', ppg: 25.1 },
+      { month: 'Jan', ppg: 26.3 }, { month: 'Feb', ppg: 23.4 }, { month: 'Mar', ppg: 24.0 }, { month: 'Apr', ppg: 24.1 }
+    ],
+    strengths: ["7-foot sniper with 39% from three on high volume", "Unstoppable from mid-range (52% on pull-ups)", "Improved post-up game and passing from doubles"],
+    weaknesses: ["Defensive effort wanes in back-to-backs", "Can disappear in physical playoff-style games", "Free throw rate still too low for his size"],
+    scoutReport: "Markkanen is the engine that makes everything run in Utah. His shooting gravity warps defensive coverages — teams cannot leave him open anywhere inside the arc, and that creates driving lanes for George and cutting lanes for Bailey. At 7 feet with a silky release, he's one of the most unguardable offensive players in the NBA.\n\nThe JJJ acquisition has actually elevated Markkanen's game. With another elite defender and rim-protector beside him, Markkanen can cheat toward the perimeter on defense without exposing the paint. His rebounding numbers are up, his efficiency is career-best, and the Jazz are starting to look like a team built for the playoffs with Markkanen as the offensive fulcrum.",
+    ceiling: { label: "Franchise Cornerstone", pct: 85 },
+    comps: ["Dirk Nowitzki", "Kristaps Porzingis"],
+    streak: [
+      { result: 'hot', opp: 'LAL', pts: 30, reb: 10, ast: 3, win: true },
+      { result: 'hot', opp: 'DEN', pts: 27, reb: 9, ast: 4, win: true },
+      { result: 'avg', opp: 'PHX', pts: 22, reb: 7, ast: 2, win: false },
+      { result: 'hot', opp: 'OKC', pts: 28, reb: 11, ast: 3, win: false },
+      { result: 'avg', opp: 'POR', pts: 21, reb: 8, ast: 2, win: true },
+      { result: 'cold', opp: 'SAC', pts: 15, reb: 6, ast: 1, win: true },
+      { result: 'hot', opp: 'SAS', pts: 32, reb: 12, ast: 4, win: true },
+      { result: 'avg', opp: 'MIN', pts: 23, reb: 8, ast: 3, win: false },
+      { result: 'hot', opp: 'GSW', pts: 29, reb: 9, ast: 2, win: false },
+      { result: 'avg', opp: 'HOU', pts: 24, reb: 7, ast: 3, win: true }
+    ]
+  },
+  {
+    name: "Jaren Jackson Jr.", pos: "PF", number: 8, badge: "DPOY", starter: true,
+    headshot: 'https://cdn.nba.com/headshots/nba/latest/1040x760/1628991.png',
+    stats: { ppg: 21.6, rpg: 6.8, apg: 1.4, fgPct: 47.8, threePct: 34.5, tsPct: 59.8 },
+    lastYear: { ppg: 22.5, rpg: 5.5, apg: 1.6, fgPct: 48.1, threePct: 33.1, tsPct: 58.4 },
+    radar: { Scoring: 80, Playmaking: 45, Defense: 95, Athleticism: 82, Shooting: 72, IQ: 80 },
+    zones: { Rim: 38, Midrange: 20, Three: 26, FreeThrow: 16 },
+    monthly: [
+      { month: 'Oct', ppg: 0 }, { month: 'Nov', ppg: 0 }, { month: 'Dec', ppg: 0 },
+      { month: 'Jan', ppg: 0 }, { month: 'Feb', ppg: 20.1 }, { month: 'Mar', ppg: 22.4 }, { month: 'Apr', ppg: 21.6 }
+    ],
+    strengths: ["Elite rim protection — 2.4 blocks/game since arrival", "Stretch-4 shooting opens floor for everyone", "Defensive Player of the Year pedigree (2023 winner)"],
+    weaknesses: ["Foul trouble remains an issue (4.8 fouls/36)", "Limited playmaking — needs the ball delivered", "Still building chemistry with new teammates"],
+    scoutReport: "The blockbuster acquisition. Jackson arrived in February and immediately transformed the Jazz's defense. His shot-blocking instincts are elite — he doesn't just protect the rim, he alters shots from the weak side in ways that demoralize opposing drivers. The Jazz's defensive rating dropped 6 points per 100 possessions with JJJ on the floor.\n\nOffensively, the fit with Markkanen is even better than projected. Both can stretch to the three-point line, creating a nightmare pick-and-pop game. Jackson's willingness to play the 5 in small-ball lineups gives Will Hardy devastating closing lineups. The foul trouble is the one lingering concern — if he can stay on the floor, this is an All-NBA defense. The Jazz gave up a lot (Clayton, Anderson, Hendricks, Niang, and 3 firsts), but JJJ looks like the missing piece.",
+    ceiling: { label: "Franchise Cornerstone", pct: 88 },
+    comps: ["Anthony Davis", "Kevin Garnett"],
+    streak: [
+      { result: 'hot', opp: 'LAL', pts: 24, reb: 8, ast: 2, win: true },
+      { result: 'avg', opp: 'DEN', pts: 19, reb: 7, ast: 1, win: true },
+      { result: 'hot', opp: 'PHX', pts: 26, reb: 9, ast: 2, win: false },
+      { result: 'cold', opp: 'OKC', pts: 14, reb: 5, ast: 0, win: false },
+      { result: 'hot', opp: 'POR', pts: 23, reb: 7, ast: 1, win: true },
+      { result: 'avg', opp: 'SAC', pts: 20, reb: 6, ast: 2, win: true },
+      { result: 'hot', opp: 'SAS', pts: 28, reb: 10, ast: 1, win: true },
+      { result: 'hot', opp: 'MIN', pts: 25, reb: 8, ast: 2, win: false },
+      { result: 'cold', opp: 'GSW', pts: 13, reb: 4, ast: 1, win: false },
+      { result: 'avg', opp: 'HOU', pts: 21, reb: 7, ast: 1, win: true }
+    ]
+  },
+  {
+    name: "Walker Kessler", pos: "C", number: 24, badge: "RETURNING", starter: true,
+    headshot: 'https://cdn.nba.com/headshots/nba/latest/1040x760/1631117.png',
+    stats: { ppg: 12.3, rpg: 9.8, apg: 1.1, fgPct: 65.2, threePct: 0, tsPct: 62.1 },
+    lastYear: { ppg: 8.1, rpg: 7.4, apg: 0.8, fgPct: 63.8, threePct: 0, tsPct: 57.2 },
+    radar: { Scoring: 52, Playmaking: 38, Defense: 85, Athleticism: 70, Shooting: 25, IQ: 72 },
+    zones: { Rim: 72, Midrange: 8, Three: 0, FreeThrow: 20 },
+    monthly: [
+      { month: 'Oct', ppg: 0 }, { month: 'Nov', ppg: 10.2 }, { month: 'Dec', ppg: 11.5 },
+      { month: 'Jan', ppg: 12.8 }, { month: 'Feb', ppg: 13.1 }, { month: 'Mar', ppg: 12.9 }, { month: 'Apr', ppg: 12.3 }
+    ],
+    strengths: ["Elite rim protector — 2.1 blocks/game", "Dominant offensive rebounder (3.8 OREB/game)", "Improved free throw shooting (72%)"],
+    weaknesses: ["Zero perimeter game — can't space the floor", "Struggles against mobile, switching bigs", "Limited post moves beyond dunks and hooks"],
+    scoutReport: "Kessler returned from his shoulder injury in November and has been a steady presence ever since. His rim protection alongside JJJ gives the Jazz arguably the best shot-blocking frontcourt in the NBA — opponents think twice before driving into that paint. His offensive rebounding is elite and creates easy second-chance points.\n\nThe limitations are well-documented: Kessler can't shoot, and in an era of stretch-5s, that can create spacing issues. Will Hardy has been creative with staggering Kessler and JJJ minutes, deploying Kessler primarily with George-heavy lineups where the PG can use the big man as a roll threat. The key question going forward: can Kessler develop enough offensive versatility to play alongside JJJ in crunch time, or will Filipowski eventually claim those minutes?",
+    ceiling: { label: "Starter", pct: 78 },
+    comps: ["Rudy Gobert", "Mitchell Robinson"],
+    streak: [
+      { result: 'avg', opp: 'LAL', pts: 12, reb: 11, ast: 1, win: true },
+      { result: 'hot', opp: 'DEN', pts: 16, reb: 14, ast: 2, win: true },
+      { result: 'cold', opp: 'PHX', pts: 8, reb: 7, ast: 0, win: false },
+      { result: 'avg', opp: 'OKC', pts: 11, reb: 10, ast: 1, win: false },
+      { result: 'hot', opp: 'POR', pts: 18, reb: 13, ast: 1, win: true },
+      { result: 'avg', opp: 'SAC', pts: 13, reb: 9, ast: 1, win: true },
+      { result: 'avg', opp: 'SAS', pts: 12, reb: 10, ast: 2, win: true },
+      { result: 'cold', opp: 'MIN', pts: 6, reb: 8, ast: 0, win: false },
+      { result: 'avg', opp: 'GSW', pts: 10, reb: 9, ast: 1, win: false },
+      { result: 'hot', opp: 'HOU', pts: 15, reb: 12, ast: 2, win: true }
+    ]
+  },
+  {
+    name: "Isaiah Collier", pos: "PG", number: 30, badge: null, starter: false,
+    stats: { ppg: 8.2, rpg: 2.4, apg: 4.8, fgPct: 41.2, threePct: 30.1, tsPct: 52.4 },
+    lastYear: { ppg: 4.8, rpg: 1.6, apg: 2.9, fgPct: 37.5, threePct: 24.2, tsPct: 47.1 },
+    radar: { Scoring: 55, Playmaking: 72, Defense: 58, Athleticism: 75, Shooting: 45, IQ: 60 },
+    zones: { Rim: 42, Midrange: 22, Three: 18, FreeThrow: 18 },
+    monthly: [
+      { month: 'Oct', ppg: 6.1 }, { month: 'Nov', ppg: 7.4 }, { month: 'Dec', ppg: 8.0 },
+      { month: 'Jan', ppg: 9.2 }, { month: 'Feb', ppg: 8.8 }, { month: 'Mar', ppg: 8.5 }, { month: 'Apr', ppg: 8.2 }
+    ],
+    strengths: ["Explosive first step gets to the rim", "Advanced court vision for his age", "Competitive two-way effort"],
+    weaknesses: ["Three-point shot unreliable (30%)", "Decision-making under pressure needs work", "Turnover-prone in half-court sets"],
+    scoutReport: "Collier has settled into the backup PG role nicely, providing a different look behind George. Where George is a methodical pick-and-roll player, Collier brings chaos — his first step is among the fastest on the team and he can get to the rim at will. The assist-to-turnover ratio needs improvement, but the raw playmaking tools are evident.\n\nThe shot is the big question. At 30% from three, defenses sag off him and clog the paint, limiting his driving efficiency. The Jazz development staff has been working with him on a mechanical overhaul, and the early returns in practice are encouraging. If the shot comes around, Collier has the upside to be a high-level backup PG in this league for a long time.",
+    ceiling: { label: "Starter", pct: 45 },
+    comps: ["Dennis Smith Jr.", "Immanuel Quickley"],
+    streak: [
+      { result: 'avg', opp: 'LAL', pts: 8, reb: 2, ast: 5, win: true },
+      { result: 'cold', opp: 'DEN', pts: 4, reb: 1, ast: 3, win: true },
+      { result: 'avg', opp: 'PHX', pts: 9, reb: 3, ast: 4, win: false },
+      { result: 'hot', opp: 'OKC', pts: 14, reb: 3, ast: 7, win: false },
+      { result: 'avg', opp: 'POR', pts: 8, reb: 2, ast: 5, win: true },
+      { result: 'cold', opp: 'SAC', pts: 5, reb: 1, ast: 3, win: true },
+      { result: 'avg', opp: 'SAS', pts: 9, reb: 3, ast: 6, win: true },
+      { result: 'avg', opp: 'MIN', pts: 7, reb: 2, ast: 4, win: false },
+      { result: 'hot', opp: 'GSW', pts: 13, reb: 4, ast: 8, win: false },
+      { result: 'avg', opp: 'HOU', pts: 8, reb: 2, ast: 5, win: true }
+    ]
+  },
+  {
+    name: "Cody Williams", pos: "SG/SF", number: 10, badge: null, starter: false,
+    stats: { ppg: 9.4, rpg: 3.6, apg: 1.5, fgPct: 42.8, threePct: 34.5, tsPct: 54.1 },
+    lastYear: { ppg: 5.1, rpg: 2.1, apg: 0.9, fgPct: 39.2, threePct: 29.8, tsPct: 49.5 },
+    radar: { Scoring: 58, Playmaking: 48, Defense: 65, Athleticism: 80, Shooting: 62, IQ: 60 },
+    zones: { Rim: 36, Midrange: 20, Three: 28, FreeThrow: 16 },
+    monthly: [
+      { month: 'Oct', ppg: 7.8 }, { month: 'Nov', ppg: 8.5 }, { month: 'Dec', ppg: 9.2 },
+      { month: 'Jan', ppg: 10.1 }, { month: 'Feb', ppg: 10.4 }, { month: 'Mar', ppg: 9.8 }, { month: 'Apr', ppg: 9.4 }
+    ],
+    strengths: ["Long, switchable perimeter defender", "Improving three-point stroke (35%)", "Excellent transition finisher"],
+    weaknesses: ["Struggles creating off the dribble", "Inconsistent energy on defense", "Needs more physicality on the boards"],
+    scoutReport: "Williams has shown flashes of the tantalizing upside that made him a lottery pick. His length and fluidity make him a natural fit in Hardy's switch-heavy scheme, and his three-point shot has come along nicely — he's now a credible catch-and-shoot threat. In transition, he's a highlight reel with his above-the-rim finishing.\n\nThe concern is consistency. Williams can look like a future starter one night and disappear the next. His handle isn't tight enough to create off the bounce reliably, and his rebounding effort wanes when he gets tired. The physical development is key — if Williams adds 10 pounds of muscle, his defensive versatility becomes truly elite. He's in the mix for the starting 2-guard job long-term, but Bailey's emergence has pushed him to a bench role for now.",
+    ceiling: { label: "Starter", pct: 55 },
+    comps: ["Mikal Bridges", "Keldon Johnson"],
+    streak: [
+      { result: 'avg', opp: 'LAL', pts: 10, reb: 4, ast: 1, win: true },
+      { result: 'cold', opp: 'DEN', pts: 5, reb: 2, ast: 1, win: true },
+      { result: 'hot', opp: 'PHX', pts: 16, reb: 5, ast: 3, win: false },
+      { result: 'avg', opp: 'OKC', pts: 9, reb: 3, ast: 1, win: false },
+      { result: 'avg', opp: 'POR', pts: 10, reb: 4, ast: 2, win: true },
+      { result: 'cold', opp: 'SAC', pts: 4, reb: 2, ast: 0, win: true },
+      { result: 'hot', opp: 'SAS', pts: 15, reb: 5, ast: 2, win: true },
+      { result: 'avg', opp: 'MIN', pts: 8, reb: 3, ast: 1, win: false },
+      { result: 'avg', opp: 'GSW', pts: 11, reb: 4, ast: 2, win: false },
+      { result: 'avg', opp: 'HOU', pts: 9, reb: 3, ast: 1, win: true }
+    ]
+  },
+  {
+    name: "Kyle Filipowski", pos: "PF/C", number: 22, badge: null, starter: false,
+    stats: { ppg: 10.1, rpg: 5.8, apg: 2.2, fgPct: 46.5, threePct: 33.8, tsPct: 56.0 },
+    lastYear: { ppg: 6.2, rpg: 3.9, apg: 1.4, fgPct: 43.8, threePct: 28.5, tsPct: 51.2 },
+    radar: { Scoring: 60, Playmaking: 58, Defense: 55, Athleticism: 55, Shooting: 62, IQ: 75 },
+    zones: { Rim: 32, Midrange: 26, Three: 24, FreeThrow: 18 },
+    monthly: [
+      { month: 'Oct', ppg: 8.5 }, { month: 'Nov', ppg: 9.2 }, { month: 'Dec', ppg: 10.0 },
+      { month: 'Jan', ppg: 11.3 }, { month: 'Feb', ppg: 10.8 }, { month: 'Mar', ppg: 10.5 }, { month: 'Apr', ppg: 10.1 }
+    ],
+    strengths: ["High basketball IQ — makes the right play", "Stretch-big shooting (34% from three)", "Solid passer from the high post"],
+    weaknesses: ["Athletic limitations against elite bigs", "Defensive anchor ability questioned", "Struggles in up-tempo games"],
+    scoutReport: "Filipowski is the quintessential high-IQ role player who does everything at a solid level without being spectacular at anything. His ability to stretch the floor from the 5 position gives Hardy an intriguing small-ball option, and his passing from the high post creates easy looks for cutters. He's been a positive in every lineup he's played in this season.\n\nThe ceiling question is real. Filipowski isn't athletic enough to be a lob threat or a rim protector, which limits his upside in today's NBA. But his feel for the game is advanced — he rarely makes mistakes, he screens well, and he competes. As a backup big who can play either the 4 or 5, he's a valuable rotation piece. The question is whether he can ever be more than that.",
+    ceiling: { label: "Starter", pct: 50 },
+    comps: ["Nikola Vucevic", "Kelly Olynyk"],
+    streak: [
+      { result: 'avg', opp: 'LAL', pts: 10, reb: 6, ast: 2, win: true },
+      { result: 'avg', opp: 'DEN', pts: 11, reb: 5, ast: 3, win: true },
+      { result: 'cold', opp: 'PHX', pts: 6, reb: 4, ast: 1, win: false },
+      { result: 'avg', opp: 'OKC', pts: 9, reb: 6, ast: 2, win: false },
+      { result: 'hot', opp: 'POR', pts: 16, reb: 8, ast: 4, win: true },
+      { result: 'avg', opp: 'SAC', pts: 10, reb: 5, ast: 2, win: true },
+      { result: 'avg', opp: 'SAS', pts: 11, reb: 7, ast: 3, win: true },
+      { result: 'cold', opp: 'MIN', pts: 5, reb: 3, ast: 1, win: false },
+      { result: 'avg', opp: 'GSW', pts: 9, reb: 5, ast: 2, win: false },
+      { result: 'hot', opp: 'HOU', pts: 14, reb: 7, ast: 3, win: true }
+    ]
+  },
+  {
+    name: "Brice Sensabaugh", pos: "SF/SG", number: 18, badge: null, starter: false,
+    stats: { ppg: 11.5, rpg: 3.2, apg: 1.8, fgPct: 44.0, threePct: 37.2, tsPct: 57.5 },
+    lastYear: { ppg: 7.8, rpg: 2.4, apg: 1.2, fgPct: 41.5, threePct: 34.0, tsPct: 53.8 },
+    radar: { Scoring: 68, Playmaking: 45, Defense: 42, Athleticism: 62, Shooting: 75, IQ: 58 },
+    zones: { Rim: 28, Midrange: 24, Three: 32, FreeThrow: 16 },
+    monthly: [
+      { month: 'Oct', ppg: 9.8 }, { month: 'Nov', ppg: 10.5 }, { month: 'Dec', ppg: 11.2 },
+      { month: 'Jan', ppg: 12.8 }, { month: 'Feb', ppg: 12.1 }, { month: 'Mar', ppg: 11.8 }, { month: 'Apr', ppg: 11.5 }
+    ],
+    strengths: ["Microwave scorer off the bench (37% from three)", "Shot creation in isolation", "Improving mid-range pull-up game"],
+    weaknesses: ["Defensive liability against athletic wings", "Shot selection is feast-or-famine", "Limited playmaking for others"],
+    scoutReport: "Sensabaugh has carved out a clear role as the Jazz's instant-offense bench scorer. When he comes in, he hunts shots — and he makes enough of them to justify the approach. His three-point shooting has been excellent, and his ability to create his own shot from the mid-range gives the bench unit a scoring punch it desperately needs.\n\nThe defense is the issue that will ultimately cap Sensabaugh's ceiling. He struggles to stay in front of quicker wings, and his off-ball awareness is poor. Hardy has tried to hide him in lineups with multiple good defenders, but opposing coaches have started targeting him in pick-and-roll actions. If Sensabaugh can become even an average defender, he's a 15+ PPG scorer. If not, he's a microwave bench scorer — which still has value, but limits his minutes in close games.",
+    ceiling: { label: "Starter", pct: 48 },
+    comps: ["Jordan Clarkson", "Malik Monk"],
+    streak: [
+      { result: 'hot', opp: 'LAL', pts: 18, reb: 4, ast: 2, win: true },
+      { result: 'cold', opp: 'DEN', pts: 6, reb: 2, ast: 1, win: true },
+      { result: 'hot', opp: 'PHX', pts: 20, reb: 3, ast: 3, win: false },
+      { result: 'avg', opp: 'OKC', pts: 11, reb: 3, ast: 1, win: false },
+      { result: 'cold', opp: 'POR', pts: 7, reb: 2, ast: 1, win: true },
+      { result: 'hot', opp: 'SAC', pts: 19, reb: 4, ast: 2, win: true },
+      { result: 'avg', opp: 'SAS', pts: 12, reb: 3, ast: 2, win: true },
+      { result: 'cold', opp: 'MIN', pts: 5, reb: 1, ast: 0, win: false },
+      { result: 'hot', opp: 'GSW', pts: 17, reb: 4, ast: 3, win: false },
+      { result: 'avg', opp: 'HOU', pts: 11, reb: 3, ast: 2, win: true }
+    ]
+  },
+  {
+    name: "Will Riley", pos: "SG/SF", number: 21, badge: "ROOKIE", starter: false,
+    stats: { ppg: 6.8, rpg: 2.8, apg: 1.2, fgPct: 40.5, threePct: 32.1, tsPct: 52.0 },
+    lastYear: null,
+    radar: { Scoring: 48, Playmaking: 42, Defense: 60, Athleticism: 78, Shooting: 55, IQ: 55 },
+    zones: { Rim: 38, Midrange: 20, Three: 24, FreeThrow: 18 },
+    monthly: [
+      { month: 'Oct', ppg: 4.5 }, { month: 'Nov', ppg: 5.8 }, { month: 'Dec', ppg: 6.2 },
+      { month: 'Jan', ppg: 7.5 }, { month: 'Feb', ppg: 7.8 }, { month: 'Mar', ppg: 7.2 }, { month: 'Apr', ppg: 6.8 }
+    ],
+    strengths: ["Athletic freak — elite vertical leap", "Defensive potential with length and motor", "Improving catch-and-shoot numbers"],
+    weaknesses: ["Raw offensive skill set", "Handle needs significant tightening", "Fouling rate too high for minutes"],
+    scoutReport: "Riley was the Jazz's #21 pick and has shown exactly the kind of flashes that make you patient with a raw prospect. His athleticism is jaw-dropping — the dunk contest invitations will come. Defensively, his length and motor give Hardy another switchable body, and he's been surprisingly effective in spot minutes against starting lineups.\n\nThe offensive game is a work in progress. Riley's shooting mechanics are inconsistent, and his handle limits him to catch-and-finish plays. But the physical tools are undeniable, and the Jazz development staff (which turned Bailey into a shooter) is confident they can unlock Riley's offensive game over the next two years. He's a project, but the upside is real.",
+    ceiling: { label: "Starter", pct: 38 },
+    comps: ["Herbert Jones", "Matisse Thybulle"],
+    streak: [
+      { result: 'cold', opp: 'LAL', pts: 4, reb: 2, ast: 1, win: true },
+      { result: 'avg', opp: 'DEN', pts: 7, reb: 3, ast: 1, win: true },
+      { result: 'avg', opp: 'PHX', pts: 6, reb: 3, ast: 1, win: false },
+      { result: 'cold', opp: 'OKC', pts: 3, reb: 1, ast: 0, win: false },
+      { result: 'hot', opp: 'POR', pts: 14, reb: 5, ast: 2, win: true },
+      { result: 'avg', opp: 'SAC', pts: 7, reb: 3, ast: 1, win: true },
+      { result: 'cold', opp: 'SAS', pts: 4, reb: 2, ast: 1, win: true },
+      { result: 'avg', opp: 'MIN', pts: 6, reb: 2, ast: 1, win: false },
+      { result: 'avg', opp: 'GSW', pts: 8, reb: 3, ast: 2, win: false },
+      { result: 'hot', opp: 'HOU', pts: 12, reb: 4, ast: 2, win: true }
+    ]
+  },
+  {
+    name: "EJ Harkless", pos: "SG/PG", number: 6, badge: null, starter: false,
+    stats: { ppg: 5.4, rpg: 1.8, apg: 2.5, fgPct: 39.8, threePct: 31.5, tsPct: 50.8 },
+    lastYear: { ppg: 3.1, rpg: 1.2, apg: 1.8, fgPct: 36.5, threePct: 27.3, tsPct: 46.2 },
+    radar: { Scoring: 42, Playmaking: 55, Defense: 58, Athleticism: 68, Shooting: 48, IQ: 55 },
+    zones: { Rim: 35, Midrange: 25, Three: 22, FreeThrow: 18 },
+    monthly: [
+      { month: 'Oct', ppg: 4.2 }, { month: 'Nov', ppg: 5.0 }, { month: 'Dec', ppg: 5.5 },
+      { month: 'Jan', ppg: 5.8 }, { month: 'Feb', ppg: 6.0 }, { month: 'Mar', ppg: 5.6 }, { month: 'Apr', ppg: 5.4 }
+    ],
+    strengths: ["Versatile ball-handler, can play 1 or 2", "Pesky on-ball defender", "Good energy and hustle plays"],
+    weaknesses: ["Inconsistent shooter from all levels", "Limited scoring ceiling", "Can get overwhelmed by size mismatches"],
+    scoutReport: "Harkless is the kind of player every team needs — a versatile guard who can fill multiple roles without hurting you. He defends with energy, pushes the pace, and makes simple plays. He's not going to wow you with any one skill, but his overall impact is positive in the minutes he plays.\n\nThe scoring limitations are real, though. Harkless struggles to score efficiently from anywhere on the floor, which limits his value in half-court offense. Hardy has used him primarily as a defensive change-of-pace guard, bringing him in to harass opposing ball-handlers. In that role, he's effective. Asking him to do more than that exposes his limitations.",
+    ceiling: { label: "Starter", pct: 30 },
+    comps: ["Marcus Smart (lite)", "Patrick Beverley"],
+    streak: [
+      { result: 'avg', opp: 'LAL', pts: 5, reb: 2, ast: 3, win: true },
+      { result: 'avg', opp: 'DEN', pts: 6, reb: 1, ast: 2, win: true },
+      { result: 'cold', opp: 'PHX', pts: 2, reb: 1, ast: 1, win: false },
+      { result: 'avg', opp: 'OKC', pts: 5, reb: 2, ast: 3, win: false },
+      { result: 'avg', opp: 'POR', pts: 6, reb: 2, ast: 3, win: true },
+      { result: 'hot', opp: 'SAC', pts: 11, reb: 3, ast: 5, win: true },
+      { result: 'cold', opp: 'SAS', pts: 3, reb: 1, ast: 1, win: true },
+      { result: 'avg', opp: 'MIN', pts: 5, reb: 2, ast: 2, win: false },
+      { result: 'avg', opp: 'GSW', pts: 6, reb: 2, ast: 3, win: false },
+      { result: 'cold', opp: 'HOU', pts: 3, reb: 1, ast: 2, win: true }
+    ]
+  },
+  {
+    name: "John Konchar", pos: "SF", number: 46, badge: "NEW ACQUISITION", starter: false,
+    stats: { ppg: 5.8, rpg: 4.2, apg: 1.6, fgPct: 45.5, threePct: 35.8, tsPct: 55.2 },
+    lastYear: { ppg: 5.2, rpg: 3.8, apg: 1.3, fgPct: 44.1, threePct: 34.2, tsPct: 53.5 },
+    radar: { Scoring: 40, Playmaking: 48, Defense: 70, Athleticism: 62, Shooting: 60, IQ: 72 },
+    zones: { Rim: 30, Midrange: 18, Three: 30, FreeThrow: 22 },
+    monthly: [
+      { month: 'Oct', ppg: 5.5 }, { month: 'Nov', ppg: 5.8 }, { month: 'Dec', ppg: 6.0 },
+      { month: 'Jan', ppg: 6.2 }, { month: 'Feb', ppg: 5.5 }, { month: 'Mar', ppg: 5.8 }, { month: 'Apr', ppg: 5.8 }
+    ],
+    strengths: ["Elite hustle — offensive rebounds from the wing", "Reliable three-point shooter (36%)", "Versatile defender who guards 1-4"],
+    weaknesses: ["Not a creator — needs others to set him up", "Limited ceiling as a scorer", "Aging profile (29 years old)"],
+    scoutReport: "Konchar arrived in the JJJ trade from Memphis and has been exactly what the Jazz needed: a veteran 3-and-D wing who does the dirty work. His hustle stats are outstanding — offensive rebounds, deflections, loose balls — and his three-point shooting has given Hardy another reliable floor-spacer.\n\nThe veteran presence has been valuable in the locker room as well. Konchar has helped the young players understand what it takes to compete every night, and his selfless style of play sets the tone for the bench unit. He's not going to be a long-term piece, but for a team trying to bridge development with competitiveness, Konchar is the ideal glue guy.",
+    ceiling: { label: "Starter", pct: 65 },
+    comps: ["PJ Tucker", "Danny Green"],
+    streak: [
+      { result: 'avg', opp: 'LAL', pts: 6, reb: 5, ast: 2, win: true },
+      { result: 'avg', opp: 'DEN', pts: 5, reb: 4, ast: 1, win: true },
+      { result: 'avg', opp: 'PHX', pts: 6, reb: 4, ast: 2, win: false },
+      { result: 'cold', opp: 'OKC', pts: 3, reb: 2, ast: 1, win: false },
+      { result: 'avg', opp: 'POR', pts: 7, reb: 5, ast: 2, win: true },
+      { result: 'hot', opp: 'SAC', pts: 12, reb: 7, ast: 3, win: true },
+      { result: 'avg', opp: 'SAS', pts: 5, reb: 4, ast: 1, win: true },
+      { result: 'avg', opp: 'MIN', pts: 6, reb: 3, ast: 2, win: false },
+      { result: 'cold', opp: 'GSW', pts: 2, reb: 3, ast: 0, win: false },
+      { result: 'avg', opp: 'HOU', pts: 6, reb: 4, ast: 2, win: true }
+    ]
+  },
+  {
+    name: "Jock Landale", pos: "C", number: 11, badge: "NEW ACQUISITION", starter: false,
+    stats: { ppg: 7.2, rpg: 4.5, apg: 1.8, fgPct: 52.1, threePct: 36.2, tsPct: 58.5 },
+    lastYear: { ppg: 6.8, rpg: 4.0, apg: 1.5, fgPct: 50.5, threePct: 34.8, tsPct: 56.1 },
+    radar: { Scoring: 50, Playmaking: 55, Defense: 52, Athleticism: 50, Shooting: 62, IQ: 70 },
+    zones: { Rim: 40, Midrange: 20, Three: 22, FreeThrow: 18 },
+    monthly: [
+      { month: 'Oct', ppg: 6.8 }, { month: 'Nov', ppg: 7.0 }, { month: 'Dec', ppg: 7.5 },
+      { month: 'Jan', ppg: 7.2 }, { month: 'Feb', ppg: 7.0 }, { month: 'Mar', ppg: 7.4 }, { month: 'Apr', ppg: 7.2 }
+    ],
+    strengths: ["Stretch-5 shooting (36% from three)", "High-IQ passer from the post and elbow", "Veteran presence and professionalism"],
+    weaknesses: ["Limited rim protection and shot-blocking", "Below-average lateral quickness", "Struggles against athletic bigs in P&R"],
+    scoutReport: "Landale came over in the JJJ trade and has provided exactly what the Jazz needed: a backup center who can shoot. His three-point shooting allows Hardy to play him alongside Kessler in certain matchups, creating a twin-towers look with floor spacing. His passing from the high post has been a pleasant surprise.\n\nDefensively, Landale is limited. He doesn't have the length or athleticism to protect the rim, and quicker bigs exploit him in pick-and-roll. But he's a smart defender who positions himself well and rarely gets caught out of scheme. At 29, he's a veteran role player who knows his limitations and plays within them. The Jazz value his professionalism and his ability to mentor Kessler and Filipowski.",
+    ceiling: { label: "Starter", pct: 60 },
+    comps: ["Aron Baynes", "Brook Lopez (lite)"],
+    streak: [
+      { result: 'avg', opp: 'LAL', pts: 7, reb: 5, ast: 2, win: true },
+      { result: 'avg', opp: 'DEN', pts: 8, reb: 4, ast: 2, win: true },
+      { result: 'cold', opp: 'PHX', pts: 4, reb: 3, ast: 1, win: false },
+      { result: 'avg', opp: 'OKC', pts: 7, reb: 5, ast: 2, win: false },
+      { result: 'hot', opp: 'POR', pts: 14, reb: 7, ast: 3, win: true },
+      { result: 'avg', opp: 'SAC', pts: 6, reb: 4, ast: 1, win: true },
+      { result: 'avg', opp: 'SAS', pts: 8, reb: 5, ast: 2, win: true },
+      { result: 'cold', opp: 'MIN', pts: 3, reb: 2, ast: 1, win: false },
+      { result: 'avg', opp: 'GSW', pts: 7, reb: 4, ast: 2, win: false },
+      { result: 'hot', opp: 'HOU', pts: 12, reb: 6, ast: 3, win: true }
+    ]
+  }
+];
+
+// ============================================================
+// DATA: DRAFT PROSPECTS
+// ============================================================
+const PROSPECTS = [
+  { rank: 1, name: "AJ Dybantsa", pos: "SF", school: "BYU", height: "6'9\"", age: 19, jazzFit: 9, stars: 5,
+    stats: { ppg: 22.9, rpg: 7.1, apg: 3.9 },
+    radar: { Scoring: 92, Playmaking: 72, Defense: 68, Athleticism: 90, Shooting: 70, IQ: 78 },
+    strengths: ["Elite downhill attack with physicality to finish through contact", "Physical tools are NBA-ready — 6'9\" with guard skills", "High basketball IQ and advanced feel for the game"],
+    concerns: ["Perimeter shot consistency — streaky from three (33%)", "Individual defense needs polish despite tools"],
+    jazzFitAnalysis: "Dybantsa would instantly become the Jazz's most talented player and the long-term franchise cornerstone alongside JJJ. His ability to attack downhill and finish at the rim complements Markkanen's perimeter scoring perfectly. With George feeding him in transition and JJJ protecting the rim behind him, Dybantsa would have an ideal environment to develop into a superstar. The only question is whether the Jazz pick high enough to get him.",
+    comps: ["Jayson Tatum", "Paul George"], projected: "Top 3" },
+  { rank: 2, name: "Darryn Peterson", pos: "PG/SG", school: "Kansas", height: "6'5\"", age: 19, jazzFit: 8, stars: 5,
+    stats: { ppg: 22.6, rpg: 4.7, apg: 2.1 },
+    radar: { Scoring: 90, Playmaking: 68, Defense: 60, Athleticism: 85, Shooting: 75, IQ: 72 },
+    strengths: ["Superstar-level offensive upside with elite shot creation", "Playmaking and vision beyond his years", "Size for the position at 6'5\" allows versatile deployment"],
+    concerns: ["Cramping and health concerns dogged him at Kansas", "Limited APG suggests still-developing court vision"],
+    jazzFitAnalysis: "Peterson could eventually replace George as the primary ball-handler or play alongside him in an oversized backcourt. His scoring ability would give the Jazz another elite shot creator, something they desperately need in crunch time. The health questions are a concern, but the talent is undeniable. In Hardy's system, Peterson would have the freedom to create while JJJ and Markkanen space the floor.",
+    comps: ["Devin Booker", "Bradley Beal"], projected: "Top 3" },
+  { rank: 3, name: "Cameron Boozer", pos: "PF", school: "Duke", height: "6'9\" 250 lbs", age: 18, jazzFit: 6, stars: 5,
+    stats: { ppg: 24.2, rpg: 11.0, apg: 4.4 },
+    radar: { Scoring: 85, Playmaking: 75, Defense: 62, Athleticism: 68, Shooting: 58, IQ: 82 },
+    strengths: ["Elite rebounder with incredible instincts", "High-IQ passer who can orchestrate offense from the post", "Strong post game and touch around the basket"],
+    concerns: ["Positional overlap with JJJ and Markkanen in frontcourt", "Athleticism questions against elite NBA bigs"],
+    jazzFitAnalysis: "The fit is complicated. Boozer is a dominant talent, but the Jazz already have Markkanen and JJJ in the frontcourt. He'd need to play center in Utah's system, which limits his passing and face-up game. The Carlos Boozer connection to Utah is poetic, but the basketball fit requires creative lineup construction. Only worth it if the Jazz view him as a generational talent regardless of positional overlap.",
+    comps: ["Julius Randle", "Domantas Sabonis"], projected: "Top 3" },
+  { rank: 4, name: "Caleb Wilson", pos: "PF/C", school: "UNC", height: "6'10\"", age: 19, jazzFit: 7, stars: 5,
+    stats: { ppg: 18.4, rpg: 9.2, apg: 2.5 },
+    radar: { Scoring: 72, Playmaking: 58, Defense: 75, Athleticism: 78, Shooting: 45, IQ: 70 },
+    strengths: ["Exceptional effort and motor — never takes a play off", "Double-double machine with elite rebounding instincts", "Versatile defender who can switch across positions"],
+    concerns: ["Three-point shooting at 25.9% is a real concern", "Ball skills still developing — limited creation ability"],
+    jazzFitAnalysis: "Wilson's stretch-5 potential pairs well with the Jazz's floor-spacing approach, though his current shooting numbers are concerning. He could back up Kessler long-term and provide a different look — more mobile and switchable. The effort and motor would be a perfect cultural fit in Hardy's system. If the shot develops, he's a steal at this range.",
+    comps: ["Bam Adebayo", "Pascal Siakam"], projected: "Top 5" },
+  { rank: 5, name: "Keaton Wagler", pos: "SG/SF", school: "Illinois", height: "6'7\"", age: 19, jazzFit: 9, stars: 4.5,
+    stats: { ppg: 18.9, rpg: 5.1, apg: 2.8 },
+    radar: { Scoring: 75, Playmaking: 55, Defense: 70, Athleticism: 72, Shooting: 92, IQ: 75 },
+    strengths: ["Elite three-point shooting — 42% on high volume", "Positional size at 6'7\" for the 2/3 spots", "Excellent off-ball movement and screening reads"],
+    concerns: ["Not a primary creator — needs ball-dominant teammates", "Needs to add strength for NBA physicality"],
+    jazzFitAnalysis: "PERFECT fit for the Jazz. Wagler is a ready-made shooter who would space the floor for George's drives, Markkanen's post-ups, and JJJ's face-up game. His defensive size at 6'7\" fits Hardy's switch-everything scheme. He wouldn't need to create — just catch, shoot, and defend. This is the kind of complementary piece that turns good teams into great ones.",
+    comps: ["Klay Thompson", "Desmond Bane"], projected: "Top 10" },
+  { rank: 6, name: "Kingston Flemings", pos: "PG", school: "Houston", height: "6'3\"", age: 18, jazzFit: 7, stars: 4.5,
+    stats: { ppg: 16.5, rpg: 3.9, apg: 5.4 },
+    radar: { Scoring: 70, Playmaking: 78, Defense: 65, Athleticism: 82, Shooting: 60, IQ: 68 },
+    strengths: ["Elite burst and first step", "Court vision and passing instincts beyond his age", "Improving jumper with solid mechanics"],
+    concerns: ["Size at the PG position (6'3\")", "Decision-making still needs refinement"],
+    jazzFitAnalysis: "Flemings would be a long-term George backup or successor, providing an explosive backcourt piece. His playmaking would give the Jazz another creator, and his improving shot suggests shooting upside. The size concern is real, but his competitiveness and motor mitigate it. Would thrive learning behind George.",
+    comps: ["De'Aaron Fox", "Tyrese Maxey"], projected: "Top 10" },
+  { rank: 7, name: "Darius Acuff Jr.", pos: "PG", school: "Arkansas", height: "6'3\"", age: 19, jazzFit: 7, stars: 4.5,
+    stats: { ppg: 19.3, rpg: 3.8, apg: 4.2 },
+    radar: { Scoring: 78, Playmaking: 68, Defense: 55, Athleticism: 75, Shooting: 65, IQ: 70 },
+    strengths: ["Clutch gene — thrives in big moments", "Scoring versatility across all three levels", "Fearless competitor who never gets rattled"],
+    concerns: ["Turnover-prone in half-court sets", "Defensive engagement inconsistent"],
+    jazzFitAnalysis: "Acuff fits the Jazz's fast-paced identity perfectly. His fearless scoring mentality would give Hardy a microwave option off the bench, and his clutch performances suggest a winner's mentality. Would thrive in Will Hardy's pace-and-space system, attacking off the dribble while JJJ and Markkanen space the floor.",
+    comps: ["Damian Lillard (lite)", "CJ McCollum"], projected: "Top 10" },
+  { rank: 8, name: "Mikel Brown Jr.", pos: "SG", school: "TBD", height: "6'5\"", age: 19, jazzFit: 8, stars: 4.5,
+    stats: { ppg: 17.8, rpg: 4.4, apg: 3.1 },
+    radar: { Scoring: 72, Playmaking: 58, Defense: 75, Athleticism: 88, Shooting: 55, IQ: 65 },
+    strengths: ["Elite athleticism with explosive finishing", "Defensive motor and switchability", "Improving shooting mechanics"],
+    concerns: ["Shot mechanics need significant work", "Needs offensive refinement and polish"],
+    jazzFitAnalysis: "Brown is the athletic 3-and-D wing the Jazz frontcourt desperately needs. His defensive versatility would allow Hardy to play him alongside Bailey in switchable lineups, and his athleticism creates easy transition points. If the shot develops, he's a perfect complementary piece next to George and Markkanen.",
+    comps: ["Jalen Green", "Anthony Edwards (lite)"], projected: "Top 10" },
+  { rank: 9, name: "Koa Peat", pos: "PF", school: "Arizona", height: "6'9\"", age: 19, jazzFit: 6, stars: 4,
+    stats: { ppg: 16.7, rpg: 7.3, apg: 2.1 },
+    radar: { Scoring: 68, Playmaking: 50, Defense: 70, Athleticism: 72, Shooting: 48, IQ: 65 },
+    strengths: ["Physical bruiser with strong interior scoring", "Tournament standout with big-game performances", "Improving touch around the basket"],
+    concerns: ["Lack of explosion against NBA-sized bigs", "Limited shooting range beyond 15 feet"],
+    jazzFitAnalysis: "Peat would be a power backup behind JJJ, but the positional redundancy is concerning. The Jazz already have Markkanen, JJJ, Filipowski, and Landale in the frontcourt. Unless the Jazz plan to move one of those pieces, Peat's fit is limited despite his talent.",
+    comps: ["Zion Williamson (lite)", "John Collins"], projected: "Top 10" },
+  { rank: 10, name: "Hannes Steinbach", pos: "PF/C", school: "Washington", height: "6'10\"", age: 19, jazzFit: 7, stars: 4,
+    stats: { ppg: 18.6, rpg: 11.6, apg: 1.5 },
+    radar: { Scoring: 65, Playmaking: 42, Defense: 68, Athleticism: 60, Shooting: 55, IQ: 72 },
+    strengths: ["Elite rebounding instincts and positioning", "Highly dependable production every night", "Strong motor that never quits"],
+    concerns: ["Athletic limitations could be exploited in NBA", "Middling Washington competition raises questions"],
+    jazzFitAnalysis: "Steinbach could grow into a Kessler backup with more offensive versatility. His rebounding and consistency are valuable, and his motor fits the Jazz culture. A safe, high-floor pick who could contribute rotation minutes within two years.",
+    comps: ["Jonas Valanciunas", "Ivica Zubac"], projected: "Lottery" },
+  { rank: 11, name: "Tyler Tanner", pos: "SG", school: "Vanderbilt", height: "6'5\"", age: 20, jazzFit: 8, stars: 4,
+    stats: { ppg: 20.1, rpg: 4.8, apg: 3.6 },
+    radar: { Scoring: 78, Playmaking: 62, Defense: 58, Athleticism: 68, Shooting: 78, IQ: 72 },
+    strengths: ["Elite shot creation from mid-range", "Improved three-point shooting as a sophomore", "Veteran-ready skill set"],
+    concerns: ["Age concern as a sophomore (20)", "Athleticism ceiling questions at NBA level"],
+    jazzFitAnalysis: "Tanner is a veteran-ready backup SG who could contribute immediately. His shot creation and mid-range mastery give Hardy an instant-offense option off the bench, and his improved three-point shooting spaces the floor. Could push Sensabaugh for minutes right away.",
+    comps: ["DeMar DeRozan (lite)", "Tyler Herro"], projected: "Lottery" },
+  { rank: 12, name: "Cameron Carr", pos: "SF", school: "Baylor", height: "6'7\"", age: 20, jazzFit: 8, stars: 4,
+    stats: { ppg: 17.4, rpg: 5.9, apg: 2.7 },
+    radar: { Scoring: 72, Playmaking: 55, Defense: 65, Athleticism: 70, Shooting: 85, IQ: 72 },
+    strengths: ["Elite movement shooting (41.7% catch-and-shoot 3s)", "Strong finishing ability around the basket", "Smart, heady player who makes winning plays"],
+    concerns: ["Not a primary creator — needs structure", "Needs to add strength for wing position"],
+    jazzFitAnalysis: "Carr is an elite floor-spacer who would be ideal for the Jazz's ball-movement system. His catch-and-shoot numbers are outstanding, and his basketball IQ means he rarely makes mistakes. In a lineup with George, Markkanen, and JJJ creating, Carr would feast on open looks.",
+    comps: ["Joe Harris", "Duncan Robinson (with defense)"], projected: "Lottery" },
+  { rank: 13, name: "Thomas Haugh", pos: "SF/PF", school: "Florida", height: "6'9\"", age: 22, jazzFit: 7, stars: 3.5,
+    stats: { ppg: 17.2, rpg: 6.6, apg: 2.3 },
+    radar: { Scoring: 65, Playmaking: 55, Defense: 72, Athleticism: 65, Shooting: 50, IQ: 75 },
+    strengths: ["Positional size at 6'9\" for wing/forward", "Ball-moving instincts and team-first approach", "Versatile defender who can guard 2-4"],
+    concerns: ["Average shooting profile (32% from three)", "Older prospect at 22 — limited development runway"],
+    jazzFitAnalysis: "Haugh is an immediate rotation contributor. His versatility, defense, and selfless play style fit perfectly in Hardy's system. He wouldn't need touches — just defend, rebound, and make the simple play. The shooting concerns are real but manageable with Jazz's shooting-development track record.",
+    comps: ["Grant Williams", "Aaron Gordon (lite)"], projected: "Mid First" },
+  { rank: 14, name: "Labaron Philon", pos: "PG", school: "Alabama", height: "6'3\"", age: 20, jazzFit: 7, stars: 4,
+    stats: { ppg: 19.6, rpg: 4.1, apg: 5.2 },
+    radar: { Scoring: 75, Playmaking: 72, Defense: 55, Athleticism: 80, Shooting: 58, IQ: 65 },
+    strengths: ["Explosive burst and rim-finishing ability", "Improving shooting mechanics", "SEC-tested toughness and competitiveness"],
+    concerns: ["Shot mechanics still inconsistent", "Decision-making at full speed needs work"],
+    jazzFitAnalysis: "Philon is a backup PG with serious upside who would push Collier for minutes immediately. His explosion and scoring ability off the bench would give Hardy a change-of-pace option. In the Jazz's up-tempo system, Philon's transition game would shine.",
+    comps: ["Ja Morant (lite)", "Russell Westbrook (lite)"], projected: "Mid First" },
+  { rank: 15, name: "Patrick Ngongba", pos: "C", school: "Duke", height: "6'11\"", age: 20, jazzFit: 6, stars: 3.5,
+    stats: { ppg: 12.3, rpg: 8.7, apg: 1.2 },
+    radar: { Scoring: 45, Playmaking: 35, Defense: 80, Athleticism: 75, Shooting: 28, IQ: 60 },
+    strengths: ["Elite shot-blocking and rim protection", "Incredible length and wingspan", "Breakout healthy season at Duke"],
+    concerns: ["Limited offensive repertoire", "Health history and durability questions"],
+    jazzFitAnalysis: "With Kessler already providing elite rim protection, Ngongba is redundant. Third-string center depth isn't worth a first-round pick unless the Jazz are willing to move Kessler. The talent is real but the fit isn't there.",
+    comps: ["Robert Williams III", "Myles Turner (lite)"], projected: "Mid First" },
+  { rank: 16, name: "Braylon Mullins", pos: "SG", school: "UConn", height: "6'5\"", age: 19, jazzFit: 8, stars: 4,
+    stats: { ppg: 12.0, rpg: 3.5, apg: 1.4 },
+    radar: { Scoring: 60, Playmaking: 42, Defense: 62, Athleticism: 65, Shooting: 90, IQ: 68 },
+    strengths: ["Off-ball gravity and shooting pull elite defenders", "Catch-and-shoot mastery from deep", "Winning culture background at UConn"],
+    concerns: ["Not a self-creator off the dribble", "Limited scoring when shots aren't falling"],
+    jazzFitAnalysis: "Mullins is a perfect 3-and-D role player for the Jazz. Plug him next to George and let him shoot — he'd feast on the open looks created by Markkanen and JJJ's spacing. His UConn pedigree means he knows how to win and can handle pressure moments.",
+    comps: ["Seth Curry", "Buddy Hield"], projected: "Mid First" },
+  { rank: 17, name: "Amari Allen", pos: "SF", school: "Alabama", height: "6'7\"", age: 19, jazzFit: 7, stars: 3.5,
+    stats: { ppg: 14.8, rpg: 6.2, apg: 2.0 },
+    radar: { Scoring: 58, Playmaking: 45, Defense: 70, Athleticism: 82, Shooting: 52, IQ: 60 },
+    strengths: ["Athletic and switchable defender", "Emerging three-point shot with good form", "High-upside freshman with room to grow"],
+    concerns: ["Still raw offensively — limited self-creation", "Consistency from game to game"],
+    jazzFitAnalysis: "Allen is a long-term wing depth piece with 3-and-D upside. His athleticism and defensive versatility fit the Jazz's switch-everything approach, and his shooting trajectory is encouraging. Would need time to develop but has starter potential.",
+    comps: ["OG Anunoby (lite)", "Josh Okogie"], projected: "Mid First" },
+  { rank: 18, name: "Killyan Toure", pos: "SF/PF", school: "Iowa State", height: "6'9\"", age: 19, jazzFit: 6, stars: 3.5,
+    stats: { ppg: 13.4, rpg: 7.1, apg: 1.9 },
+    radar: { Scoring: 55, Playmaking: 48, Defense: 62, Athleticism: 68, Shooting: 50, IQ: 60 },
+    strengths: ["Positional versatility as a combo forward", "Improving motor and effort level", "Stretch-4 potential with developing shot"],
+    concerns: ["Inconsistent production game-to-game", "Needs polish on both ends of the floor"],
+    jazzFitAnalysis: "Toure's versatility is intriguing but the Jazz already have plenty of combo forwards. His stretch-4 potential is interesting but unproven. A depth piece who could develop into a rotation player but unlikely to crack the Jazz's current frontcourt.",
+    comps: ["Jerami Grant (lite)", "Kelly Oubre Jr."], projected: "Late First" },
+  { rank: 19, name: "Trentyn Flowers", pos: "SF", school: "TBD", height: "6'7\"", age: 19, jazzFit: 7, stars: 3.5,
+    stats: { ppg: 15.2, rpg: 5.4, apg: 2.3 },
+    radar: { Scoring: 62, Playmaking: 48, Defense: 72, Athleticism: 80, Shooting: 52, IQ: 62 },
+    strengths: ["Relentless motor and hustle on both ends", "Athletic with explosion and length", "Hard-nosed defense and competitiveness"],
+    concerns: ["Shot still developing — inconsistent mechanics", "Needs more playmaking in his game"],
+    jazzFitAnalysis: "Flowers fits the Jazz's defensive identity as a grinder type. His motor and athleticism would be valuable in Hardy's switch-heavy scheme. The shot development is key — if it comes around, he's a valuable 3-and-D wing. If not, he's a limited rotation piece.",
+    comps: ["Luguentz Dort", "Josh Hart"], projected: "Late First" },
+  { rank: 20, name: "Yanic Konan-Niederhauser", pos: "C", school: "International", height: "7'0\"", age: 19, jazzFit: 5, stars: 3,
+    stats: { ppg: 10.1, rpg: 7.8, apg: 1.1 },
+    radar: { Scoring: 42, Playmaking: 35, Defense: 65, Athleticism: 62, Shooting: 35, IQ: 55 },
+    strengths: ["Elite size and mobility for a 7-footer", "Shot-blocking upside and rim presence", "Young with significant room to grow"],
+    concerns: ["Very raw — years away from NBA contribution", "Limited offensive skill set"],
+    jazzFitAnalysis: "A stretch project who would sit behind Kessler and Filipowski. The Jazz don't have the roster spots or patience for a multi-year development project at center. Low priority despite the intriguing physical tools.",
+    comps: ["Bol Bol", "Bismack Biyombo"], projected: "Late First" },
+  { rank: 21, name: "Christian Anderson", pos: "SG", school: "Texas Tech", height: "6'5\"", age: 20, jazzFit: 8, stars: 3.5,
+    stats: { ppg: 16.8, rpg: 4.3, apg: 3.4 },
+    radar: { Scoring: 68, Playmaking: 58, Defense: 72, Athleticism: 68, Shooting: 70, IQ: 72 },
+    strengths: ["Defensive versatility across multiple positions", "Solid three-point shooter with good mechanics", "Winning pedigree at Texas Tech"],
+    concerns: ["Not an elite athlete by NBA standards", "Limited creation ability off the dribble"],
+    jazzFitAnalysis: "Anderson is a ready-made rotation SG who complements George perfectly. His defense and shooting are exactly what the Jazz need from a wing, and his maturity means he can contribute immediately. A high-floor pick with starter upside.",
+    comps: ["Josh Richardson", "Derrick White (lite)"], projected: "Late First" },
+  { rank: 22, name: "Noa Essengue", pos: "SF/PF", school: "International", height: "6'9\"", age: 19, jazzFit: 7, stars: 3.5,
+    stats: { ppg: 14.5, rpg: 6.3, apg: 2.1 },
+    radar: { Scoring: 62, Playmaking: 48, Defense: 68, Athleticism: 78, Shooting: 55, IQ: 60 },
+    strengths: ["Athletic wing with versatile defensive ability", "Improving three-point shot", "High-upside swing with elite physical tools"],
+    concerns: ["Development timeline coming from Europe", "Needs more offensive polish"],
+    jazzFitAnalysis: "Essengue has Markkanen-like long-term potential as a versatile, shooting wing/forward. His athleticism exceeds Markkanen's, and his defensive ceiling is higher. The development timeline is the concern — the Jazz might need more immediate contributors.",
+    comps: ["Lauri Markkanen (lite)", "Jonathan Isaac"], projected: "Late First" },
+  { rank: 23, name: "Will Mullenix", pos: "C", school: "TBD", height: "6'11\"", age: 19, jazzFit: 6, stars: 3,
+    stats: { ppg: 11.2, rpg: 8.4, apg: 1.4 },
+    radar: { Scoring: 48, Playmaking: 38, Defense: 62, Athleticism: 65, Shooting: 35, IQ: 58 },
+    strengths: ["Elite screen-setting and rim-running", "Strong rebounding and effort", "Physical presence inside"],
+    concerns: ["Limited offensive repertoire beyond dunks", "Not a passer or floor-spacer"],
+    jazzFitAnalysis: "Third-string center depth. The Jazz already have Kessler and Filipowski covering this role with more upside. Not worth a first-round selection barring significant development.",
+    comps: ["Clint Capela", "Deandre Ayton (lite)"], projected: "Late First" },
+  { rank: 24, name: "Drake Powell", pos: "SG/SF", school: "UNC", height: "6'6\"", age: 19, jazzFit: 7, stars: 3.5,
+    stats: { ppg: 13.7, rpg: 4.9, apg: 2.0 },
+    radar: { Scoring: 58, Playmaking: 45, Defense: 65, Athleticism: 82, Shooting: 58, IQ: 60 },
+    strengths: ["Elite athleticism and vertical pop", "Improving three-point shot trajectory", "Defensive potential with length and motor"],
+    concerns: ["Creation ability still limited", "Consistency in big moments questioned"],
+    jazzFitAnalysis: "Powell offers athletic wing depth that complements Ace Bailey's development timeline. His improving shooting and defensive tools make him an interesting prospect, though he'd need to earn minutes in a crowded wing rotation.",
+    comps: ["Jarred Vanderbilt", "Cam Reddish"], projected: "Late First" },
+  { rank: 25, name: "Tounde Yessoufou", pos: "SF", school: "International", height: "6'7\"", age: 20, jazzFit: 6, stars: 3,
+    stats: { ppg: 12.9, rpg: 5.1, apg: 2.4 },
+    radar: { Scoring: 52, Playmaking: 48, Defense: 65, Athleticism: 62, Shooting: 50, IQ: 68 },
+    strengths: ["High IQ and motor on both ends", "Versatile defensive ability", "Team-first mentality"],
+    concerns: ["Average athleticism by NBA standards", "Limited shot creation ability"],
+    jazzFitAnalysis: "A depth piece who wouldn't be worth a top-10 pick for the Jazz. His versatility and IQ are nice, but the Jazz need higher-upside players at this stage of their build. Better suited as a second-round target.",
+    comps: ["Cedi Osman", "Taurean Prince"], projected: "Late First" }
+];
+
+// ============================================================
+// DATA: DRAFT SIMULATOR
+// ============================================================
+const DRAFT_SIM_TEAMS = [
+  { pick: 1, team: 'WAS Wizards' }, { pick: 2, team: 'BKN Nets' },
+  { pick: 3, team: 'CHA Hornets' }, { pick: 4, team: 'TOR Raptors' },
+  { pick: 5, team: 'CHI Bulls' }, { pick: 6, team: 'NOP Pelicans' },
+  { pick: 7, team: 'UTAH JAZZ' }, { pick: 8, team: 'DET Pistons' },
+  { pick: 9, team: 'PHI 76ers' }, { pick: 10, team: 'MIL Bucks' }
+];
+
+// ============================================================
+// COMPONENTS
+// ============================================================
+
+// Mountain SVG Background
+function MountainBg() {
+  return (
+    <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 1440 320" preserveAspectRatio="none" style={{height:'200px'}}>
+      <path d="M0,320 L120,240 L240,280 L360,200 L480,260 L600,180 L720,220 L840,160 L960,200 L1080,140 L1200,180 L1320,120 L1440,160 L1440,320 Z" fill="rgba(78,0,142,0.3)" />
+      <path d="M0,320 L100,260 L200,300 L300,220 L400,280 L500,200 L600,240 L700,180 L800,240 L900,200 L1000,260 L1100,200 L1200,240 L1300,180 L1440,220 L1440,320 Z" fill="rgba(78,0,142,0.5)" />
+      <path d="M0,320 L80,280 L160,310 L240,260 L320,300 L400,240 L480,280 L560,220 L640,260 L720,230 L800,270 L880,240 L960,280 L1040,250 L1120,290 L1200,260 L1280,300 L1360,270 L1440,300 L1440,320 Z" fill="rgba(45,22,84,0.8)" />
+    </svg>
+  );
+}
+
+// Floating Particles
+function Particles() {
+  const particles = useMemo(() => Array.from({length: 30}, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    delay: Math.random() * 8,
+    duration: 6 + Math.random() * 8,
+    size: 2 + Math.random() * 4,
+    opacity: 0.2 + Math.random() * 0.4
+  })), []);
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {particles.map(p => (
+        <div key={p.id} className="absolute rounded-full" style={{
+          left: `${p.left}%`, bottom: '-10px',
+          width: p.size, height: p.size,
+          background: `rgba(121,163,220,${p.opacity})`,
+          animation: `float-particle ${p.duration}s ${p.delay}s infinite linear`
+        }} />
+      ))}
+    </div>
+  );
+}
+
+// Player Jersey Avatar SVG
+function JerseyAvatar({ number, size = 80, color = '#4E008E' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 80 80">
+      <circle cx="40" cy="40" r="38" fill={color} stroke="#79A3DC" strokeWidth="2" />
+      <text x="40" y="48" textAnchor="middle" fill="#79A3DC" fontSize="28" fontWeight="800" fontFamily="Inter">
+        {number}
+      </text>
+    </svg>
+  );
+}
+
+// Badge Component
+function Badge({ type }) {
+  const styles = {
+    'ROOKIE': 'bg-green-600 text-white',
+    'ALL-STAR': 'bg-yellow-500 text-black',
+    'DPOY': 'bg-red-600 text-white',
+    'RETURNING': 'bg-blue-600 text-white',
+    'NEW ACQUISITION': 'bg-orange-500 text-white'
+  };
+  if (!type) return null;
+  return (
+    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${styles[type] || 'bg-gray-600 text-white'}`}>
+      {type === 'DPOY' ? '👑 DPOY' : type}
+    </span>
+  );
+}
+
+// Hot/Cold Streak
+function StreakDots({ streak }) {
+  const [hovIdx, setHovIdx] = useState(null);
+  const colors = { hot: '#22c55e', cold: '#ef4444', avg: '#eab308' };
+  return (
+    <div className="flex gap-1.5 items-center relative">
+      {streak.map((g, i) => (
+        <div key={i} className="relative">
+          <div
+            className="w-4 h-4 rounded-full cursor-pointer transition-transform hover:scale-150"
+            style={{ background: colors[g.result] }}
+            onMouseEnter={() => setHovIdx(i)}
+            onMouseLeave={() => setHovIdx(null)}
+          />
+          {hovIdx === i && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs whitespace-nowrap z-50 shadow-lg">
+              <div className="font-bold">vs {g.opp}</div>
+              <div>{g.pts} pts, {g.reb} reb{g.ast ? `, ${g.ast} ast` : ''}</div>
+              <div className={g.win ? 'text-green-400' : 'text-red-400'}>{g.win ? 'W' : 'L'}</div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Radar Chart for Players
+function PlayerRadar({ data, size = 280 }) {
+  const chartData = Object.entries(data).map(([key, val]) => ({ subject: key, value: val, fullMark: 100 }));
+  return (
+    <ResponsiveContainer width="100%" height={size}>
+      <RadarChart data={chartData}>
+        <PolarGrid stroke="rgba(78,0,142,0.5)" />
+        <PolarAngleAxis dataKey="subject" tick={{ fill: '#ccc', fontSize: 11 }} />
+        <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+        <Radar dataKey="value" stroke="#79A3DC" fill="#79A3DC" fillOpacity={0.3} strokeWidth={2} />
+      </RadarChart>
+    </ResponsiveContainer>
+  );
+}
+
+// Scouting Panel (Slide-in)
+function ScoutingPanel({ player, onClose }) {
+  if (!player) return null;
+  const zoneData = Object.entries(player.zones).map(([k, v]) => ({ zone: k, pct: v }));
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60" />
+      <div className="relative w-full max-w-lg bg-jazz-midnight border-l border-jazz-purple overflow-y-auto animate-slide-in"
+           onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-jazz-midnight/95 backdrop-blur-sm border-b border-jazz-purple p-4 flex justify-between items-center z-10">
+          <div>
+            <h2 className="text-xl font-bold text-jazz-sky">{player.name}</h2>
+            <p className="text-sm text-gray-400">{player.pos} | #{player.number}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button>
+        </div>
+        <div className="p-4 space-y-6">
+          {/* Stats Pills */}
+          <div className="grid grid-cols-3 gap-2">
+            {[['PPG', player.stats.ppg, player.lastYear?.ppg], ['RPG', player.stats.rpg, player.lastYear?.rpg], ['APG', player.stats.apg, player.lastYear?.apg],
+              ['FG%', player.stats.fgPct, player.lastYear?.fgPct], ['3P%', player.stats.threePct, player.lastYear?.threePct], ['TS%', player.stats.tsPct, player.lastYear?.tsPct]].map(([label, val, prev]) => {
+              const delta = prev != null && prev > 0 ? Math.round(((val - prev) / prev) * 100) : null;
+              return (
+                <div key={label} className="glass rounded-lg p-3 text-center">
+                  <div className="text-lg font-bold text-jazz-sky">{val}</div>
+                  <div className="text-xs text-gray-400">{label}</div>
+                  {delta !== null && (
+                    <div className={`text-[10px] font-bold mt-0.5 ${delta > 0 ? 'text-green-400' : delta < 0 ? 'text-red-400' : 'text-gray-500'}`}>
+                      {delta > 0 ? '\u2191' : delta < 0 ? '\u2193' : '\u2013'} {Math.abs(delta)}% YoY
+                    </div>
+                  )}
+                  {delta === null && player.lastYear === null && (
+                    <div className="text-[10px] text-gray-600 mt-0.5">ROOKIE</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Radar Chart */}
+          <div className="glass rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-jazz-sky mb-2">Skill Breakdown</h3>
+            <PlayerRadar data={player.radar} />
+          </div>
+
+          {/* Scoring Zones */}
+          <div className="glass rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-jazz-sky mb-3">Scoring Zones</h3>
+            {zoneData.map(z => (
+              <div key={z.zone} className="mb-2">
+                <div className="flex justify-between text-xs text-gray-400 mb-1">
+                  <span>{z.zone}</span><span>{z.pct}%</span>
+                </div>
+                <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-jazz-sky rounded-full transition-all duration-500" style={{ width: `${z.pct}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Monthly PPG */}
+          <div className="glass rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-jazz-sky mb-2">Monthly PPG Trend</h3>
+            <ResponsiveContainer width="100%" height={180}>
+              <LineChart data={player.monthly.filter(m => m.ppg > 0)}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(78,0,142,0.3)" />
+                <XAxis dataKey="month" tick={{ fill: '#aaa', fontSize: 11 }} />
+                <YAxis tick={{ fill: '#aaa', fontSize: 11 }} domain={['auto', 'auto']} />
+                <Tooltip contentStyle={{ background: '#0A0014', border: '1px solid #4E008E', borderRadius: 8 }} />
+                <Line type="monotone" dataKey="ppg" stroke="#79A3DC" strokeWidth={2} dot={{ fill: '#79A3DC' }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Strengths & Weaknesses */}
+          <div className="glass rounded-xl p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-jazz-sky">Strengths</h3>
+            {player.strengths.map((s, i) => (
+              <div key={i} className="flex items-start gap-2 text-sm"><span className="text-green-400 mt-0.5">&#10003;</span><span className="text-gray-300">{s}</span></div>
+            ))}
+            <h3 className="text-sm font-semibold text-jazz-sky mt-4">Weaknesses</h3>
+            {player.weaknesses.map((w, i) => (
+              <div key={i} className="flex items-start gap-2 text-sm"><span className="text-amber-400 mt-0.5">&#9888;</span><span className="text-gray-300">{w}</span></div>
+            ))}
+          </div>
+
+          {/* Scout Report */}
+          <div className="glass rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-jazz-sky mb-2">Scout Report</h3>
+            {player.scoutReport.split('\n\n').map((p, i) => (
+              <p key={i} className="text-sm text-gray-300 leading-relaxed mb-3">{p}</p>
+            ))}
+          </div>
+
+          {/* Ceiling */}
+          <div className="glass rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-jazz-sky mb-2">Development Ceiling</h3>
+            <div className="flex justify-between text-xs text-gray-400 mb-1">
+              <span>{player.ceiling.label}</span><span>{player.ceiling.pct}%</span>
+            </div>
+            <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-700" style={{
+                width: `${player.ceiling.pct}%`,
+                background: player.ceiling.pct >= 80 ? 'linear-gradient(90deg, #79A3DC, #A8C4E8)' :
+                  player.ceiling.pct >= 60 ? 'linear-gradient(90deg, #4E008E, #7B2FBF)' : '#6b7280'
+              }} />
+            </div>
+          </div>
+
+          {/* Comps */}
+          <div className="glass rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-jazz-sky mb-2">NBA Comparisons</h3>
+            <div className="flex gap-2">
+              {player.comps.map((c, i) => (
+                <span key={i} className="px-3 py-1 rounded-full text-sm font-medium bg-jazz-purple/50 text-jazz-sky border border-jazz-purple">{c}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Hot/Cold Streak */}
+          <div className="glass rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-jazz-sky mb-3">Last 10 Games</h3>
+            <StreakDots streak={player.streak} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// SECTION: ROSTER
+// ============================================================
+function RosterSection() {
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const starters = PLAYERS.filter(p => p.starter);
+  const bench = PLAYERS.filter(p => !p.starter);
+
+  const pctChange = (curr, prev) => {
+    if (!prev || prev === 0) return null;
+    return Math.round(((curr - prev) / prev) * 100);
+  };
+
+  const StatWithDelta = ({ val, label, prev }) => {
+    const delta = prev != null ? pctChange(val, prev) : null;
+    return (
+      <span className="inline-flex items-center gap-0.5">
+        {val} {label}
+        {delta !== null && (
+          <span className={`text-[9px] font-bold ${delta > 0 ? 'text-green-400' : delta < 0 ? 'text-red-400' : 'text-gray-500'}`}>
+            {delta > 0 ? '+' : ''}{delta}%
+          </span>
+        )}
+      </span>
+    );
+  };
+
+  const PlayerTile = ({ player, large }) => (
+    <div
+      onClick={() => setSelectedPlayer(player)}
+      className={`glass rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:border-jazz-sky/50 group overflow-hidden ${large ? '' : 'p-3'}`}
+    >
+      <div className="flex flex-col items-center text-center">
+        {large && player.headshot ? (
+          <div className="w-full h-48 overflow-hidden rounded-t-xl mb-3 relative" style={{ background: 'linear-gradient(180deg, #1A0030 0%, #0A0014 100%)' }}>
+            <img src={player.headshot} alt={player.name}
+              className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-110"
+              style={{ objectPosition: 'top center' }} />
+            <div className="absolute bottom-0 left-0 right-0 h-16" style={{ background: 'linear-gradient(transparent, rgba(26,10,46,0.95))' }} />
+          </div>
+        ) : (
+          <div className={large ? 'pt-5' : ''}>
+            <JerseyAvatar number={player.number} size={large ? 80 : 56} />
+          </div>
+        )}
+        <div className={large ? 'px-4 pb-4' : ''}>
+          <h3 className={`font-bold ${large ? '' : 'mt-2'} group-hover:text-jazz-sky transition-colors ${large ? 'text-lg' : 'text-sm'}`}>
+            {player.name}
+          </h3>
+          <p className="text-xs text-gray-400">{player.pos} | #{player.number}</p>
+          {player.badge && <div className="mt-1.5"><Badge type={player.badge} /></div>}
+          <div className={`flex gap-3 mt-2 ${large ? 'text-sm' : 'text-xs'} text-gray-400`}>
+            <StatWithDelta val={player.stats.ppg} label="PPG" prev={player.lastYear?.ppg} />
+            <StatWithDelta val={player.stats.rpg} label="RPG" prev={player.lastYear?.rpg} />
+            <StatWithDelta val={player.stats.apg} label="APG" prev={player.lastYear?.apg} />
+          </div>
+          <div className="mt-2"><StreakDots streak={player.streak} /></div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <section className="py-12 px-4 max-w-7xl mx-auto">
+      <h2 className="text-3xl font-black text-center mb-2">
+        <span className="text-jazz-sky">STARTING</span> FIVE
+      </h2>
+      <p className="text-center text-gray-400 mb-8 text-sm">Click any player for full scouting report</p>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-10">
+        {starters.map(p => <PlayerTile key={p.name} player={p} large />)}
+      </div>
+      <h2 className="text-2xl font-bold text-center mb-6">
+        <span className="text-jazz-light">BENCH</span> ROTATION
+      </h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {bench.map(p => <PlayerTile key={p.name} player={p} />)}
+      </div>
+      <ScoutingPanel player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
+    </section>
+  );
+}
+
+// ============================================================
+// SECTION: DRAFT ROOM
+// ============================================================
+function DraftRoom() {
+  const [filter, setFilter] = useState('All');
+  const [selectedProspect, setSelectedProspect] = useState(null);
+  const positions = ['All', 'PG', 'SG', 'SF', 'PF', 'C'];
+
+  const filtered = filter === 'All' ? PROSPECTS : PROSPECTS.filter(p => p.pos.includes(filter));
+
+  return (
+    <section className="py-12 px-4 max-w-7xl mx-auto">
+      {/* Header Banner */}
+      <div className="rounded-2xl p-6 mb-8 text-center border-2 border-jazz-sky/40" style={{ background: 'linear-gradient(135deg, rgba(78,0,142,0.4) 0%, rgba(26,10,46,0.9) 50%, rgba(78,0,142,0.4) 100%)' }}>
+        <h2 className="text-3xl font-black text-jazz-sky">2026 NBA DRAFT</h2>
+        <p className="text-gray-300 mt-2">The Jazz hold a 2026 first-round pick. The lottery is May 10.</p>
+        <div className="flex justify-center gap-6 mt-4">
+          <div className="rounded-lg px-5 py-3 border border-jazz-sky/30" style={{ background: 'rgba(121,163,220,0.08)' }}>
+            <div className="text-jazz-sky font-bold text-xl">#6 - #9</div>
+            <div className="text-xs text-gray-400">Projected Pick Range</div>
+          </div>
+          <div className="rounded-lg px-5 py-3 border border-amber-500/30" style={{ background: 'rgba(121,163,220,0.08)' }}>
+            <div className="text-amber-400 font-bold text-xl">3 FRPs</div>
+            <div className="text-xs text-gray-400">Sent to MEM for JJJ</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex justify-center gap-2 mb-6 flex-wrap">
+        {positions.map(pos => (
+          <button key={pos} onClick={() => setFilter(pos)}
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${filter === pos ? 'bg-jazz-sky text-black' : 'glass text-gray-300 hover:text-white'}`}>
+            {pos}
+          </button>
+        ))}
+      </div>
+
+      {/* Prospect Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        {filtered.map(p => (
+          <div key={p.rank} onClick={() => setSelectedProspect(p)}
+            className="glass rounded-xl p-4 cursor-pointer transition-all duration-300 hover:scale-105 hover:border-jazz-sky/50 group">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-jazz-purple flex items-center justify-center text-jazz-sky font-bold text-sm">
+                #{p.rank}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-sm group-hover:text-jazz-sky truncate">{p.name}</h3>
+                <p className="text-xs text-gray-400">{p.pos} | {p.school}</p>
+              </div>
+            </div>
+            <div className="flex justify-between items-center text-xs text-gray-400 mb-2">
+              <span>{p.height} | Age {p.age}</span>
+              <div className="flex">
+                {Array.from({length: 5}, (_, i) => (
+                  <span key={i} className={i < Math.floor(p.stars) ? 'text-jazz-sky' : 'text-gray-600'}>&#9733;</span>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2 text-xs text-gray-400">
+              <span>{p.stats.ppg} PPG</span>
+              <span>{p.stats.rpg} RPG</span>
+              <span>{p.stats.apg} APG</span>
+            </div>
+            <div className="mt-2 flex justify-between items-center">
+              <span className="text-xs text-gray-500">{p.projected}</span>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${p.jazzFit >= 8 ? 'bg-green-600/30 text-green-400' : p.jazzFit >= 6 ? 'bg-yellow-600/30 text-yellow-400' : 'bg-red-600/30 text-red-400'}`}>
+                Fit: {p.jazzFit}/10
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Prospect Analysis Panel */}
+      {selectedProspect && (
+        <div className="fixed inset-0 z-50 flex justify-end" onClick={() => setSelectedProspect(null)}>
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="relative w-full max-w-lg bg-jazz-midnight border-l border-jazz-purple overflow-y-auto animate-slide-in"
+               onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-jazz-midnight/95 backdrop-blur-sm border-b border-jazz-purple p-4 flex justify-between items-center z-10">
+              <div>
+                <h2 className="text-xl font-bold text-jazz-sky">#{selectedProspect.rank} {selectedProspect.name}</h2>
+                <p className="text-sm text-gray-400">{selectedProspect.pos} | {selectedProspect.school} | {selectedProspect.height}</p>
+              </div>
+              <button onClick={() => setSelectedProspect(null)} className="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div className="p-4 space-y-6">
+              <div className="grid grid-cols-3 gap-2">
+                {[['PPG', selectedProspect.stats.ppg], ['RPG', selectedProspect.stats.rpg], ['APG', selectedProspect.stats.apg]].map(([l, v]) => (
+                  <div key={l} className="glass rounded-lg p-3 text-center">
+                    <div className="text-lg font-bold text-jazz-sky">{v}</div>
+                    <div className="text-xs text-gray-400">{l}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="glass rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-jazz-sky mb-2">Skill Projection</h3>
+                <PlayerRadar data={selectedProspect.radar} />
+              </div>
+              <div className="glass rounded-xl p-4 space-y-3">
+                <h3 className="text-sm font-semibold text-jazz-sky">Strengths</h3>
+                {selectedProspect.strengths.map((s, i) => (
+                  <div key={i} className="flex gap-2 text-sm"><span className="text-green-400">&#10003;</span><span className="text-gray-300">{s}</span></div>
+                ))}
+                <h3 className="text-sm font-semibold text-jazz-sky mt-3">Concerns</h3>
+                {selectedProspect.concerns.map((c, i) => (
+                  <div key={i} className="flex gap-2 text-sm"><span className="text-amber-400">&#9888;</span><span className="text-gray-300">{c}</span></div>
+                ))}
+              </div>
+              <div className="glass rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-jazz-sky mb-2">Jazz Fit Analysis</h3>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={`text-2xl font-black ${selectedProspect.jazzFit >= 8 ? 'text-green-400' : selectedProspect.jazzFit >= 6 ? 'text-yellow-400' : 'text-red-400'}`}>
+                    {selectedProspect.jazzFit}/10
+                  </span>
+                  <span className="text-sm text-gray-400">Jazz Fit Score</span>
+                </div>
+                <p className="text-sm text-gray-300 leading-relaxed">{selectedProspect.jazzFitAnalysis}</p>
+              </div>
+              <div className="glass rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-jazz-sky mb-2">NBA Comparisons</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {selectedProspect.comps.map((c, i) => (
+                    <span key={i} className="px-3 py-1 rounded-full text-sm bg-jazz-purple/50 text-jazz-sky border border-jazz-purple">{c}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="glass rounded-xl p-4 text-center">
+                <span className="text-xs text-gray-400">Projected Range</span>
+                <div className="text-lg font-bold text-jazz-sky">{selectedProspect.projected}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ============================================================
+// SECTION: FAN MAP — real visitor tracking with US-first map
+// ============================================================
+
+// US state boundaries as simplified SVG path data for an Albers projection
+// We use a simple lat/lng → pixel projection for the US bounding box
+const US_BOUNDS = { minLat: 24.5, maxLat: 49.5, minLng: -125, maxLng: -66.5 };
+const WORLD_BOUNDS = { minLat: -60, maxLat: 72, minLng: -180, maxLng: 180 };
+
+function projectPoint(lat, lng, bounds, width, height) {
+  const x = ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * width;
+  const y = ((bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat)) * height;
+  return { x, y };
+}
+
+function isInUS(lat, lng) {
+  return lat >= US_BOUNDS.minLat && lat <= US_BOUNDS.maxLat &&
+         lng >= US_BOUNDS.minLng && lng <= US_BOUNDS.maxLng;
+}
+
+// Reverse geocode — show state only for US, country for international
+async function reverseGeocode(lat, lng) {
+  try {
+    const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=5`);
+    const data = await resp.json();
+    const state = data.address?.state || '';
+    const country = data.address?.country_code?.toUpperCase() || '??';
+    const label = country === 'US' && state ? state : (data.address?.country || 'Unknown');
+    return { city: label, country };
+  } catch {
+    return { city: 'Unknown', country: '??' };
+  }
+}
+
+const STORAGE_KEY = 'jazzketball_fanmap_visitors';
+
+function loadVisitors() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveVisitors(visitors) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(visitors)); } catch {}
+}
+
+function FanMap() {
+  const [visitors, setVisitors] = useState(() => loadVisitors());
+  const [userLoc, setUserLoc] = useState(null);
+  const [hovCity, setHovCity] = useState(null);
+  const [geoStatus, setGeoStatus] = useState('pending');
+  const [isNewVisit, setIsNewVisit] = useState(false);
+
+  const hasIntl = visitors.some(v => !isInUS(v.lat, v.lng));
+  const mapBounds = hasIntl ? WORLD_BOUNDS : US_BOUNDS;
+  const mapWidth = 800;
+  const mapHeight = hasIntl ? 500 : 500;
+
+  useEffect(() => {
+    if (!navigator.geolocation) { setGeoStatus('denied'); return; }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = Math.round(pos.coords.latitude * 10) / 10;
+        const lng = Math.round(pos.coords.longitude * 10) / 10;
+        setUserLoc({ lat, lng });
+        setGeoStatus('granted');
+
+        const geo = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+
+        setVisitors(prev => {
+          const existing = prev.find(v => Math.abs(v.lat - lat) < 0.2 && Math.abs(v.lng - lng) < 0.2);
+          let updated;
+          if (existing) {
+            updated = prev.map(v => v === existing ? { ...v, count: v.count + 1, lastVisit: new Date().toISOString() } : v);
+          } else {
+            setIsNewVisit(true);
+            updated = [...prev, { lat, lng, city: geo.city, country: geo.country, count: 1, lastVisit: new Date().toISOString() }];
+          }
+          saveVisitors(updated);
+          return updated;
+        });
+      },
+      () => setGeoStatus('denied')
+    );
+  }, []);
+
+  const totalVisits = visitors.reduce((s, v) => s + v.count, 0);
+  const uniqueLocations = visitors.length;
+  const top5 = [...visitors].sort((a, b) => b.count - a.count).slice(0, 5);
+  const flags = { US: '🇺🇸', GB: '🇬🇧', JP: '🇯🇵', AU: '🇦🇺', FR: '🇫🇷', CA: '🇨🇦', MX: '🇲🇽', SG: '🇸🇬', DE: '🇩🇪', BR: '🇧🇷', '??': '🌍' };
+
+  // Recognizable US continental outline (simplified but accurate shape)
+  // Coordinates mapped to 800x500 SVG viewBox using US_BOUNDS projection
+  const usOutline = useMemo(() => {
+    // Key coastal/border points of the continental US, projected
+    const pts = [
+      // Pacific NW
+      [-124.7, 48.4], [-124.2, 46.3], [-123.9, 46.2], [-124.1, 43.5], [-124.4, 42.0],
+      // California coast
+      [-124.2, 40.4], [-123.8, 39.4], [-122.4, 37.8], [-121.9, 36.6], [-120.6, 35.1],
+      [-118.6, 34.0], [-117.3, 32.7],
+      // Mexican border
+      [-114.7, 32.7], [-111.1, 31.3], [-108.2, 31.8], [-106.6, 31.8], [-104.0, 30.0],
+      [-103.0, 29.0], [-101.4, 29.8], [-100.0, 28.2], [-97.2, 25.9], [-97.1, 26.4],
+      // Gulf coast
+      [-97.0, 28.0], [-96.5, 28.8], [-95.0, 29.7], [-94.5, 29.4], [-93.8, 29.7],
+      [-91.8, 29.5], [-89.6, 29.0], [-89.0, 29.0], [-88.8, 30.2], [-87.6, 30.3],
+      [-86.5, 30.4], [-85.0, 29.9], [-84.0, 30.0], [-83.0, 29.0], [-82.0, 27.5],
+      [-81.0, 25.5], [-80.0, 25.2],
+      // Florida east coast up
+      [-80.1, 26.5], [-80.4, 28.5], [-81.1, 30.7], [-81.4, 31.5],
+      // Atlantic coast north
+      [-79.5, 33.0], [-77.9, 34.3], [-75.5, 35.5], [-75.5, 37.0], [-76.0, 37.3],
+      [-76.3, 38.0], [-75.1, 38.8], [-74.7, 39.3], [-74.0, 40.5], [-73.7, 40.6],
+      [-72.0, 41.0], [-71.0, 41.5], [-70.0, 41.7], [-69.9, 42.0], [-70.6, 42.7],
+      [-71.0, 42.8], [-70.8, 43.1], [-67.0, 44.5], [-67.0, 47.2],
+      // Canadian border
+      [-69.0, 47.4], [-71.0, 45.0], [-74.7, 45.0], [-76.8, 43.6], [-79.0, 43.3],
+      [-82.4, 41.7], [-83.5, 42.0], [-84.4, 46.5], [-85.0, 46.8], [-88.0, 46.0],
+      [-89.6, 48.0], [-95.2, 49.0], [-123.3, 49.0], [-124.7, 48.4]
+    ];
+    return pts.map(([lng, lat]) => {
+      const p = projectPoint(lat, lng, US_BOUNDS, mapWidth, mapHeight);
+      return `${p.x},${p.y}`;
+    }).join(' ');
+  }, [mapWidth, mapHeight]);
+
+  // SLC reference point
+  const slcPt = projectPoint(40.76, -111.89, hasIntl ? WORLD_BOUNDS : US_BOUNDS, mapWidth, mapHeight);
+
+  return (
+    <section className="py-12 px-4 max-w-7xl mx-auto">
+      <h2 className="text-3xl font-black text-center mb-2">
+        <span className="text-jazz-sky">JAZZ</span> NATION
+      </h2>
+      <p className="text-center text-gray-400 mb-6">
+        {visitors.length === 0 ? 'Be the first fan on the map — allow location access below' :
+          `${uniqueLocations} location${uniqueLocations !== 1 ? 's' : ''} \u2022 ${totalVisits} total visit${totalVisits !== 1 ? 's' : ''}`}
+      </p>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Map */}
+        <div className="lg:col-span-3 glass rounded-2xl p-4 relative" style={{ minHeight: 420 }}>
+          <svg viewBox={`0 0 ${mapWidth} ${mapHeight}`} className="w-full" style={{ background: '#05000A', borderRadius: 12 }}>
+            {!hasIntl ? (
+              <>
+                {/* US continental outline */}
+                <polygon points={usOutline} fill="rgba(78,0,142,0.12)" stroke="rgba(78,0,142,0.5)" strokeWidth="1.5" strokeLinejoin="round" />
+                {/* State boundary lines */}
+                {[
+                  // Major vertical state lines (west to east longitude boundaries)
+                  [[-104.05, 49], [-104.05, 37]], // MT/ND → CO/KS border
+                  [[-104.05, 37], [-104.05, 32]], // CO/KS → NM/TX
+                  [[-109.05, 49], [-109.05, 37]], // MT/WY/CO/UT border
+                  [[-109.05, 37], [-109.05, 31.3]], // AZ/NM
+                  [[-114.04, 42], [-114.04, 35]], // NV/UT/AZ
+                  [[-120, 42], [-120, 39]], // OR/CA border segment
+                  [[-100, 49], [-100, 37]], // ND/SD/NE/KS
+                  [[-100, 37], [-100, 34]], // KS/OK
+                  [[-97, 49], [-97, 37]], // MN/IA/MO border area
+                  [[-95.3, 49], [-95.3, 43]], // MN west
+                  [[-90, 49], [-90, 43]], // WI/MN
+                  [[-87.5, 42], [-87.5, 37]], // IL/IN
+                  [[-84.8, 42], [-84.8, 39]], // OH/IN
+                  [[-81, 42], [-81, 39]], // PA/OH
+                  // Major horizontal state lines (latitude boundaries)
+                  [[-124, 42], [-117, 42]], // OR/CA
+                  [[-117, 42], [-111, 42]], // NV/ID, UT/ID
+                  [[-111, 42], [-104, 42]], // WY south
+                  [[-111, 37], [-109, 37]], // UT/AZ
+                  [[-109, 37], [-102, 37]], // CO/NM, CO/OK
+                  [[-102, 37], [-95, 37]], // KS/OK
+                  [[-104, 46], [-97, 46]], // SD/ND
+                  [[-104, 43], [-97, 43]], // SD/NE
+                  [[-97, 40], [-90, 40]], // KS-NE/MO-IA
+                  [[-90, 45], [-83, 45]], // WI/MI
+                  [[-90, 42.5], [-82, 42.5]], // IL/WI, approximate
+                  [[-80, 42], [-75, 42]], // PA/NY
+                  [[-81, 36.5], [-75.5, 36.5]], // NC/VA approx
+                  [[-88, 35], [-81, 35]], // TN/GA/NC
+                  [[-91, 33], [-88, 33]], // LA/MS/AL
+                ].map(([[lng1, lat1], [lng2, lat2]], i) => {
+                  const p1 = projectPoint(lat1, lng1, US_BOUNDS, mapWidth, mapHeight);
+                  const p2 = projectPoint(lat2, lng2, US_BOUNDS, mapWidth, mapHeight);
+                  return <line key={`sb${i}`} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="rgba(78,0,142,0.25)" strokeWidth="0.5" />;
+                })}
+                {/* SLC home marker */}
+                <circle cx={slcPt.x} cy={slcPt.y} r="4" fill="none" stroke="rgba(121,163,220,0.3)" strokeWidth="1" strokeDasharray="3 2" />
+                <text x={slcPt.x} y={slcPt.y - 8} textAnchor="middle" fill="rgba(121,163,220,0.35)" fontSize="9" fontWeight="600" fontFamily="Inter">SLC</text>
+              </>
+            ) : (
+              <>
+                {/* Simplified world continents */}
+                <polygon points={usOutline} fill="rgba(78,0,142,0.12)" stroke="rgba(78,0,142,0.3)" strokeWidth="0.8" />
+                <ellipse cx="420" cy="160" rx="90" ry="100" fill="rgba(78,0,142,0.1)" stroke="rgba(78,0,142,0.25)" strokeWidth="0.5" />
+                <ellipse cx="430" cy="75" rx="120" ry="55" fill="rgba(78,0,142,0.1)" stroke="rgba(78,0,142,0.25)" strokeWidth="0.5" />
+                <ellipse cx="600" cy="180" rx="80" ry="80" fill="rgba(78,0,142,0.1)" stroke="rgba(78,0,142,0.25)" strokeWidth="0.5" />
+                <ellipse cx="700" cy="330" rx="50" ry="40" fill="rgba(78,0,142,0.1)" stroke="rgba(78,0,142,0.25)" strokeWidth="0.5" />
+              </>
+            )}
+
+            {/* Visitor dots */}
+            {visitors.map((v, i) => {
+              const { x, y } = projectPoint(v.lat, v.lng, mapBounds, mapWidth, mapHeight);
+              if (x < 0 || x > mapWidth || y < 0 || y > mapHeight) return null;
+              const r = Math.min(4 + Math.log2(v.count + 1) * 3, 16);
+              const isUser = userLoc && Math.abs(v.lat - userLoc.lat) < 0.2 && Math.abs(v.lng - userLoc.lng) < 0.2;
+              return (
+                <g key={i} onMouseEnter={() => setHovCity(v)} onMouseLeave={() => setHovCity(null)} className="cursor-pointer">
+                  {/* Outer glow */}
+                  <circle cx={x} cy={y} r={r * 2.5} fill="rgba(121,163,220,0.08)" />
+                  <circle cx={x} cy={y} r={r * 1.5} fill="rgba(121,163,220,0.15)" className={isUser && isNewVisit ? 'pulse-dot' : ''} />
+                  {/* Core dot */}
+                  <circle cx={x} cy={y} r={r} fill="#79A3DC" opacity={0.7 + Math.min(v.count / 20, 0.3)} />
+                  {/* "You" label for user's dot */}
+                  {isUser && (
+                    <text x={x} y={y - r - 6} textAnchor="middle" fill="#79A3DC" fontSize="10" fontWeight="700" fontFamily="Inter">YOU</text>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+
+          {hovCity && (
+            <div className="absolute top-4 left-4 glass rounded-lg px-4 py-3 text-sm z-10">
+              <div className="font-bold text-jazz-sky">{flags[hovCity.country] || '🌍'} {hovCity.country === 'US' && hovCity.city.includes(', ') ? hovCity.city.split(', ').pop() : hovCity.city}</div>
+              <div className="text-gray-400">{hovCity.count} visit{hovCity.count !== 1 ? 's' : ''} &bull; Last: {new Date(hovCity.lastVisit).toLocaleDateString()}</div>
+            </div>
+          )}
+
+          {geoStatus === 'pending' && visitors.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="glass rounded-xl px-6 py-4 text-center">
+                <div className="text-jazz-sky font-semibold mb-1">Allow location access</div>
+                <div className="text-sm text-gray-400">to put yourself on the Jazz Nation map</div>
+              </div>
+            </div>
+          )}
+
+          {geoStatus === 'denied' && visitors.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="glass rounded-xl px-6 py-4 text-center">
+                <div className="text-gray-400 text-sm">We know you're out there, Jazz fan 👀</div>
+                <div className="text-gray-500 text-xs mt-1">Enable location to join Jazz Nation</div>
+              </div>
+            </div>
+          )}
+
+          {/* Map mode indicator */}
+          <div className="absolute bottom-3 right-3 glass rounded-full px-3 py-1 text-[10px] text-gray-500">
+            {hasIntl ? 'WORLD VIEW' : 'UNITED STATES'}
+          </div>
+        </div>
+
+        {/* Leaderboard */}
+        <div className="glass rounded-2xl p-4">
+          <h3 className="text-sm font-bold text-jazz-sky mb-4">TOP LOCATIONS</h3>
+          {top5.length === 0 ? (
+            <div className="text-center text-gray-500 text-sm py-8">No visitors yet. Be the first!</div>
+          ) : top5.map((v, i) => (
+            <div key={i} className="flex items-center gap-3 mb-3 pb-3 border-b border-jazz-purple/30 last:border-0">
+              <span className="text-lg font-black text-jazz-sky w-6">#{i + 1}</span>
+              <span className="text-lg">{flags[v.country] || '🌍'}</span>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-sm truncate">{v.country === 'US' && v.city.includes(', ') ? v.city.split(', ').pop() : v.city}</div>
+                <div className="text-xs text-gray-400">{v.count} visit{v.count !== 1 ? 's' : ''}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================================
+// SECTION: FAN POLL — 50 questions, one at a time, with dashboards
+// ============================================================
+const ALL_POLL_QUESTIONS = [
+  { id: 1, q: "With their 2026 first-round pick, the Jazz should select:", opts: ["AJ Dybantsa", "Darryn Peterson", "Cameron Boozer", "Keaton Wagler", "Best Available Player"], cat: "Draft" },
+  { id: 2, q: "Is the Jazz rebuild officially over?", opts: ["Yes", "Not yet", "Getting close"], cat: "Team" },
+  { id: 3, q: "Who is the Jazz's most important player?", opts: ["Keyonte George", "Lauri Markkanen", "Jaren Jackson Jr.", "Ace Bailey", "Walker Kessler"], cat: "Roster" },
+  { id: 4, q: "The JJJ trade was:", opts: ["A huge win", "Fair for both sides", "We gave up too much", "Too early to tell"], cat: "Trade" },
+  { id: 5, q: "Keyonte George's ceiling is:", opts: ["MVP candidate", "Perennial All-Star", "Solid starter", "Elite role player"], cat: "Roster" },
+  { id: 6, q: "Ace Bailey's rookie season has been:", opts: ["Exceeded expectations", "Met expectations", "Slightly disappointing", "Still developing"], cat: "Roster" },
+  { id: 7, q: "The Jazz will make the playoffs in 2027:", opts: ["Definitely", "Probably", "50/50", "Unlikely", "No way"], cat: "Team" },
+  { id: 8, q: "Best potential backcourt partner for George?", opts: ["Ace Bailey", "A draft pick", "A free agent signing", "Cody Williams breakout"], cat: "Roster" },
+  { id: 9, q: "Walker Kessler's long-term role should be:", opts: ["Starting center", "Elite backup", "Trade chip", "Depends on development"], cat: "Roster" },
+  { id: 10, q: "Which Jazz player has the highest trade value?", opts: ["Lauri Markkanen", "Jaren Jackson Jr.", "Keyonte George", "Ace Bailey", "Walker Kessler"], cat: "Trade" },
+  { id: 11, q: "Markkanen and JJJ together are:", opts: ["Best frontcourt in the West", "Top 5 in the league", "Good but not elite yet", "Spacing concerns"], cat: "Roster" },
+  { id: 12, q: "Rate Will Hardy as head coach:", opts: ["Top 10 in the NBA", "Above average", "Average", "Jury still out"], cat: "Team" },
+  { id: 13, q: "The Jazz's biggest weakness is:", opts: ["Perimeter defense", "Bench depth", "Playmaking", "Rebounding", "Clutch execution"], cat: "Team" },
+  { id: 14, q: "Which free agent should the Jazz target?", opts: ["A veteran point guard", "A 3-and-D wing", "A stretch big", "Nobody — develop the young guys"], cat: "Team" },
+  { id: 15, q: "Brice Sensabaugh's role next season:", opts: ["Sixth man", "Starter", "Trade candidate", "Deep bench"], cat: "Roster" },
+  { id: 16, q: "Kyle Filipowski's ceiling:", opts: ["Starting center", "Valuable rotation big", "End of bench", "Future trade piece"], cat: "Roster" },
+  { id: 17, q: "Best uniform in Jazz history?", opts: ["Purple mountains (current)", "Classic purple/teal", "2000s navy blue", "City editions", "Throwback shorts era"], cat: "Culture" },
+  { id: 18, q: "Greatest Jazz player of all time?", opts: ["Karl Malone", "John Stockton", "Donovan Mitchell era", "Adrian Dantley", "Mark Eaton"], cat: "Culture" },
+  { id: 19, q: "Jazz's most exciting player to watch:", opts: ["Ace Bailey dunks", "Keyonte George handles", "JJJ blocks", "Markkanen threes", "Kessler putbacks"], cat: "Culture" },
+  { id: 20, q: "Ideal Jazz playing style:", opts: ["Fast pace, lots of threes", "Grind-it-out defense", "Balanced both ends", "Star-driven isolation", "Motion offense"], cat: "Team" },
+  { id: 21, q: "Should the Jazz trade up in the draft?", opts: ["Yes, for Dybantsa", "Yes, for Peterson", "No, stay put", "Trade down for assets"], cat: "Draft" },
+  { id: 22, q: "Jazz's championship window opens:", opts: ["2027", "2028", "2029", "2030+", "It's already open"], cat: "Team" },
+  { id: 23, q: "If you could add ONE former Jazz player to this roster:", opts: ["Prime Donovan Mitchell", "Prime Rudy Gobert", "Prime Deron Williams", "Prime Carlos Boozer", "Prime Andrei Kirilenko"], cat: "Culture" },
+  { id: 24, q: "John Konchar's impact has been:", opts: ["Better than expected", "Exactly what we needed", "Just a role player", "Forgettable"], cat: "Roster" },
+  { id: 25, q: "Jock Landale's stretch-5 game is:", opts: ["Crucial for the rotation", "Nice to have", "Overrated", "Perfect Kessler complement"], cat: "Roster" },
+  { id: 26, q: "Most likely Jazz All-Star next year:", opts: ["Lauri Markkanen", "Jaren Jackson Jr.", "Keyonte George", "Ace Bailey", "None of them"], cat: "Roster" },
+  { id: 27, q: "Isaiah Collier's development grade:", opts: ["A — exceeding expectations", "B — on track", "C — needs work", "D — concerning", "Incomplete"], cat: "Roster" },
+  { id: 28, q: "Cody Williams will become:", opts: ["Future starter", "Solid rotation wing", "Trade piece", "Out of the rotation"], cat: "Roster" },
+  { id: 29, q: "The Jazz should prioritize:", opts: ["Winning now", "Developing youth", "Balance of both", "Tank for better pick"], cat: "Team" },
+  { id: 30, q: "Best arena atmosphere game:", opts: ["Jazz vs Lakers", "Jazz vs Warriors", "Jazz vs Nuggets", "Jazz vs Thunder", "Playoff games only"], cat: "Culture" },
+  { id: 31, q: "Danny Ainge's tenure grade:", opts: ["A", "B", "C", "D", "Too early to grade"], cat: "Team" },
+  { id: 32, q: "Keaton Wagler would be the perfect Jazz pick because:", opts: ["Elite shooting fit", "Defensive versatility", "Low maintenance role", "Immediate contributor", "All of the above"], cat: "Draft" },
+  { id: 33, q: "EJ Harkless's role going forward:", opts: ["Defensive specialist minutes", "Trade for assets", "G-League development", "Emergency depth only"], cat: "Roster" },
+  { id: 34, q: "Will Riley's development timeline:", opts: ["Contributing next year", "2 years away", "3+ years away", "Bust potential"], cat: "Roster" },
+  { id: 35, q: "Jazz's best player in crunch time:", opts: ["Keyonte George", "Lauri Markkanen", "Jaren Jackson Jr.", "Ace Bailey"], cat: "Roster" },
+  { id: 36, q: "Biggest Jazz rival right now:", opts: ["Denver Nuggets", "OKC Thunder", "Minnesota Wolves", "Sacramento Kings", "Everyone in the West"], cat: "Culture" },
+  { id: 37, q: "The Jazz Note logo should:", opts: ["Stay forever", "Get a modern update", "Go back to mountains", "Add more purple"], cat: "Culture" },
+  { id: 38, q: "Ideal Jazz draft strategy:", opts: ["Best player available", "Fill biggest need", "Trade picks for stars", "Stockpile future picks"], cat: "Draft" },
+  { id: 39, q: "JJJ's defensive impact has been:", opts: ["Transformative", "Very good", "Good but overhyped", "Hard to measure yet"], cat: "Roster" },
+  { id: 40, q: "Best Jazz home game promotion:", opts: ["Bobblehead nights", "Jersey giveaways", "Dollar hot dog night", "Bear vs kids races", "Halftime dunk shows"], cat: "Culture" },
+  { id: 41, q: "Jazz's offensive identity should center on:", opts: ["George PnR with JJJ", "Markkanen post-ups", "Bailey in transition", "Ball movement", "Three-point barrage"], cat: "Team" },
+  { id: 42, q: "Predict Jazz's 2027 win total:", opts: ["50+ wins", "45-49 wins", "40-44 wins", "35-39 wins", "Under 35 wins"], cat: "Team" },
+  { id: 43, q: "Would you trade Markkanen for a top-3 pick?", opts: ["Absolutely", "Only for #1 overall", "No way", "Depends on the prospect"], cat: "Trade" },
+  { id: 44, q: "Best Jazz commentator moment:", opts: ["Hot Rod Hundley era", "Craig Bolerjack call", "Matt Harpring analysis", "Thurl Bailey takes", "David Locke stats"], cat: "Culture" },
+  { id: 45, q: "If Jazz could have ONE superstar via trade:", opts: ["Luka Doncic", "Giannis Antetokounmpo", "Shai Gilgeous-Alexander", "Victor Wembanyama", "Nobody — keep the core"], cat: "Trade" },
+  { id: 46, q: "Jazz should invest most in:", opts: ["Player development staff", "Analytics department", "Scouting network", "Coaching staff", "Fan experience"], cat: "Team" },
+  { id: 47, q: "Markkanen's 3-point shooting is:", opts: ["Best in the NBA for his size", "Top 5 big-man shooter ever", "Elite but not historic", "Good but streaky"], cat: "Roster" },
+  { id: 48, q: "Will the Jazz retire any current player's jersey?", opts: ["Markkanen for sure", "JJJ if he stays", "George if he becomes a star", "Too early to say", "Multiple players"], cat: "Culture" },
+  { id: 49, q: "Cameron Boozer's Jazz fit concern is:", opts: ["Frontcourt crowding", "Not athletic enough", "Doesn't shoot threes", "Would be fine actually"], cat: "Draft" },
+  { id: 50, q: "Rate the Jazz's future outlook (1-5 stars):", opts: ["5 stars — dynasty incoming", "4 stars — contender soon", "3 stars — solid foundation", "2 stars — still building", "1 star — worried"], cat: "Team" }
+];
+
+const POLL_STORAGE_KEY = 'jazzketball_poll_data';
+const POLL_ANSWERED_KEY = 'jazzketball_poll_answered';
+const POLL_ORDER_KEY = 'jazzketball_poll_order';
+
+function loadPollData() {
+  try { return JSON.parse(localStorage.getItem(POLL_STORAGE_KEY)) || {}; } catch { return {}; }
+}
+function savePollData(data) {
+  try { localStorage.setItem(POLL_STORAGE_KEY, JSON.stringify(data)); } catch {}
+}
+function loadAnswered() {
+  try { return JSON.parse(localStorage.getItem(POLL_ANSWERED_KEY)) || {}; } catch { return {}; }
+}
+function saveAnswered(data) {
+  try { localStorage.setItem(POLL_ANSWERED_KEY, JSON.stringify(data)); } catch {}
+}
+function getShuffledOrder() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(POLL_ORDER_KEY));
+    if (saved && saved.length === ALL_POLL_QUESTIONS.length) return saved;
+  } catch {}
+  const order = ALL_POLL_QUESTIONS.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+  try { localStorage.setItem(POLL_ORDER_KEY, JSON.stringify(order)); } catch {}
+  return order;
+}
+
+const POLL_COLORS = ['#79A3DC', '#4E008E', '#7B2FBF', '#A8C4E8', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B'];
+
+function FanPoll() {
+  const [pollData, setPollData] = useState(() => loadPollData());
+  const [answered, setAnswered] = useState(() => loadAnswered());
+  const [order] = useState(() => getShuffledOrder());
+  const [showDashboard, setShowDashboard] = useState(false);
+
+  // Find first unanswered question in this user's shuffled order
+  const currentIdx = order.findIndex(i => !answered[ALL_POLL_QUESTIONS[i].id]);
+  const currentQ = currentIdx >= 0 ? ALL_POLL_QUESTIONS[order[currentIdx]] : null;
+  const answeredCount = Object.keys(answered).length;
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [selectedQId, setSelectedQId] = useState(null);
+
+  const vote = (qId, optIdx) => {
+    if (answered[qId]) return;
+    setSelectedAnswer(optIdx);
+    setSelectedQId(qId);
+
+    const key = `q${qId}`;
+    const newData = { ...pollData };
+    if (!newData[key]) newData[key] = {};
+    newData[key][optIdx] = (newData[key][optIdx] || 0) + 1;
+    setPollData(newData);
+    savePollData(newData);
+
+    const newAnswered = { ...answered, [qId]: optIdx };
+    setAnswered(newAnswered);
+    saveAnswered(newAnswered);
+  };
+
+  const goNext = () => {
+    setSelectedAnswer(null);
+    setSelectedQId(null);
+  };
+
+  const getQData = (qId) => {
+    const key = `q${qId}`;
+    return pollData[key] || {};
+  };
+
+  const getTotalVotes = (qId) => {
+    const d = getQData(qId);
+    return Object.values(d).reduce((s, v) => s + v, 0);
+  };
+
+  // Category stats for dashboard
+  const cats = ['Draft', 'Roster', 'Team', 'Trade', 'Culture'];
+  const catCounts = {};
+  cats.forEach(c => { catCounts[c] = ALL_POLL_QUESTIONS.filter(q => q.cat === c && answered[q.id] !== undefined).length; });
+  const catTotals = {};
+  cats.forEach(c => { catTotals[c] = ALL_POLL_QUESTIONS.filter(q => q.cat === c).length; });
+
+  // Most voted questions
+  const mostVoted = ALL_POLL_QUESTIONS
+    .map(q => ({ ...q, total: getTotalVotes(q.id) }))
+    .filter(q => q.total > 0)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5);
+
+  return (
+    <section className="py-12 px-4 max-w-5xl mx-auto">
+      <h2 className="text-3xl font-black text-center mb-2">
+        <span className="text-jazz-sky">FAN</span> POLL
+      </h2>
+
+      {/* Progress bar */}
+      <div className="max-w-md mx-auto mb-2">
+        <div className="flex justify-between text-xs text-gray-400 mb-1">
+          <span>{answeredCount} of {ALL_POLL_QUESTIONS.length} answered</span>
+          <span>{Math.round((answeredCount / ALL_POLL_QUESTIONS.length) * 100)}%</span>
+        </div>
+        <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+          <div className="h-full bg-jazz-sky rounded-full transition-all duration-500" style={{ width: `${(answeredCount / ALL_POLL_QUESTIONS.length) * 100}%` }} />
+        </div>
+      </div>
+
+      {/* Toggle */}
+      <div className="flex justify-center gap-3 mb-8">
+        <button onClick={() => setShowDashboard(false)}
+          className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${!showDashboard ? 'bg-jazz-sky text-black' : 'glass text-gray-400 hover:text-white'}`}>
+          Vote
+        </button>
+        <button onClick={() => setShowDashboard(true)}
+          className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${showDashboard ? 'bg-jazz-sky text-black' : 'glass text-gray-400 hover:text-white'}`}>
+          Dashboard
+        </button>
+      </div>
+
+      {!showDashboard ? (
+        /* VOTING VIEW */
+        currentQ ? (
+          <div className="max-w-2xl mx-auto">
+            <div className="glass rounded-2xl p-6 animate-fade-in" key={currentQ.id}>
+              <div className="flex items-center justify-between mb-4">
+                <span className="px-3 py-1 rounded-full text-xs font-bold border border-jazz-purple text-jazz-light">{currentQ.cat}</span>
+                <span className="text-xs text-gray-500">Q{answeredCount + 1}</span>
+              </div>
+              <h3 className="text-xl font-bold text-center mb-6">{currentQ.q}</h3>
+              <div className="space-y-3">
+                {currentQ.opts.map((opt, i) => {
+                  const data = getQData(currentQ.id);
+                  const total = Object.values(data).reduce((s, v) => s + v, 0);
+                  const votes = data[i] || 0;
+                  const pct = total > 0 ? Math.round((votes / total) * 100) : 0;
+                  const isSelected = selectedAnswer === i && selectedQId === currentQ.id;
+                  const hasVoted = answered[currentQ.id] !== undefined;
+                  return (
+                    <button key={i} onClick={() => vote(currentQ.id, i)}
+                      disabled={hasVoted}
+                      className={`w-full text-left rounded-xl p-4 transition-all duration-300 relative overflow-hidden
+                        ${isSelected ? 'border-2 border-jazz-sky bg-jazz-sky/10' : hasVoted ? 'glass opacity-80' : 'glass hover:border-jazz-sky/30 cursor-pointer'}`}>
+                      {hasVoted && (
+                        <div className="absolute inset-0 rounded-xl overflow-hidden">
+                          <div className="h-full bg-jazz-purple/20 transition-all duration-700" style={{ width: `${pct}%` }} />
+                        </div>
+                      )}
+                      <div className="relative flex justify-between items-center">
+                        <span className={`font-semibold ${isSelected ? 'text-jazz-sky' : ''}`}>{opt}</span>
+                        {hasVoted && <span className="text-jazz-sky font-bold text-lg">{pct}%</span>}
+                      </div>
+                      {hasVoted && <div className="relative text-xs text-gray-500 mt-1">{votes} vote{votes !== 1 ? 's' : ''}</div>}
+                    </button>
+                  );
+                })}
+              </div>
+              {answered[currentQ.id] !== undefined && (
+                <div className="mt-6 text-center animate-fade-in">
+                  <button onClick={goNext}
+                    className="px-8 py-3 rounded-xl bg-jazz-sky text-black font-bold text-lg hover:bg-yellow-400 transition-all">
+                    Next Question &rarr;
+                  </button>
+                </div>
+              )}
+              <p className="text-center text-xs text-gray-500 mt-4">{getTotalVotes(currentQ.id) > 0 ? `${getTotalVotes(currentQ.id)} total votes` : 'Be the first to vote!'}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center glass rounded-2xl p-8 max-w-md mx-auto">
+            <div className="text-4xl mb-3">🏆</div>
+            <h3 className="text-xl font-bold text-jazz-sky mb-2">All Done!</h3>
+            <p className="text-gray-400">You've answered all 50 questions. Check the Dashboard for results!</p>
+            <button onClick={() => setShowDashboard(true)} className="mt-4 px-6 py-2 rounded-xl bg-jazz-sky text-black font-bold hover:bg-yellow-400 transition-all">
+              View Dashboard
+            </button>
+          </div>
+        )
+      ) : (
+        /* DASHBOARD VIEW — community results analysis */
+        <div className="space-y-8 animate-fade-in">
+          {/* Overview stats */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="glass rounded-xl p-4 text-center">
+              <div className="text-3xl font-black text-jazz-sky">
+                {ALL_POLL_QUESTIONS.reduce((s, q) => s + getTotalVotes(q.id), 0)}
+              </div>
+              <div className="text-xs text-gray-400">Total Community Votes</div>
+            </div>
+            <div className="glass rounded-xl p-4 text-center">
+              <div className="text-3xl font-black text-jazz-sky">
+                {ALL_POLL_QUESTIONS.filter(q => getTotalVotes(q.id) > 0).length}
+              </div>
+              <div className="text-xs text-gray-400">Questions With Votes</div>
+            </div>
+            <div className="glass rounded-xl p-4 text-center">
+              <div className="text-3xl font-black text-jazz-sky">{answeredCount}/50</div>
+              <div className="text-xs text-gray-400">Your Progress</div>
+            </div>
+          </div>
+
+          {/* Community consensus — top winning answers by category */}
+          {cats.map(cat => {
+            const catQs = ALL_POLL_QUESTIONS.filter(q => q.cat === cat && getTotalVotes(q.id) > 0);
+            if (catQs.length === 0) return null;
+            return (
+              <div key={cat} className="glass rounded-2xl p-6">
+                <h3 className="text-lg font-bold text-jazz-sky mb-1">{cat}</h3>
+                <p className="text-xs text-gray-500 mb-4">{catQs.length} question{catQs.length !== 1 ? 's' : ''} voted on</p>
+                <div className="space-y-4">
+                  {catQs.map(q => {
+                    const data = getQData(q.id);
+                    const total = getTotalVotes(q.id);
+                    const sorted = q.opts.map((opt, i) => ({ opt, votes: data[i] || 0, i })).sort((a, b) => b.votes - a.votes);
+                    const winner = sorted[0];
+                    const winPct = total > 0 ? Math.round((winner.votes / total) * 100) : 0;
+                    return (
+                      <div key={q.id} className="glass rounded-xl p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <h4 className="font-semibold text-sm flex-1 text-gray-200">{q.q}</h4>
+                          <span className="text-xs text-gray-500 ml-2 whitespace-nowrap">{total} votes</span>
+                        </div>
+                        {/* Winner highlight */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-jazz-sky font-bold">{winner.opt}</span>
+                          <span className="text-jazz-sky font-black text-lg">{winPct}%</span>
+                          {winPct >= 60 && <span className="text-xs px-2 py-0.5 rounded-full bg-jazz-sky/20 text-jazz-sky">Strong consensus</span>}
+                          {winPct >= 40 && winPct < 60 && <span className="text-xs px-2 py-0.5 rounded-full bg-jazz-purple/30 text-jazz-light">Split vote</span>}
+                        </div>
+                        {/* All options as bars */}
+                        <div className="space-y-1.5">
+                          {sorted.map((s, si) => {
+                            const pct = total > 0 ? Math.round((s.votes / total) * 100) : 0;
+                            return (
+                              <div key={si} className="flex items-center gap-2">
+                                <div className="text-xs text-gray-400 w-28 truncate">{s.opt}</div>
+                                <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                                  <div className="h-full rounded-full transition-all duration-500" style={{
+                                    width: `${pct}%`,
+                                    background: si === 0 ? '#79A3DC' : si === 1 ? '#4E008E' : '#7B2FBF'
+                                  }} />
+                                </div>
+                                <span className="text-xs text-gray-500 w-10 text-right">{pct}%</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Votes by category chart */}
+          {(() => {
+            const chartData = cats.map(c => ({
+              name: c,
+              votes: ALL_POLL_QUESTIONS.filter(q => q.cat === c).reduce((s, q) => s + getTotalVotes(q.id), 0)
+            })).filter(d => d.votes > 0);
+            return chartData.length > 0 && (
+              <div className="glass rounded-2xl p-6">
+                <h3 className="text-lg font-bold text-jazz-sky mb-4">Votes by Category</h3>
+                <div style={{ height: 250 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(78,0,142,0.2)" />
+                      <XAxis dataKey="name" tick={{ fill: '#aaa', fontSize: 11 }} />
+                      <YAxis tick={{ fill: '#aaa', fontSize: 11 }} />
+                      <Tooltip contentStyle={{ background: '#0A0014', border: '1px solid #4E008E', borderRadius: 8 }} />
+                      <Bar dataKey="votes" fill="#79A3DC" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div className="text-center">
+            <button onClick={() => setShowDashboard(false)} className="px-6 py-2 rounded-xl glass text-jazz-sky hover:bg-jazz-sky/20 font-semibold">
+              {answeredCount < ALL_POLL_QUESTIONS.length ? 'Keep Voting' : 'Review Questions'}
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ============================================================
+// SECTION: LINEUP BUILDER
+// ============================================================
+function LineupBuilder() {
+  const positions = ['PG', 'SG', 'SF', 'PF', 'C'];
+  const [lineup, setLineup] = useState({ PG: null, SG: null, SF: null, PF: null, C: null });
+  const [report, setReport] = useState(null);
+
+  const assignPlayer = (player) => {
+    const posOptions = player.pos.split('/');
+    for (const pos of posOptions) {
+      if (lineup[pos] === null) {
+        setLineup(prev => ({ ...prev, [pos]: player }));
+        return;
+      }
+    }
+    // Try any empty slot
+    for (const pos of positions) {
+      if (!lineup[pos]) {
+        setLineup(prev => ({ ...prev, [pos]: player }));
+        return;
+      }
+    }
+  };
+
+  const filledCount = Object.values(lineup).filter(Boolean).length;
+  const usedNames = new Set(Object.values(lineup).filter(Boolean).map(p => p.name));
+
+  useEffect(() => {
+    if (filledCount === 5) {
+      const players = Object.values(lineup).filter(Boolean);
+      const totalPPG = players.reduce((s, p) => s + p.stats.ppg, 0).toFixed(1);
+      const totalRPG = players.reduce((s, p) => s + p.stats.rpg, 0).toFixed(1);
+      const hasJJJ = players.some(p => p.name.includes('Jackson'));
+      const hasKessler = players.some(p => p.name.includes('Kessler'));
+      const hasMarkkanen = players.some(p => p.name.includes('Markkanen'));
+      const hasGeorge = players.some(p => p.name.includes('George'));
+      const avgDef = players.reduce((s, p) => s + p.radar.Defense, 0) / 5;
+
+      let identity = 'Balanced';
+      let chemistry = 7;
+      const strengths = [];
+
+      if (hasMarkkanen && players.some(p => p.radar.Shooting > 70)) {
+        identity = 'Stretch Offense'; chemistry += 1;
+      }
+      if (hasGeorge) { identity = 'Guard-Driven'; strengths.push('Elite playmaking from Keyonte George drives the offense'); }
+      if (hasJJJ && hasKessler) { strengths.push('Elite defensive frontcourt — DPOY meets shot-blocking menace'); chemistry += 1; }
+      if (hasJJJ && hasMarkkanen) { strengths.push('Twin stretch-big spacing warps every defensive scheme'); identity = 'Inside-Out'; }
+      if (avgDef > 70) { strengths.push('Top-tier defensive unit — opponents score at a below-average rate'); chemistry += 1; }
+      if (strengths.length === 0) strengths.push('Versatile lineup with multiple scoring options');
+
+      chemistry = Math.min(chemistry, 10);
+
+      setReport({
+        ppg: totalPPG, rpg: totalRPG, chemistry, identity,
+        defRating: (105 - avgDef * 0.15).toFixed(1), strengths
+      });
+    } else {
+      setReport(null);
+    }
+  }, [lineup, filledCount]);
+
+  return (
+    <section className="py-12 px-4 max-w-5xl mx-auto">
+      <h2 className="text-3xl font-black text-center mb-2">
+        <span className="text-jazz-sky">LINEUP</span> BUILDER
+      </h2>
+      <p className="text-center text-gray-400 mb-6">Build your dream Jazz lineup</p>
+
+      {/* Position Slots */}
+      <div className="flex justify-center gap-3 mb-8 flex-wrap">
+        {positions.map(pos => (
+          <div key={pos} className={`glass rounded-xl p-4 w-32 text-center transition-all ${lineup[pos] ? 'border-jazz-sky/50' : 'border-dashed border-2 border-jazz-purple/50'}`}>
+            <div className="text-xs text-jazz-sky font-bold mb-2">{pos}</div>
+            {lineup[pos] ? (
+              <div>
+                <JerseyAvatar number={lineup[pos].number} size={48} />
+                <div className="text-xs font-semibold mt-1 truncate">{lineup[pos].name.split(' ').pop()}</div>
+              </div>
+            ) : (
+              <div className="text-3xl text-gray-600">+</div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Available Players */}
+      <div className="flex flex-wrap gap-2 justify-center mb-6">
+        {PLAYERS.map(p => (
+          <button key={p.name} onClick={() => assignPlayer(p)}
+            disabled={usedNames.has(p.name)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${usedNames.has(p.name) ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : 'glass text-white hover:bg-jazz-sky/20 hover:text-jazz-sky'}`}>
+            #{p.number} {p.name.split(' ').pop()}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex justify-center gap-3">
+        <button onClick={() => setLineup({ PG: null, SG: null, SF: null, PF: null, C: null })}
+          className="px-4 py-2 rounded-full glass text-gray-400 hover:text-white text-sm">Reset</button>
+      </div>
+
+      {/* Report */}
+      {report && (
+        <div className="mt-8 glass rounded-2xl p-6 animate-fade-in">
+          <h3 className="text-lg font-bold text-jazz-sky text-center mb-4">Lineup Report</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div className="text-center">
+              <div className="text-2xl font-black text-jazz-sky">{report.ppg}</div>
+              <div className="text-xs text-gray-400">Projected PPG</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-black text-jazz-sky">{report.rpg}</div>
+              <div className="text-xs text-gray-400">Projected RPG</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-black text-jazz-sky">{report.chemistry}/10</div>
+              <div className="text-xs text-gray-400">Chemistry</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-black text-jazz-sky">{report.defRating}</div>
+              <div className="text-xs text-gray-400">Def. Rating</div>
+            </div>
+          </div>
+          <div className="text-center mb-4">
+            <span className="px-4 py-1 rounded-full bg-jazz-sky/20 text-jazz-sky font-bold text-sm">{report.identity}</span>
+          </div>
+          <div className="space-y-2">
+            {report.strengths.map((s, i) => (
+              <div key={i} className="flex items-start gap-2 text-sm"><span className="text-green-400">&#10003;</span><span className="text-gray-300">{s}</span></div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ============================================================
+// SECTION: TRADE MACHINE
+// ============================================================
+function TradeMachine() {
+  const [jazzOut, setJazzOut] = useState([]);
+  const [incoming, setIncoming] = useState('');
+  const [analysis, setAnalysis] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const toggleJazzPlayer = (name) => {
+    setJazzOut(prev => prev.includes(name) ? prev.filter(n => n !== name) : prev.length < 2 ? [...prev, name] : prev);
+  };
+
+  const analyzeTrade = async () => {
+    if (!jazzOut.length || !incoming.trim()) return;
+    setLoading(true);
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': prompt('Enter your Anthropic API key:'), 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514', max_tokens: 1000,
+          system: "You are an NBA trade analyst. Evaluate trades for the Utah Jazz. Current core: Keyonte George (PG), Ace Bailey (SG, rookie), Lauri Markkanen (SF, All-Star), Jaren Jackson Jr (PF, DPOY), Walker Kessler (C). Be specific and analytical. Format: Start with a letter grade (A+ to F), then 3 bullet points for the trade, then 3 bullet points against. End with a Danny Ainge Approval rating (1-10).",
+          messages: [{ role: 'user', content: `Jazz trade away: ${jazzOut.join(', ')}. Jazz receive: ${incoming}. Analyze this trade.` }]
+        })
+      });
+      const data = await resp.json();
+      setAnalysis(data.content?.[0]?.text || 'Could not analyze trade.');
+    } catch (e) {
+      setAnalysis('Trade analysis requires an Anthropic API key. Enter a valid key to unlock AI-powered analysis.');
+    }
+    setLoading(false);
+  };
+
+  return (
+    <section className="py-12 px-4 max-w-4xl mx-auto">
+      <h2 className="text-3xl font-black text-center mb-2">
+        <span className="text-jazz-sky">TRADE</span> MACHINE
+      </h2>
+      <p className="text-center text-gray-400 mb-6">What if? Simulate trades with AI analysis</p>
+
+      <div className="glass rounded-2xl p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Jazz sends */}
+          <div>
+            <h3 className="text-sm font-bold text-red-400 mb-3">JAZZ SEND (select 1-2)</h3>
+            <div className="space-y-2">
+              {PLAYERS.map(p => (
+                <button key={p.name} onClick={() => toggleJazzPlayer(p.name)}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${jazzOut.includes(p.name) ? 'bg-red-600/20 border border-red-500/50 text-red-300' : 'glass text-gray-300 hover:text-white'}`}>
+                  #{p.number} {p.name} <span className="text-gray-500">({p.pos})</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Jazz receives */}
+          <div>
+            <h3 className="text-sm font-bold text-green-400 mb-3">JAZZ RECEIVE</h3>
+            <textarea value={incoming} onChange={e => setIncoming(e.target.value)}
+              placeholder="Type player names (e.g., 'Zach LaVine, 2027 1st round pick')"
+              className="w-full h-32 bg-gray-900/50 border border-jazz-purple rounded-xl p-3 text-sm text-white placeholder-gray-500 resize-none focus:outline-none focus:border-jazz-sky" />
+            <button onClick={analyzeTrade} disabled={loading || !jazzOut.length || !incoming.trim()}
+              className="mt-3 w-full py-3 rounded-xl font-bold text-sm transition-all bg-jazz-sky text-black hover:bg-yellow-400 disabled:opacity-40 disabled:cursor-not-allowed">
+              {loading ? 'Analyzing...' : '🔄 Analyze Trade'}
+            </button>
+          </div>
+        </div>
+
+        {analysis && (
+          <div className="mt-6 glass rounded-xl p-4 animate-fade-in">
+            <h3 className="text-sm font-bold text-jazz-sky mb-3">AI TRADE ANALYSIS</h3>
+            <div className="text-sm text-gray-300 leading-relaxed space-y-2"
+              dangerouslySetInnerHTML={{ __html: analysis
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-jazz-sky font-semibold">$1</strong>')
+                .replace(/\n\n/g, '</p><p class="mt-2">')
+                .replace(/\n- /g, '<br/>\u2022 ')
+                .replace(/\n/g, '<br/>')
+              }} />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ============================================================
+// SECTION: DRAFT SIMULATOR
+// ============================================================
+function DraftSimulator() {
+  const [simState, setSimState] = useState('idle'); // idle, simulating, picking, done
+  const [picks, setPicks] = useState([]);
+  const [available, setAvailable] = useState([...PROSPECTS]);
+  const [jazzOptions, setJazzOptions] = useState([]);
+  const [userPick, setUserPick] = useState(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [fanReactions, setFanReactions] = useState([]);
+  const jazzPickNum = 7;
+
+  const autoPickReasons = {
+    'WAS Wizards': 'Need a franchise cornerstone to build around',
+    'BKN Nets': 'Looking for star power to sell tickets in Brooklyn',
+    'CHA Hornets': 'Seeking a running mate for LaMelo Ball',
+    'TOR Raptors': 'Building through the draft — best player available',
+    'CHI Bulls': 'Desperate for young talent after rebuild began',
+    'NOP Pelicans': 'Need scoring punch to complement Zion',
+  };
+
+  const startSim = () => {
+    setSimState('simulating');
+    setPicks([]);
+    setAvailable([...PROSPECTS]);
+    setUserPick(null);
+    setFanReactions([]);
+    simulatePicks([...PROSPECTS], [], 1);
+  };
+
+  const simulatePicks = (avail, currentPicks, pickNum) => {
+    if (pickNum >= jazzPickNum) {
+      const top3 = avail.slice(0, 3);
+      setJazzOptions(top3);
+      setAvailable(avail);
+      setPicks(currentPicks);
+      setSimState('picking');
+      return;
+    }
+
+    setTimeout(() => {
+      const team = DRAFT_SIM_TEAMS[pickNum - 1];
+      const picked = avail[0];
+      const newAvail = avail.slice(1);
+      const newPicks = [...currentPicks, { ...team, player: picked, reason: autoPickReasons[team.team] || 'Best player available' }];
+      setPicks(newPicks);
+      setAvailable(newAvail);
+      simulatePicks(newAvail, newPicks, pickNum + 1);
+    }, 800);
+  };
+
+  const makeJazzPick = (prospect) => {
+    setUserPick(prospect);
+    setShowConfetti(true);
+    setSimState('done');
+
+    const reactions = [
+      { user: '@JazzFanForever', text: `${prospect.name}?! LET'S GOOOOO! This is the one! 🔥🔥🔥` },
+      { user: '@UtahHoops2026', text: `Interesting pick. I was hoping for someone else but I trust Danny Ainge.` },
+      { user: '@WasatchWarrior', text: `${prospect.name} + JJJ + Markkanen = CHAMPIONSHIP WINDOW OPEN 🏆` },
+      { user: '@JazzBear_SLC', text: `Not sure about this one... hope I'm wrong tho 😬` },
+      { user: '@NoteNation801', text: `The crowd at Delta Center is going WILD right now! Welcome to Utah, ${prospect.name.split(' ').pop()}!!! 💜💛` }
+    ];
+    setFanReactions(reactions);
+    setTimeout(() => setShowConfetti(false), 3000);
+  };
+
+  return (
+    <section className="py-12 px-4 max-w-4xl mx-auto">
+      <h2 className="text-3xl font-black text-center mb-2">
+        <span className="text-jazz-sky">DRAFT</span> SIMULATOR
+      </h2>
+      <p className="text-center text-gray-400 mb-6">Play as the Jazz GM — make the pick</p>
+
+      {simState === 'idle' && (
+        <div className="text-center">
+          <button onClick={startSim} className="px-8 py-4 rounded-2xl bg-jazz-sky text-black font-bold text-lg hover:bg-yellow-400 transition-all pulse-sky">
+            🎲 Start Mock Draft
+          </button>
+        </div>
+      )}
+
+      {(simState === 'simulating' || simState === 'picking' || simState === 'done') && (
+        <div className="glass rounded-2xl p-6">
+          {/* Previous picks */}
+          <div className="space-y-3 mb-6">
+            {picks.map((p, i) => (
+              <div key={i} className="flex items-center gap-4 glass rounded-lg p-3 animate-fade-in">
+                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-sm font-bold">#{p.pick}</div>
+                <div className="flex-1">
+                  <div className="font-bold text-sm">{p.team}</div>
+                  <div className="text-xs text-gray-400">selects</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-jazz-sky text-sm">{p.player.name}</div>
+                  <div className="text-xs text-gray-400">{p.player.pos} | {p.player.school}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {simState === 'simulating' && (
+            <div className="text-center py-8">
+              <div className="text-jazz-sky font-bold animate-pulse">Simulating picks...</div>
+            </div>
+          )}
+
+          {simState === 'picking' && (
+            <div className="animate-fade-in">
+              <div className="text-center mb-4">
+                <div className="text-jazz-sky font-black text-xl">WITH THE #{jazzPickNum} PICK...</div>
+                <div className="text-gray-400 text-sm">The Utah Jazz select:</div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {jazzOptions.map(p => (
+                  <button key={p.rank} onClick={() => makeJazzPick(p)}
+                    className="glass rounded-xl p-4 text-center hover:border-jazz-sky/50 hover:scale-105 transition-all">
+                    <div className="text-3xl font-black text-jazz-sky mb-2">#{p.rank}</div>
+                    <div className="font-bold">{p.name}</div>
+                    <div className="text-xs text-gray-400">{p.pos} | {p.school}</div>
+                    <div className="text-xs text-gray-400 mt-1">{p.stats.ppg} PPG | {p.stats.rpg} RPG</div>
+                    <div className={`text-xs font-bold mt-2 ${p.jazzFit >= 8 ? 'text-green-400' : 'text-yellow-400'}`}>Fit: {p.jazzFit}/10</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {simState === 'done' && userPick && (
+            <div className="animate-fade-in">
+              {/* Confetti effect */}
+              {showConfetti && (
+                <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+                  {Array.from({length: 40}, (_, i) => (
+                    <div key={i} className="absolute" style={{
+                      left: `${Math.random() * 100}%`, top: '-20px',
+                      width: 10, height: 10, borderRadius: Math.random() > 0.5 ? '50%' : '0',
+                      background: ['#79A3DC', '#4E008E', '#A8C4E8', '#fff'][Math.floor(Math.random() * 4)],
+                      animation: `confetti ${1 + Math.random() * 2}s ${Math.random()}s forwards`
+                    }} />
+                  ))}
+                </div>
+              )}
+
+              <div className="glass rounded-xl p-3 mb-4 flex items-center gap-4">
+                <div className="w-8 h-8 rounded-full bg-jazz-sky flex items-center justify-center text-black text-sm font-bold">#{jazzPickNum}</div>
+                <div className="flex-1">
+                  <div className="font-bold text-sm text-jazz-sky">UTAH JAZZ</div>
+                  <div className="text-xs text-gray-400">select</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-jazz-sky text-lg">{userPick.name}</div>
+                  <div className="text-xs text-gray-400">{userPick.pos} | {userPick.school}</div>
+                </div>
+              </div>
+
+              <div className="glass rounded-xl p-4 mb-4">
+                <h3 className="text-sm font-bold text-jazz-sky mb-2">Why {userPick.name.split(' ').pop()} Fits</h3>
+                <p className="text-sm text-gray-300 leading-relaxed">{userPick.jazzFitAnalysis}</p>
+              </div>
+
+              <div className="glass rounded-xl p-4">
+                <h3 className="text-sm font-bold text-jazz-sky mb-3">Fan Reactions</h3>
+                <div className="space-y-3">
+                  {fanReactions.map((r, i) => (
+                    <div key={i} className="flex gap-3 animate-fade-in" style={{ animationDelay: `${i * 0.2}s` }}>
+                      <div className="w-8 h-8 rounded-full bg-jazz-purple/50 flex items-center justify-center text-xs text-jazz-sky">
+                        {r.user[1].toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="text-xs text-jazz-sky font-semibold">{r.user}</div>
+                        <div className="text-sm text-gray-300">{r.text}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="text-center mt-6">
+                <button onClick={startSim} className="px-6 py-2 rounded-full glass text-jazz-sky hover:bg-jazz-sky/20 text-sm font-semibold">
+                  Run Again
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ============================================================
+// SECTION: AI CHAT SCOUT
+// ============================================================
+function AIChatScout() {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const chatRef = useRef(null);
+
+  const systemPrompt = "You are the Utah Jazz's expert AI scout for the 2026-27 season. The Jazz's core is Keyonte George (#3, PG), Ace Bailey (#5, SG/SF, 2025 #5 pick), Lauri Markkanen (#23, SF/PF, All-Star), Jaren Jackson Jr. (#8, PF, 2x All-Star, 2023 DPOY, acquired from Memphis Feb 2026), and Walker Kessler (#24, C). JJJ was traded for Walter Clayton Jr., Kyle Anderson, Taylor Hendricks, Georges Niang, and 3 first-round picks. The 2026 draft's top prospects are Dybantsa, Peterson, and Boozer. Be confident, use analytics lingo, reference Utah's mountain identity. Keep answers concise (2-3 paragraphs max).";
+
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+    const userMsg = { role: 'user', content: input };
+    const newMessages = [...messages, userMsg].slice(-12);
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setLoading(true);
+
+    const key = apiKey || prompt('Enter your Anthropic API key:');
+    if (key && !apiKey) setApiKey(key);
+
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: systemPrompt,
+          messages: newMessages.map(m => ({ role: m.role, content: m.content }))
+        })
+      });
+      const data = await resp.json();
+      const assistantMsg = { role: 'assistant', content: data.content?.[0]?.text || 'I had trouble generating a response. Try again!' };
+      setMessages(prev => [...prev, assistantMsg]);
+    } catch (e) {
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Enter a valid Anthropic API key to chat with the Jazz AI Scout.' }]);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
+  }, [messages]);
+
+  return (
+    <>
+      {/* Floating Button */}
+      <button onClick={() => setOpen(!open)}
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-jazz-sky text-black flex items-center justify-center text-xl font-bold shadow-lg pulse-sky hover:scale-110 transition-transform">
+        {open ? '✕' : '🤖'}
+      </button>
+
+      {/* Chat Panel */}
+      {open && (
+        <div className="fixed bottom-24 right-6 z-40 w-96 max-w-[90vw] bg-jazz-midnight border border-jazz-purple rounded-2xl shadow-2xl animate-fade-in overflow-hidden">
+          <div className="bg-jazz-purple/30 p-4 border-b border-jazz-purple">
+            <h3 className="font-bold text-jazz-sky">Ask the Scout 🤖</h3>
+            <p className="text-xs text-gray-400">AI-powered Jazz analysis</p>
+          </div>
+
+          <div ref={chatRef} className="h-80 overflow-y-auto p-4 space-y-3">
+            {messages.length === 0 && (
+              <div className="text-center text-gray-500 text-sm py-8">
+                Ask about the roster, draft prospects, trades, or strategy!
+              </div>
+            )}
+            {messages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${m.role === 'user' ? 'bg-jazz-sky text-black' : 'glass text-gray-200'}`}>
+                  {m.content}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="glass rounded-xl px-4 py-2 text-sm text-gray-400 animate-pulse">Scouting...</div>
+              </div>
+            )}
+          </div>
+
+          <div className="p-3 border-t border-jazz-purple flex gap-2">
+            <input value={input} onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && sendMessage()}
+              placeholder="Ask about Jazz basketball..."
+              className="flex-1 bg-gray-900/50 border border-jazz-purple rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-jazz-sky" />
+            <button onClick={sendMessage} disabled={loading}
+              className="px-4 py-2 rounded-lg bg-jazz-sky text-black font-bold text-sm hover:bg-yellow-400 disabled:opacity-40">
+              Send
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ============================================================
+// MAIN APP
+// ============================================================
+function App() {
+  const [activeTab, setActiveTab] = useState('ROSTER');
+  const tabs = ['ROSTER', 'DRAFT ROOM', 'FAN MAP', 'POLL', 'LINEUPS', 'TRADES', 'MOCK DRAFT'];
+
+  return (
+    <div className="min-h-screen">
+      {/* Header */}
+      <header className="relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #1A0030, #0A0014)' }}>
+        <Particles />
+        <MountainBg />
+        <div className="relative z-10 text-center py-10 px-4">
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight">
+            <span className="text-jazz-sky">UTAH</span> <span className="text-white">JAZZ</span>
+          </h1>
+          <p className="text-xs md:text-sm text-gray-400 tracking-widest mt-1">2026-27 SEASON HUB</p>
+        </div>
+      </header>
+
+      {/* Sticky Navigation */}
+      <nav className="sticky top-0 z-30 border-b border-jazz-purple/30" style={{ background: 'rgba(26,10,46,0.95)', backdropFilter: 'blur(12px)' }}>
+        <div className="flex items-center justify-center gap-1 py-2.5 px-4 flex-wrap">
+          {tabs.map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 ${activeTab === tab ? 'bg-jazz-sky text-black shadow-lg shadow-jazz-sky/20' : 'text-gray-400 hover:text-white hover:bg-jazz-purple/30'}`}>
+              {tab}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      {/* Content */}
+      <main>
+        {activeTab === 'ROSTER' && <RosterSection />}
+        {activeTab === 'DRAFT ROOM' && <DraftRoom />}
+        {activeTab === 'FAN MAP' && <FanMap />}
+        {activeTab === 'POLL' && <FanPoll />}
+        {activeTab === 'LINEUPS' && <LineupBuilder />}
+        {activeTab === 'TRADES' && <TradeMachine />}
+        {activeTab === 'MOCK DRAFT' && <DraftSimulator />}
+      </main>
+
+      {/* Footer */}
+      <footer className="text-center py-8 px-4 border-t border-jazz-purple/20">
+        <p className="text-gray-500 text-sm">Jazzketball &mdash; Utah Jazz 2026-27 Season Hub</p>
+        <p className="text-gray-600 text-xs mt-1">Built with React, Recharts, and Jazz purple passion</p>
+      </footer>
+
+      {/* AI Chat Scout - Always visible */}
+      <AIChatScout />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
