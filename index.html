@@ -612,13 +612,51 @@ const PROSPECTS = [
 // ============================================================
 // DATA: DRAFT SIMULATOR
 // ============================================================
-const DRAFT_SIM_TEAMS = [
-  { pick: 1, team: 'WAS Wizards' }, { pick: 2, team: 'BKN Nets' },
-  { pick: 3, team: 'CHA Hornets' }, { pick: 4, team: 'TOR Raptors' },
-  { pick: 5, team: 'CHI Bulls' }, { pick: 6, team: 'NOP Pelicans' },
-  { pick: 7, team: 'UTAH JAZZ' }, { pick: 8, team: 'DET Pistons' },
-  { pick: 9, team: 'PHI 76ers' }, { pick: 10, team: 'MIL Bucks' }
+// Lottery teams with real 2026 odds (percentage chance at #1 pick)
+// Based on inverse record — worst record = best odds
+const LOTTERY_TEAMS = [
+  { team: 'WAS Wizards', record: '17-65', odds: 14.0, need: 'Franchise player' },
+  { team: 'BKN Nets', record: '19-63', odds: 14.0, need: 'Star rebuild piece' },
+  { team: 'CHA Hornets', record: '21-61', odds: 14.0, need: 'LaMelo running mate' },
+  { team: 'TOR Raptors', record: '23-59', odds: 12.5, need: 'Build through the draft' },
+  { team: 'CHI Bulls', record: '24-58', odds: 10.5, need: 'Young talent infusion' },
+  { team: 'NOP Pelicans', record: '26-56', odds: 9.0, need: 'Complement Zion' },
+  { team: 'UTAH JAZZ', record: '28-54', odds: 7.5, need: 'Complete the core' },
+  { team: 'DET Pistons', record: '29-53', odds: 6.0, need: 'Cade backcourt partner' },
+  { team: 'PHI 76ers', record: '30-52', odds: 4.5, need: 'Post-Embiid rebuild' },
+  { team: 'SAS Spurs', record: '31-51', odds: 3.0, need: 'Wemby supporting cast' },
+  { team: 'POR Blazers', record: '32-50', odds: 2.0, need: 'Scoot backcourt help' },
+  { team: 'SAC Kings', record: '33-49', odds: 1.5, need: 'Fox/Sabonis wing help' },
+  { team: 'IND Pacers', record: '34-48', odds: 1.0, need: 'Haliburton complement' },
+  { team: 'ATL Hawks', record: '35-47', odds: 0.5, need: 'Trae Young help' },
 ];
+
+// Simulate lottery using weighted random selection
+function simulateLottery() {
+  const teams = LOTTERY_TEAMS.map(t => ({ ...t }));
+  const lotteryResult = [];
+
+  // Top 4 picks determined by lottery balls
+  for (let pick = 0; pick < 4; pick++) {
+    const totalOdds = teams.reduce((s, t) => s + t.odds, 0);
+    let rand = Math.random() * totalOdds;
+    let selected = teams[0];
+    for (const t of teams) {
+      rand -= t.odds;
+      if (rand <= 0) { selected = t; break; }
+    }
+    lotteryResult.push({ ...selected, pick: pick + 1 });
+    const idx = teams.findIndex(t => t.team === selected.team);
+    teams.splice(idx, 1);
+  }
+
+  // Picks 5-14 go in reverse-record order
+  teams.forEach((t, i) => {
+    lotteryResult.push({ ...t, pick: 5 + i });
+  });
+
+  return lotteryResult;
+}
 
 // ============================================================
 // COMPONENTS
@@ -948,28 +986,139 @@ function RosterSection() {
 function DraftRoom() {
   const [filter, setFilter] = useState('All');
   const [selectedProspect, setSelectedProspect] = useState(null);
+  const [draftView, setDraftView] = useState('board'); // board, mock, intel
   const positions = ['All', 'PG', 'SG', 'SF', 'PF', 'C'];
 
   const filtered = filter === 'All' ? PROSPECTS : PROSPECTS.filter(p => p.pos.includes(filter));
 
+  // Position need scores for Jazz
+  const posNeeds = [
+    { pos: 'SG/SF (Wing)', need: 9, reason: 'Biggest need — shooter to space the floor alongside JJJ/Markkanen' },
+    { pos: 'PG', need: 6, reason: 'George is locked in, but backup PG depth thin behind Collier' },
+    { pos: 'SF/PF (Forward)', need: 4, reason: 'Markkanen and JJJ fill both spots; depth nice but not critical' },
+    { pos: 'C', need: 3, reason: 'Kessler and Filipowski provide solid center rotation' },
+  ];
+
   return (
     <section className="py-12 px-4 max-w-7xl mx-auto">
       {/* Header Banner */}
-      <div className="rounded-2xl p-6 mb-8 text-center border-2 border-jazz-sky/40" style={{ background: 'linear-gradient(135deg, rgba(78,0,142,0.4) 0%, rgba(26,10,46,0.9) 50%, rgba(78,0,142,0.4) 100%)' }}>
+      <div className="rounded-2xl p-6 mb-8 text-center border-2 border-jazz-sky/40" style={{ background: 'linear-gradient(135deg, rgba(78,0,142,0.4) 0%, rgba(10,0,20,0.9) 50%, rgba(78,0,142,0.4) 100%)' }}>
         <h2 className="text-3xl font-black text-jazz-sky">2026 NBA DRAFT</h2>
-        <p className="text-gray-300 mt-2">The Jazz hold a 2026 first-round pick. The lottery is May 10.</p>
-        <div className="flex justify-center gap-6 mt-4">
+        <p className="text-gray-300 mt-2">NBA Draft Lottery: May 10, 2026 &bull; NBA Draft: June 25, 2026</p>
+        <div className="flex justify-center gap-4 mt-4 flex-wrap">
           <div className="rounded-lg px-5 py-3 border border-jazz-sky/30" style={{ background: 'rgba(121,163,220,0.08)' }}>
-            <div className="text-jazz-sky font-bold text-xl">#6 - #9</div>
+            <div className="text-jazz-sky font-bold text-xl">#6 – #9</div>
             <div className="text-xs text-gray-400">Projected Pick Range</div>
+          </div>
+          <div className="rounded-lg px-5 py-3 border border-jazz-sky/30" style={{ background: 'rgba(121,163,220,0.08)' }}>
+            <div className="text-jazz-sky font-bold text-xl">7.5%</div>
+            <div className="text-xs text-gray-400">Lottery Odds (#1 Pick)</div>
           </div>
           <div className="rounded-lg px-5 py-3 border border-amber-500/30" style={{ background: 'rgba(121,163,220,0.08)' }}>
             <div className="text-amber-400 font-bold text-xl">3 FRPs</div>
             <div className="text-xs text-gray-400">Sent to MEM for JJJ</div>
           </div>
+          <div className="rounded-lg px-5 py-3 border border-jazz-sky/30" style={{ background: 'rgba(121,163,220,0.08)' }}>
+            <div className="text-jazz-sky font-bold text-xl">28-54</div>
+            <div className="text-xs text-gray-400">Jazz Record</div>
+          </div>
         </div>
       </div>
 
+      {/* Draft sub-navigation */}
+      <div className="flex justify-center gap-2 mb-6">
+        {[['board', 'Big Board'], ['mock', 'Mock Draft Simulator'], ['intel', 'Draft Intel']].map(([key, label]) => (
+          <button key={key} onClick={() => setDraftView(key)}
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${draftView === key ? 'bg-jazz-sky text-black' : 'glass text-gray-400 hover:text-white'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* MOCK DRAFT VIEW */}
+      {draftView === 'mock' && <DraftSimulator />}
+
+      {/* DRAFT INTEL VIEW */}
+      {draftView === 'intel' && (
+        <div className="space-y-6 max-w-4xl mx-auto">
+          {/* Jazz needs */}
+          <div className="glass rounded-2xl p-6">
+            <h3 className="text-lg font-bold text-jazz-sky mb-4">Jazz Positional Needs</h3>
+            {posNeeds.map((n, i) => (
+              <div key={i} className="mb-4">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm font-semibold">{n.pos}</span>
+                  <span className="text-jazz-sky font-bold">{n.need}/10</span>
+                </div>
+                <div className="h-2.5 bg-gray-800 rounded-full overflow-hidden mb-1">
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${n.need * 10}%`, background: n.need >= 7 ? '#79A3DC' : n.need >= 5 ? '#4E008E' : '#333' }} />
+                </div>
+                <p className="text-xs text-gray-500">{n.reason}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Trade assets sent */}
+          <div className="glass rounded-2xl p-6">
+            <h3 className="text-lg font-bold text-jazz-sky mb-4">JJJ Trade — What Utah Sent</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { name: 'Walter Clayton Jr.', detail: 'Guard prospect' },
+                { name: 'Kyle Anderson', detail: 'Veteran wing' },
+                { name: 'Taylor Hendricks', detail: '2023 lottery pick' },
+                { name: 'Georges Niang', detail: 'Stretch-4 veteran' },
+                { name: '2027 1st Round Pick', detail: 'Unprotected' },
+                { name: '2029 1st Round Pick', detail: 'Top-5 protected' },
+                { name: '2031 1st Round Pick', detail: 'Swap rights' },
+              ].map((a, i) => (
+                <div key={i} className="glass rounded-lg p-3 text-center">
+                  <div className="text-sm font-semibold text-gray-200">{a.name}</div>
+                  <div className="text-xs text-gray-500">{a.detail}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Lottery odds breakdown */}
+          <div className="glass rounded-2xl p-6">
+            <h3 className="text-lg font-bold text-jazz-sky mb-4">2026 Lottery Odds</h3>
+            <div className="space-y-2">
+              {LOTTERY_TEAMS.map((t, i) => (
+                <div key={i} className={`flex items-center gap-3 rounded-lg p-2 ${t.team === 'UTAH JAZZ' ? 'bg-jazz-sky/10 border border-jazz-sky/30' : ''}`}>
+                  <span className="text-xs text-gray-500 w-6">{i + 1}</span>
+                  <span className={`text-sm font-semibold flex-1 ${t.team === 'UTAH JAZZ' ? 'text-jazz-sky' : 'text-gray-300'}`}>{t.team}</span>
+                  <span className="text-xs text-gray-400">{t.record}</span>
+                  <div className="w-20 h-2 bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-jazz-sky rounded-full" style={{ width: `${t.odds * 7}%` }} />
+                  </div>
+                  <span className="text-xs text-jazz-sky font-bold w-12 text-right">{t.odds}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Best fits quick list */}
+          <div className="glass rounded-2xl p-6">
+            <h3 className="text-lg font-bold text-jazz-sky mb-4">Best Jazz Fits in This Draft</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {PROSPECTS.filter(p => p.jazzFit >= 8).sort((a, b) => b.jazzFit - a.jazzFit).map(p => (
+                <div key={p.rank} className="glass rounded-lg p-3 flex items-center gap-3 cursor-pointer hover:border-jazz-sky/30 transition-all"
+                  onClick={() => { setDraftView('board'); setTimeout(() => setSelectedProspect(p), 100); }}>
+                  <div className="w-8 h-8 rounded-full bg-jazz-purple flex items-center justify-center text-jazz-sky text-xs font-bold">#{p.rank}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold truncate">{p.name}</div>
+                    <div className="text-xs text-gray-400">{p.pos} | {p.school}</div>
+                  </div>
+                  <span className="text-xs font-bold text-green-400 bg-green-600/20 px-2 py-0.5 rounded-full">Fit: {p.jazzFit}/10</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BIG BOARD VIEW */}
+      {draftView === 'board' && <>
       {/* Filters */}
       <div className="flex justify-center gap-2 mb-6 flex-wrap">
         {positions.map(pos => (
@@ -1079,6 +1228,7 @@ function DraftRoom() {
           </div>
         </div>
       )}
+      </>}
     </section>
   );
 }
@@ -1927,38 +2077,41 @@ function TradeMachine() {
 }
 
 // ============================================================
-// SECTION: DRAFT SIMULATOR
+// SECTION: DRAFT SIMULATOR (lottery odds-based)
 // ============================================================
 function DraftSimulator() {
-  const [simState, setSimState] = useState('idle'); // idle, simulating, picking, done
+  const [simState, setSimState] = useState('idle');
+  const [lotteryOrder, setLotteryOrder] = useState([]);
   const [picks, setPicks] = useState([]);
   const [available, setAvailable] = useState([...PROSPECTS]);
   const [jazzOptions, setJazzOptions] = useState([]);
+  const [jazzPickNum, setJazzPickNum] = useState(7);
   const [userPick, setUserPick] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [fanReactions, setFanReactions] = useState([]);
-  const jazzPickNum = 7;
-
-  const autoPickReasons = {
-    'WAS Wizards': 'Need a franchise cornerstone to build around',
-    'BKN Nets': 'Looking for star power to sell tickets in Brooklyn',
-    'CHA Hornets': 'Seeking a running mate for LaMelo Ball',
-    'TOR Raptors': 'Building through the draft — best player available',
-    'CHI Bulls': 'Desperate for young talent after rebuild began',
-    'NOP Pelicans': 'Need scoring punch to complement Zion',
-  };
 
   const startSim = () => {
-    setSimState('simulating');
+    const lottery = simulateLottery();
+    const jazzSlot = lottery.findIndex(t => t.team === 'UTAH JAZZ');
+    const jazzPick = jazzSlot + 1;
+
+    setLotteryOrder(lottery);
+    setJazzPickNum(jazzPick);
+    setSimState('lottery');
     setPicks([]);
     setAvailable([...PROSPECTS]);
     setUserPick(null);
     setFanReactions([]);
-    simulatePicks([...PROSPECTS], [], 1);
+
+    // Show lottery results for 3s then start picks
+    setTimeout(() => {
+      setSimState('simulating');
+      simulatePicks([...PROSPECTS], [], 1, lottery, jazzPick);
+    }, 3000);
   };
 
-  const simulatePicks = (avail, currentPicks, pickNum) => {
-    if (pickNum >= jazzPickNum) {
+  const simulatePicks = (avail, currentPicks, pickNum, lottery, jazzPick) => {
+    if (pickNum >= jazzPick) {
       const top3 = avail.slice(0, 3);
       setJazzOptions(top3);
       setAvailable(avail);
@@ -1968,69 +2121,94 @@ function DraftSimulator() {
     }
 
     setTimeout(() => {
-      const team = DRAFT_SIM_TEAMS[pickNum - 1];
-      const picked = avail[0];
-      const newAvail = avail.slice(1);
-      const newPicks = [...currentPicks, { ...team, player: picked, reason: autoPickReasons[team.team] || 'Best player available' }];
+      const team = lottery[pickNum - 1];
+      // Add some randomness to team picks — sometimes they don't take BPA
+      let pickIdx = 0;
+      if (Math.random() < 0.25 && avail.length > 2) {
+        // 25% chance team reaches for a need-based pick (take #2 or #3 instead of #1)
+        pickIdx = Math.floor(Math.random() * Math.min(3, avail.length));
+      }
+      const picked = avail[pickIdx];
+      const newAvail = [...avail]; newAvail.splice(pickIdx, 1);
+      const newPicks = [...currentPicks, { ...team, player: picked }];
       setPicks(newPicks);
       setAvailable(newAvail);
-      simulatePicks(newAvail, newPicks, pickNum + 1);
-    }, 800);
+      simulatePicks(newAvail, newPicks, pickNum + 1, lottery, jazzPick);
+    }, 700);
   };
 
   const makeJazzPick = (prospect) => {
     setUserPick(prospect);
     setShowConfetti(true);
     setSimState('done');
-
     const reactions = [
       { user: '@JazzFanForever', text: `${prospect.name}?! LET'S GOOOOO! This is the one! 🔥🔥🔥` },
       { user: '@UtahHoops2026', text: `Interesting pick. I was hoping for someone else but I trust Danny Ainge.` },
       { user: '@WasatchWarrior', text: `${prospect.name} + JJJ + Markkanen = CHAMPIONSHIP WINDOW OPEN 🏆` },
       { user: '@JazzBear_SLC', text: `Not sure about this one... hope I'm wrong tho 😬` },
-      { user: '@NoteNation801', text: `The crowd at Delta Center is going WILD right now! Welcome to Utah, ${prospect.name.split(' ').pop()}!!! 💜💛` }
+      { user: '@NoteNation801', text: `Welcome to Utah, ${prospect.name.split(' ').pop()}!!! The Delta Center is ROCKING! 💜` }
     ];
     setFanReactions(reactions);
     setTimeout(() => setShowConfetti(false), 3000);
   };
 
   return (
-    <section className="py-12 px-4 max-w-4xl mx-auto">
-      <h2 className="text-3xl font-black text-center mb-2">
-        <span className="text-jazz-sky">DRAFT</span> SIMULATOR
-      </h2>
-      <p className="text-center text-gray-400 mb-6">Play as the Jazz GM — make the pick</p>
-
+    <div className="max-w-4xl mx-auto">
       {simState === 'idle' && (
         <div className="text-center">
-          <button onClick={startSim} className="px-8 py-4 rounded-2xl bg-jazz-sky text-black font-bold text-lg hover:bg-yellow-400 transition-all pulse-sky">
-            🎲 Start Mock Draft
+          <p className="text-gray-400 text-sm mb-4">Lottery odds determine pick order. Results change every run.</p>
+          <button onClick={startSim} className="px-8 py-4 rounded-2xl bg-jazz-sky text-black font-bold text-lg hover:opacity-90 transition-all pulse-sky">
+            Run Mock Draft
           </button>
+        </div>
+      )}
+
+      {simState === 'lottery' && (
+        <div className="glass rounded-2xl p-6 animate-fade-in">
+          <h3 className="text-lg font-bold text-jazz-sky text-center mb-4">Lottery Results</h3>
+          <p className="text-center text-gray-400 text-sm mb-4">The ping pong balls have spoken...</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {lotteryOrder.slice(0, 14).map((t, i) => (
+              <div key={i} className={`rounded-lg p-2 text-center text-sm ${t.team === 'UTAH JAZZ' ? 'bg-jazz-sky/20 border border-jazz-sky/50' : 'glass'}`}>
+                <div className="font-black text-jazz-sky">#{i + 1}</div>
+                <div className={`text-xs font-semibold ${t.team === 'UTAH JAZZ' ? 'text-jazz-sky' : 'text-gray-300'}`}>{t.team}</div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-4">
+            <div className="text-jazz-sky font-bold">Jazz pick at #{lotteryOrder.findIndex(t => t.team === 'UTAH JAZZ') + 1}</div>
+            <div className="text-gray-500 text-xs animate-pulse mt-2">Simulating picks...</div>
+          </div>
         </div>
       )}
 
       {(simState === 'simulating' || simState === 'picking' || simState === 'done') && (
         <div className="glass rounded-2xl p-6">
+          {/* Lottery result summary */}
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-jazz-purple/30">
+            <span className="text-xs text-gray-500">Jazz lottery position: <span className="text-jazz-sky font-bold">#{jazzPickNum}</span></span>
+            <span className="text-xs text-gray-600">{jazzPickNum <= 4 ? 'Lottery winner!' : jazzPickNum <= 7 ? 'Solid range' : 'Fell in the draft'}</span>
+          </div>
+
           {/* Previous picks */}
-          <div className="space-y-3 mb-6">
+          <div className="space-y-2 mb-6">
             {picks.map((p, i) => (
-              <div key={i} className="flex items-center gap-4 glass rounded-lg p-3 animate-fade-in">
-                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-sm font-bold">#{p.pick}</div>
-                <div className="flex-1">
-                  <div className="font-bold text-sm">{p.team}</div>
-                  <div className="text-xs text-gray-400">selects</div>
+              <div key={i} className="flex items-center gap-3 glass rounded-lg p-2.5 animate-fade-in">
+                <div className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold">#{p.pick}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-xs truncate">{p.team}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-jazz-sky text-sm">{p.player.name}</div>
-                  <div className="text-xs text-gray-400">{p.player.pos} | {p.player.school}</div>
+                  <div className="font-bold text-jazz-sky text-xs">{p.player.name}</div>
+                  <div className="text-[10px] text-gray-500">{p.player.pos} | {p.player.school}</div>
                 </div>
               </div>
             ))}
           </div>
 
           {simState === 'simulating' && (
-            <div className="text-center py-8">
-              <div className="text-jazz-sky font-bold animate-pulse">Simulating picks...</div>
+            <div className="text-center py-6">
+              <div className="text-jazz-sky font-bold animate-pulse">Picks {picks.length + 1}–{jazzPickNum - 1} loading...</div>
             </div>
           )}
 
@@ -2044,8 +2222,8 @@ function DraftSimulator() {
                 {jazzOptions.map(p => (
                   <button key={p.rank} onClick={() => makeJazzPick(p)}
                     className="glass rounded-xl p-4 text-center hover:border-jazz-sky/50 hover:scale-105 transition-all">
-                    <div className="text-3xl font-black text-jazz-sky mb-2">#{p.rank}</div>
-                    <div className="font-bold">{p.name}</div>
+                    <div className="text-2xl font-black text-jazz-sky mb-1">#{p.rank}</div>
+                    <div className="font-bold text-sm">{p.name}</div>
                     <div className="text-xs text-gray-400">{p.pos} | {p.school}</div>
                     <div className="text-xs text-gray-400 mt-1">{p.stats.ppg} PPG | {p.stats.rpg} RPG</div>
                     <div className={`text-xs font-bold mt-2 ${p.jazzFit >= 8 ? 'text-green-400' : 'text-yellow-400'}`}>Fit: {p.jazzFit}/10</div>
@@ -2057,7 +2235,6 @@ function DraftSimulator() {
 
           {simState === 'done' && userPick && (
             <div className="animate-fade-in">
-              {/* Confetti effect */}
               {showConfetti && (
                 <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
                   {Array.from({length: 40}, (_, i) => (
@@ -2093,9 +2270,7 @@ function DraftSimulator() {
                 <div className="space-y-3">
                   {fanReactions.map((r, i) => (
                     <div key={i} className="flex gap-3 animate-fade-in" style={{ animationDelay: `${i * 0.2}s` }}>
-                      <div className="w-8 h-8 rounded-full bg-jazz-purple/50 flex items-center justify-center text-xs text-jazz-sky">
-                        {r.user[1].toUpperCase()}
-                      </div>
+                      <div className="w-8 h-8 rounded-full bg-jazz-purple/50 flex items-center justify-center text-xs text-jazz-sky">{r.user[1].toUpperCase()}</div>
                       <div>
                         <div className="text-xs text-jazz-sky font-semibold">{r.user}</div>
                         <div className="text-sm text-gray-300">{r.text}</div>
@@ -2107,14 +2282,14 @@ function DraftSimulator() {
 
               <div className="text-center mt-6">
                 <button onClick={startSim} className="px-6 py-2 rounded-full glass text-jazz-sky hover:bg-jazz-sky/20 text-sm font-semibold">
-                  Run Again
+                  Run Again (New Lottery)
                 </button>
               </div>
             </div>
           )}
         </div>
       )}
-    </section>
+    </div>
   );
 }
 
@@ -2221,7 +2396,7 @@ function AIChatScout() {
 // ============================================================
 function App() {
   const [activeTab, setActiveTab] = useState('ROSTER');
-  const tabs = ['ROSTER', 'DRAFT ROOM', 'FAN MAP', 'POLL', 'LINEUPS', 'TRADES', 'MOCK DRAFT'];
+  const tabs = ['ROSTER', 'DRAFT ROOM', 'POLL', 'TRADES', 'LINEUPS', 'FAN MAP'];
 
   return (
     <div className="min-h-screen">
@@ -2255,9 +2430,8 @@ function App() {
         {activeTab === 'DRAFT ROOM' && <DraftRoom />}
         {activeTab === 'FAN MAP' && <FanMap />}
         {activeTab === 'POLL' && <FanPoll />}
-        {activeTab === 'LINEUPS' && <LineupBuilder />}
         {activeTab === 'TRADES' && <TradeMachine />}
-        {activeTab === 'MOCK DRAFT' && <DraftSimulator />}
+        {activeTab === 'LINEUPS' && <LineupBuilder />}
       </main>
 
       {/* Footer */}
