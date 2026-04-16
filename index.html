@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="NBA Season Hub — Roster, Draft, Trades, Lineups, and Fan engagement for all 30 NBA teams" />
+<meta name="description" content="NBA Vault — Roster, Draft, Trades, Lineups, and Fan engagement for all 30 NBA teams" />
 <meta name="referrer" content="no-referrer" />
-<title>NBA Season Hub</title>
+<title>NBA Vault</title>
 <link rel="preconnect" href="https://cdn.nba.com" crossorigin />
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -6281,7 +6281,7 @@ function useTeam() {
 }
 
 function storageKey(abbr, suffix) {
-  return `nbahub_${abbr.toLowerCase()}_${suffix}`;
+  return `nbavault_${abbr.toLowerCase()}_${suffix}`;
 }
 
 // ============================================================
@@ -8239,7 +8239,7 @@ function WikiPage() {
         <div className="glass rounded-2xl p-6">
           <h3 className="text-lg font-bold text-team-secondary mb-4">About This Hub</h3>
           <p className="text-gray-300 text-sm leading-relaxed mb-3">
-            This is an all-in-one NBA season hub — a fan-built dashboard covering roster breakdowns, draft analysis, trade simulators, lineup builders, and community polls for all 30 NBA teams. Built as a single-page React application that runs entirely in the browser with no backend server required.
+            NBA Vault is an all-in-one fan-built dashboard covering roster breakdowns, draft analysis, trade simulators, lineup builders, and community polls for all 30 NBA teams. Built as a single-page React application that runs entirely in the browser with no backend server required.
           </p>
           <p className="text-gray-300 text-sm leading-relaxed">
             Each team gets its own themed experience with dynamically swappable colors, data, and content. All 30 teams feature real rosters with player names, positions, jersey numbers, stats, and official NBA.com headshot images. The Utah Jazz edition has the deepest data: full scouting reports, 25 draft prospect analyses with team-fit scores, and 50 custom fan poll questions.
@@ -8347,7 +8347,7 @@ function FAQPage() {
     { q: 'Can I share a specific section?', a: 'Yes! Each tab has its own URL. For example, share the Draft Room by sending someone the URL ending in #draft. The page will open directly to that section.' },
     { q: 'How are player ratings calculated?', a: 'Player radar charts (Scoring, Playmaking, Defense, Athleticism, Shooting, IQ) are editorially assigned on a 0-100 scale based on scouting analysis. They represent current ability, not potential.' },
     { q: 'Where does the lottery odds data come from?', a: 'Draft lottery odds, team records, and probabilities are sourced from Tankathon.com, which tracks the official NBA lottery odds format.' },
-    { q: 'Is this an official NBA product?', a: 'No. This is an independent fan project with no affiliation to the NBA, any NBA team, or the National Basketball Players Association. All team names, logos, and player likenesses are property of their respective owners.' },
+    { q: 'Is this an official NBA product?', a: 'No. NBA Vault is an independent fan project with no affiliation to the NBA, any NBA team, or the National Basketball Players Association. All team names, logos, and player likenesses are property of their respective owners.' },
     { q: 'What browsers are supported?', a: 'Any modern browser (Chrome, Firefox, Safari, Edge) with JavaScript enabled. The app uses CSS custom properties, ES6+, and the Geolocation API — all widely supported since ~2018.' },
     { q: 'Can I contribute data for my team?', a: 'The codebase is a single HTML file. To add full data for a team, you\'d add player objects to that team\'s config in the TEAM_CONFIGS object, following the same structure as the Jazz data (JAZZ_PLAYERS, JAZZ_PROSPECTS, etc.).' },
   ];
@@ -8400,7 +8400,7 @@ function WelcomeModal({ onSelect }) {
     <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.85)' }}>
       <div className="w-full max-w-2xl mx-4 rounded-2xl p-8 border border-team-primary/40 animate-fade-in" style={{ background: 'linear-gradient(135deg, #1A0030, #0A0014)' }}>
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-black text-white mb-2">Welcome to the NBA Season Hub</h2>
+          <h2 className="text-3xl font-black text-white mb-2">Welcome to <span className="text-team-secondary">NBA Vault</span></h2>
           <p className="text-gray-400 text-sm">Pick your home team to personalize your experience</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -8440,10 +8440,10 @@ function WelcomeModal({ onSelect }) {
 }
 
 function App() {
-  const [showWelcome, setShowWelcome] = useState(() => !localStorage.getItem('nbahub_selected_team'));
+  const [showWelcome, setShowWelcome] = useState(() => !localStorage.getItem('nbavault_selected_team'));
   const [activeTab, setActiveTab] = useState(getTabFromHash);
   const [selectedTeam, setSelectedTeam] = useState(() => {
-    return localStorage.getItem('nbahub_selected_team') || 'UTA';
+    return localStorage.getItem('nbavault_selected_team') || 'UTA';
   });
   const tabs = ['ROSTER', 'DRAFT ROOM', 'POLL', 'TRADES', 'LINEUPS', 'FAN MAP'];
 
@@ -8470,15 +8470,15 @@ function App() {
 
   const switchTeam = useCallback((abbr) => {
     setSelectedTeam(abbr);
-    localStorage.setItem('nbahub_selected_team', abbr);
+    localStorage.setItem('nbavault_selected_team', abbr);
     const c = TEAM_CONFIGS[abbr].colors;
     applyTeamColors(c);
-    document.title = `${TEAM_CONFIGS[abbr].fullName} Season Hub`;
+    document.title = `${TEAM_CONFIGS[abbr].fullName} | NBA Vault`;
   }, []);
 
   useEffect(() => {
     applyTeamColors(config.colors);
-    document.title = `${config.fullName} Season Hub`;
+    document.title = `${config.fullName} | NBA Vault`;
   }, []);
 
   const ctxValue = useMemo(() => ({ config, teamData, isStub, switchTeam }), [selectedTeam]);
@@ -8503,7 +8503,7 @@ function App() {
           <h1 className="text-4xl md:text-5xl font-black tracking-tight">
             <span className="text-team-secondary">{config.city.toUpperCase()}</span> <span className="text-white">{config.name.toUpperCase()}</span>
           </h1>
-          <p className="text-xs md:text-sm text-gray-400 tracking-widest mt-1">2026-27 SEASON HUB</p>
+          <p className="text-xs md:text-sm text-gray-400 tracking-widest mt-1">2026-27 &bull; NBA VAULT</p>
         </div>
       </header>
 
@@ -8552,7 +8552,7 @@ function App() {
 
       {/* Footer */}
       <footer className="text-center py-8 px-4 border-t border-team-primary/20">
-        <p className="text-gray-500 text-sm">{config.fullName} &mdash; 2026-27 Season Hub</p>
+        <p className="text-gray-500 text-sm">{config.fullName} &mdash; 2026-27 | NBA Vault</p>
         <div className="flex justify-center gap-4 mt-2">
           <button onClick={() => navigateTo('WIKI')} className="text-team-secondary/70 hover:text-team-secondary text-xs transition-colors">Wiki &amp; Tech Stack</button>
           <span className="text-gray-700">|</span>
