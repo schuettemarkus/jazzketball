@@ -6196,17 +6196,47 @@ function DraftRoom() {
   const filtered = filter === 'All' ? prospects : prospects.filter(p => p.pos.includes(filter));
 
   // Position need scores
-  const posNeeds = config.abbr === 'UTA' ? [
-    { pos: 'SG/SF (Wing)', need: 9, reason: 'Biggest need — shooter to space the floor alongside JJJ/Markkanen' },
-    { pos: 'PG', need: 6, reason: 'George is locked in, but backup PG depth thin behind Collier' },
-    { pos: 'SF/PF (Forward)', need: 4, reason: 'Markkanen and JJJ fill both spots; depth nice but not critical' },
-    { pos: 'C', need: 3, reason: 'Kessler and Filipowski provide solid center rotation' },
-  ] : [
-    { pos: 'SG/SF (Wing)', need: 7, reason: 'Wing depth is always valuable in the modern NBA' },
-    { pos: 'PG', need: 5, reason: 'Playmaking is a premium skill' },
-    { pos: 'SF/PF (Forward)', need: 5, reason: 'Versatile forwards fit any system' },
-    { pos: 'C', need: 4, reason: 'Rim protection and rebounding depth' },
-  ];
+  // Generate positional needs from the team's actual roster
+  const posNeeds = useMemo(() => {
+    if (config.abbr === 'UTA') return [
+      { pos: 'SG/SF (Wing)', need: 9, reason: 'Biggest need — shooter to space the floor alongside JJJ/Markkanen' },
+      { pos: 'PG', need: 6, reason: 'George is locked in, but backup PG depth thin behind Collier' },
+      { pos: 'SF/PF (Forward)', need: 4, reason: 'Markkanen and JJJ fill both spots; depth nice but not critical' },
+      { pos: 'C', need: 3, reason: 'Kessler and Filipowski provide solid center rotation' },
+    ];
+    const players = teamData.players || [];
+    const byPos = { PG: [], SG: [], SF: [], PF: [], C: [] };
+    players.forEach(p => {
+      const primary = (p.pos || 'SF').split('/')[0];
+      if (byPos[primary]) byPos[primary].push(p);
+    });
+    // Score need: fewer players + lower avg PPG at position = higher need
+    const posGroups = [
+      { pos: 'PG', label: 'PG', players: byPos.PG },
+      { pos: 'SG/SF (Wing)', label: 'Wing', players: [...byPos.SG, ...byPos.SF] },
+      { pos: 'SF/PF (Forward)', label: 'Forward', players: [...byPos.SF, ...byPos.PF] },
+      { pos: 'C', label: 'Center', players: byPos.C },
+    ];
+    return posGroups.map(g => {
+      const count = g.players.length;
+      const avgPpg = count > 0 ? g.players.reduce((s, p) => s + (p.stats?.ppg || 0), 0) / count : 0;
+      const starPower = g.players.some(p => p.stats?.ppg >= 18);
+      let need = 5;
+      if (count <= 1) need += 3;
+      else if (count <= 2) need += 1;
+      else need -= 1;
+      if (avgPpg < 10) need += 2;
+      if (starPower) need -= 2;
+      need = Math.max(1, Math.min(10, need));
+      const reasons = {
+        PG: count <= 1 ? `Only ${count} point guard on the roster — playmaking depth is thin` : avgPpg < 12 ? 'PG production is below league average' : `${count} PGs rostered — depth is solid`,
+        'SG/SF (Wing)': count <= 2 ? 'Wing depth is thin — need a two-way player' : starPower ? 'Star wing in place, but depth never hurts' : 'No star-level wing scorer on the roster',
+        'SF/PF (Forward)': count <= 2 ? 'Forward rotation needs reinforcement' : starPower ? 'Strong forward core — depth adds flexibility' : 'Versatile forwards needed for modern lineups',
+        C: count <= 1 ? 'Only one true center — rim protection is a priority' : starPower ? 'Anchor in place at center — low priority' : 'Rim protection and rebounding could improve',
+      };
+      return { pos: g.pos, need, reason: reasons[g.pos] || 'Roster depth analysis' };
+    }).sort((a, b) => b.need - a.need);
+  }, [config.abbr, teamData.players]);
 
   return (
     <section className="py-12 px-4 max-w-7xl mx-auto">
