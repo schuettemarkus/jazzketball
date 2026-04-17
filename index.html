@@ -9020,7 +9020,7 @@ function WikiPage() {
             <p><span className="text-team-secondary font-semibold">Single File:</span> The entire application lives in one <code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">index.html</code> file (~620KB). No build step, no bundler, no server — hosted for free on GitHub Pages.</p>
             <p><span className="text-team-secondary font-semibold">30-Team Theming:</span> A <code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">TEAM_CONFIGS</code> object holds metadata for all 30 NBA teams. CSS custom properties enable instant color swaps via <code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">applyTeamColors()</code>.</p>
             <p><span className="text-team-secondary font-semibold">Context-Driven:</span> A React Context (<code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">TeamContext</code>) propagates the active team config, data, and switch function to all child components.</p>
-            <p><span className="text-team-secondary font-semibold">URL Routing:</span> Hash-based routing (<code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">#roster</code>, <code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">#draft</code>, etc.) enables shareable deep links to each section.</p>
+            <p><span className="text-team-secondary font-semibold">URL Routing:</span> Clean URL routing (<code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">/roster</code>, <code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">/draft</code>, etc.) with History API enables shareable deep links to each section.</p>
             <p><span className="text-team-secondary font-semibold">Full 30-Team Data:</span> All 30 teams have real rosters (12 players each, 360 total) with names, stats, headshots, scout reports, strengths/weaknesses, player comparisons, ceiling projections, and monthly trends. Each team has 25 custom poll questions. Draft prospects use shared data with per-team fit scoring.</p>
             <p><span className="text-team-secondary font-semibold">Performance:</span> Lazy-loaded images, memoized components (<code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">React.memo</code>), GPU-accelerated animations with <code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">will-change</code>, preconnect hints, and optimized font loading.</p>
             <p><span className="text-team-secondary font-semibold">Security:</span> HTML entity escaping on API responses, no embedded API keys, referrer policy, session-only key storage, and XSS-safe rendering patterns.</p>
@@ -9067,7 +9067,7 @@ function FAQPage() {
     { q: 'How does the Mock Draft Simulator work?', a: 'The simulator uses real lottery odds from Tankathon.com to randomly determine draft order (top 4 picks by lottery, picks 5-14 by inverse record). Then AI logic simulates each team\'s pick before your team selects. Each run produces different results.' },
     { q: 'Does the Trade Machine require an API key?', a: 'Yes. The Trade Machine uses the Claude API (Anthropic) for real-time analysis. You\'ll be prompted to enter your API key when you first use it. Your key is stored only in your browser session — it\'s never sent anywhere except directly to the Anthropic API.' },
     { q: 'How does the Fan Map work?', a: 'The Fan Map uses your browser\'s Geolocation API (with your permission) to plot your location on an SVG map. Visitor data is stored in localStorage. It\'s a fun visualization of where fans are checking in from — entirely client-side, no data leaves your browser.' },
-    { q: 'Can I share a specific section?', a: 'Yes! Each tab has its own URL. For example, share the Draft Room by sending someone the URL ending in #draft. The page will open directly to that section.' },
+    { q: 'Can I share a specific section?', a: 'Yes! Each tab has its own clean URL. For example, share the Draft Room by sending someone nbavault.com/draft. The page will open directly to that section.' },
     { q: 'How are player ratings calculated?', a: 'Player radar charts (Scoring, Playmaking, Defense, Athleticism, Shooting, IQ) are editorially assigned on a 0-100 scale based on scouting analysis. They represent current ability, not potential.' },
     { q: 'Where does the lottery odds data come from?', a: 'Draft lottery odds, team records, and probabilities are sourced from Tankathon.com, which tracks the official NBA lottery odds format.' },
     { q: 'Is this an official NBA product?', a: 'No. NBA Vault is an independent fan project with no affiliation to the NBA, any NBA team, or the National Basketball Players Association. All team names, logos, and player likenesses are property of their respective owners.' },
@@ -9105,15 +9105,35 @@ function FAQPage() {
 // MAIN APP
 // ============================================================
 const TAB_SLUGS = {
-  'ROSTER': 'roster', 'DRAFT ROOM': 'draft', 'PICKS': 'daily-picks',
+  'ROSTER': 'roster', 'DRAFT ROOM': 'draft', 'PICKS': 'picks',
   'POLL': 'poll', 'TRADES': 'trades', 'LINEUPS': 'lineups', 'FAN MAP': 'fanmap',
   'WIKI': 'wiki', 'FAQ': 'faq'
 };
 const SLUG_TO_TAB = Object.fromEntries(Object.entries(TAB_SLUGS).map(([k, v]) => [v, k]));
+// Backward compat: old hash slugs -> new
+SLUG_TO_TAB['daily-picks'] = 'PICKS';
 
-function getTabFromHash() {
+function getTabFromPath() {
+  // Check for SPA redirect (GitHub Pages 404.html stores path in sessionStorage)
+  const redirect = sessionStorage.getItem('spa-redirect');
+  if (redirect) {
+    sessionStorage.removeItem('spa-redirect');
+    const slug = redirect.replace(/^\//, '').replace(/\/$/, '');
+    if (SLUG_TO_TAB[slug]) {
+      history.replaceState(null, '', '/' + slug);
+      return SLUG_TO_TAB[slug];
+    }
+  }
+  // Read from pathname
+  const path = window.location.pathname.replace(/^\//, '').replace(/\/$/, '');
+  if (SLUG_TO_TAB[path]) return SLUG_TO_TAB[path];
+  // Backward compat: check hash
   const hash = window.location.hash.replace('#', '');
-  return SLUG_TO_TAB[hash] || 'ROSTER';
+  if (SLUG_TO_TAB[hash]) {
+    history.replaceState(null, '', '/' + (TAB_SLUGS[SLUG_TO_TAB[hash]] || hash));
+    return SLUG_TO_TAB[hash];
+  }
+  return 'ROSTER';
 }
 
 function WelcomeModal({ onSelect }) {
@@ -9165,7 +9185,7 @@ function WelcomeModal({ onSelect }) {
 
 function App() {
   const [showWelcome, setShowWelcome] = useState(() => !localStorage.getItem('nbavault_selected_team'));
-  const [activeTab, setActiveTab] = useState(getTabFromHash);
+  const [activeTab, setActiveTab] = useState(getTabFromPath);
   const [selectedTeam, setSelectedTeam] = useState(() => {
     return localStorage.getItem('nbavault_selected_team') || 'UTA';
   });
@@ -9173,13 +9193,14 @@ function App() {
 
   const navigateTo = useCallback((tab) => {
     setActiveTab(tab);
-    window.location.hash = TAB_SLUGS[tab] || '';
+    const slug = TAB_SLUGS[tab] || '';
+    history.pushState(null, '', '/' + slug);
   }, []);
 
   useEffect(() => {
-    const onHash = () => setActiveTab(getTabFromHash());
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
+    const onPop = () => setActiveTab(getTabFromPath());
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
   }, []);
 
   const config = TEAM_CONFIGS[selectedTeam];

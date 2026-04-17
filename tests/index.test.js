@@ -239,12 +239,12 @@ describe('URL Routing', () => {
     expect(scriptContent).toContain("'faq'");
   });
 
-  test('hash change listener is registered', () => {
-    expect(scriptContent).toContain("'hashchange'");
+  test('popstate listener is registered for clean URLs', () => {
+    expect(scriptContent).toContain("'popstate'");
   });
 
-  test('navigateTo function updates hash', () => {
-    expect(scriptContent).toContain('window.location.hash');
+  test('navigateTo function uses history.pushState', () => {
+    expect(scriptContent).toContain('history.pushState');
   });
 });
 
