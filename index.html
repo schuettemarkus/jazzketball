@@ -8044,7 +8044,19 @@ const TRICODE_MAP = {
   UTA:'UTA', WAS:'WAS',
 };
 
+const SCHEDULE_CACHE_KEY = 'nbavault_schedule_cache';
+
 async function fetchTodaysGames() {
+  // Check cache: 5 min for scheduled games, 2 min if any are live
+  try {
+    const cached = JSON.parse(localStorage.getItem(SCHEDULE_CACHE_KEY));
+    if (cached) {
+      const hasLive = cached.data.games.some(g => g.isLive);
+      const ttl = hasLive ? 2 * 60 * 1000 : 5 * 60 * 1000;
+      if (Date.now() - cached.timestamp < ttl) return cached.data;
+    }
+  } catch {}
+
   try {
     const resp = await fetch(CORS_PROXY + encodeURIComponent(NBA_SCOREBOARD_URL));
     if (!resp.ok) throw new Error('API failed');
@@ -8064,7 +8076,9 @@ async function fetchTodaysGames() {
       isFinal: g.gameStatus === 3,
       isScheduled: g.gameStatus === 1,
     }));
-    return { games, source: 'live', date: data.scoreboard?.gameDate };
+    const result = { games, source: 'live', date: data.scoreboard?.gameDate };
+    try { localStorage.setItem(SCHEDULE_CACHE_KEY, JSON.stringify({ data: result, timestamp: Date.now() })); } catch {}
+    return result;
   } catch (e) {
     return null;
   }
@@ -8172,12 +8186,21 @@ function setOddsApiKey(key) {
 const ODDS_MARKET_MAP = { player_points: 'PTS', player_rebounds: 'REB', player_assists: 'AST' };
 const STAT_TO_MARKET = { PTS: 'player_points', REB: 'player_rebounds', AST: 'player_assists' };
 const ODDS_CACHE_KEY = 'nbavault_odds_cache';
-const ODDS_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+const ODDS_EVENTS_CACHE_KEY = 'nbavault_odds_events';
+
+function getOddsCacheTTL() {
+  // Before 5PM ET: lines are stable, cache for 2 hours
+  // After 5PM ET: lines move closer to tip-off, cache for 20 min
+  try {
+    const etHour = parseInt(new Date().toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false }));
+    return etHour < 17 ? 2 * 60 * 60 * 1000 : 20 * 60 * 1000;
+  } catch { return 30 * 60 * 1000; }
+}
 
 function getOddsCache() {
   try {
     const cached = JSON.parse(localStorage.getItem(ODDS_CACHE_KEY));
-    if (cached && Date.now() - cached.timestamp < ODDS_CACHE_TTL) {
+    if (cached && Date.now() - cached.timestamp < getOddsCacheTTL()) {
       return cached.lines;
     }
   } catch {}
@@ -8198,14 +8221,25 @@ async function fetchOddsApiLines() {
   const apiKey = getOddsApiKey();
   if (!apiKey) return {};
   try {
-    // Step 1: Get today's NBA events (1 API call)
-    const eventsResp = await fetch(`${ODDS_API_BASE}/events?apiKey=${apiKey}&dateFormat=iso`);
-    if (!eventsResp.ok) return {};
-    const events = await eventsResp.json();
+    // Try to reuse cached event IDs from today (saves 1 API call)
+    let events = null;
+    const today = new Date().toISOString().split('T')[0];
+    try {
+      const cachedEvents = JSON.parse(localStorage.getItem(ODDS_EVENTS_CACHE_KEY));
+      if (cachedEvents && cachedEvents.date === today) events = cachedEvents.events;
+    } catch {}
+
+    if (!events) {
+      // Step 1: Get today's NBA events (1 API call)
+      const eventsResp = await fetch(`${ODDS_API_BASE}/events?apiKey=${apiKey}&dateFormat=iso`);
+      if (!eventsResp.ok) return {};
+      events = await eventsResp.json();
+      // Cache event IDs for the rest of the day
+      try { localStorage.setItem(ODDS_EVENTS_CACHE_KEY, JSON.stringify({ events, date: today })); } catch {}
+    }
     if (!events.length) { setOddsCache({}); return {}; }
 
-    // Step 2: Fetch player props for up to 2 events (2 API calls)
-    // Each event with 3 markets = 3 credits, so 2 events = 6 credits max
+    // Step 2: Fetch player props for up to 2 events
     const lines = {};
     const markets = 'player_points,player_rebounds,player_assists';
     const eventsToFetch = events.slice(0, 2);
@@ -8508,41 +8542,52 @@ function DailyPicks() {
   const [oddsLines, setOddsLines] = useState({});
   const [oddsSource, setOddsSource] = useState(null); // 'live' | 'none'
 
-  // Fetch real schedule + odds lines on mount
+  // Fetch real schedule, then odds only if games exist
   useEffect(() => {
     (async () => {
-      // Fetch schedule and odds in parallel
-      const [scheduleData, lines] = await Promise.all([
-        fetchTodaysGames(),
-        fetchOddsApiLines(),
-      ]);
+      const scheduleData = await fetchTodaysGames();
       let data = scheduleData;
       if (!data || data.games.length === 0) {
-        // No games from API — show empty state, don't fabricate matchups
         data = { games: [], source: 'none', date: new Date().toISOString().split('T')[0] };
       }
       setSchedule(data);
       setLoadingGames(false);
-      if (Object.keys(lines).length > 0) {
-        setOddsLines(lines);
-        setOddsSource('live');
+
+      // Only fetch odds if there are actual games (saves 3 API calls on off-days)
+      if (data.games.length > 0) {
+        const lines = await fetchOddsApiLines();
+        if (Object.keys(lines).length > 0) {
+          setOddsLines(lines);
+          setOddsSource('live');
+        } else {
+          setOddsSource('none');
+        }
       } else {
         setOddsSource('none');
       }
     })();
   }, []);
 
-  // Poll live box scores for in-progress games (every 60s)
+  // Poll live box scores — only during game hours (5PM-1AM ET)
   useEffect(() => {
     if (!schedule || schedule.source !== 'live') return;
     const hasLive = schedule.games.some(g => g.isLive);
-    if (!hasLive) return;
+    if (!hasLive) {
+      // No live games — check if any are upcoming within 30 min
+      const soonest = schedule.games.filter(g => g.isScheduled && g.startTime)
+        .map(g => new Date(g.startTime) - new Date()).filter(d => d > 0);
+      if (soonest.length === 0 || Math.min(...soonest) > 30 * 60 * 1000) return;
+    }
+    const etHour = new Date().toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false });
+    const hour = parseInt(etHour);
+    // Only poll between 5PM and 1AM ET
+    if (hour >= 2 && hour < 17) return;
     const poll = async () => {
       const stats = await fetchLiveBoxScores(schedule.games);
       if (Object.keys(stats).length > 0) setLiveStats(stats);
     };
-    poll(); // Initial fetch
-    const interval = setInterval(poll, 60000); // Every 60 seconds
+    poll();
+    const interval = setInterval(poll, 60000);
     return () => clearInterval(interval);
   }, [schedule]);
 
