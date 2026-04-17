@@ -8162,6 +8162,10 @@ async function sendWelcomeEmail(toEmail, pickData) {
 const ODDS_API_KEY_STORAGE = 'nbavault_odds_api_key';
 const ODDS_API_BASE = 'https://api.the-odds-api.com/v4/sports/basketball_nba';
 
+// ---- Admin Mode ----
+// Enable: in browser console run: localStorage.setItem('nbavault_admin', 'true'); location.reload();
+// Disable: localStorage.removeItem('nbavault_admin'); location.reload();
+
 function getOddsApiKey() {
   // Default key — replace with user's key via settings
   const key = localStorage.getItem(ODDS_API_KEY_STORAGE);
@@ -8783,7 +8787,8 @@ function DailyPicks() {
   const bestPick = useMemo(() => selectBestBet(allPicks), [allPicks]);
   const [winTracker, setWinTracker] = useState(loadWinTracker);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const FREE_LIMIT = 1; // 1 free pick visible (Pick of the Day is shown separately)
+  const isAdmin = useState(() => localStorage.getItem('nbavault_admin') === 'true')[0];
+  const FREE_LIMIT = isAdmin ? 999 : 1; // Admin sees all picks
 
   const recordBestBetResult = useCallback((result) => {
     setWinTracker(prev => {
@@ -9043,7 +9048,7 @@ function DailyPicks() {
               <div className="px-4 py-3 border-b border-team-primary/10 animate-fade-in" style={{ background: 'rgba(var(--team-primary-rgb),0.06)' }}>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Last 5 Games</span>
-                  <span className="text-[10px] text-gray-600">Line: {pick.line} {pick.statType}</span>
+                  <span className="text-[10px] text-gray-600">Line: O {pick.line} {pick.statType}</span>
                 </div>
                 <div className="grid grid-cols-5 gap-2">
                   {last5.map((g, gi) => (
@@ -9051,8 +9056,8 @@ function DailyPicks() {
                       <div className="text-[9px] text-gray-500">{g.date}</div>
                       <div className="text-[9px] text-gray-600 mb-1">vs {g.opp}</div>
                       <div className={`text-lg font-black ${g.hitLine ? 'text-green-400' : 'text-red-400'}`}>{g.statVal}</div>
-                      <div className="text-[9px] text-gray-500">{g.pts}p {g.reb}r {g.ast}a</div>
-                      <div className="text-[9px] text-gray-600">{g.min} min</div>
+                      <div className="text-[9px] text-gray-600 mt-0.5">Line: {pick.line}</div>
+                      <div className={`text-[9px] font-bold ${g.hitLine ? 'text-green-400' : 'text-red-400'}`}>{g.statVal >= pick.line ? `+${(g.statVal - pick.line).toFixed(1)}` : `${(g.statVal - pick.line).toFixed(1)}`}</div>
                     </div>
                   ))}
                 </div>
@@ -9146,7 +9151,7 @@ function DailyPicks() {
                 <div className="px-4 pb-4 animate-fade-in" style={{ background: 'rgba(var(--team-primary-rgb),0.06)' }}>
                   <div className="flex items-center gap-2 mb-2 pt-2 border-t border-team-primary/10">
                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Last 5 Games</span>
-                    <span className="text-[10px] text-gray-600">Line: {pick.line} {pick.statType}</span>
+                    <span className="text-[10px] text-gray-600">Line: O {pick.line} {pick.statType}</span>
                   </div>
                   <div className="grid grid-cols-5 gap-1.5">
                     {last5.map((g, gi) => (
@@ -9154,7 +9159,7 @@ function DailyPicks() {
                         <div className="text-[8px] text-gray-500">{g.date}</div>
                         <div className="text-[8px] text-gray-600">vs {g.opp}</div>
                         <div className={`text-base font-black ${g.hitLine ? 'text-green-400' : 'text-red-400'}`}>{g.statVal}</div>
-                        <div className="text-[8px] text-gray-600">{g.min}m</div>
+                        <div className={`text-[8px] font-bold ${g.hitLine ? 'text-green-400' : 'text-red-400'}`}>{g.statVal >= pick.line ? `+${(g.statVal - pick.line).toFixed(1)}` : `${(g.statVal - pick.line).toFixed(1)}`}</div>
                       </div>
                     ))}
                   </div>
