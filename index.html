@@ -19,6 +19,7 @@
 <link rel="preconnect" href="https://cdn.nba.com" />
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preconnect" href="https://unpkg.com" crossorigin />
 <link rel="dns-prefetch" href="https://unpkg.com" />
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -9176,20 +9177,10 @@ const SLUG_TO_TAB = Object.fromEntries(Object.entries(TAB_SLUGS).map(([k, v]) =>
 SLUG_TO_TAB['daily-picks'] = 'PICKS';
 
 function getTabFromPath() {
-  // Check for SPA redirect (GitHub Pages 404.html stores path in sessionStorage)
-  const redirect = sessionStorage.getItem('spa-redirect');
-  if (redirect) {
-    sessionStorage.removeItem('spa-redirect');
-    const slug = redirect.replace(/^\//, '').replace(/\/$/, '');
-    if (SLUG_TO_TAB[slug]) {
-      history.replaceState(null, '', '/' + slug);
-      return SLUG_TO_TAB[slug];
-    }
-  }
-  // Read from pathname
+  // Read from pathname (404.html is a copy of index.html, so deep links work directly)
   const path = window.location.pathname.replace(/^\//, '').replace(/\/$/, '');
   if (SLUG_TO_TAB[path]) return SLUG_TO_TAB[path];
-  // Backward compat: check hash
+  // Backward compat: check hash for old URLs
   const hash = window.location.hash.replace('#', '');
   if (SLUG_TO_TAB[hash]) {
     history.replaceState(null, '', '/' + (TAB_SLUGS[SLUG_TO_TAB[hash]] || hash));
