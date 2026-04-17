@@ -8579,7 +8579,7 @@ function DailyPicks() {
         if (!tc || !tc.players) return;
         const isHome = teamAbbr === game.home;
         const opponent = isHome ? game.away : game.home;
-        tc.players.filter(p => p.starter && p.stats.ppg >= 12).forEach(p => {
+        tc.players.filter(p => p.starter && p.stats.ppg >= 15).forEach(p => {
           candidates.push({ ...p, teamAbbr, teamName: tc.name, isHome, opponent, game });
         });
       });

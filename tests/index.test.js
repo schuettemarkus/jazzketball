@@ -1,5 +1,5 @@
 /**
- * Jazzketball Test Suite
+ * NBA Vault Test Suite
  * Validates HTML structure, data integrity, theming, and catches regressions.
  * Run: npm test
  */
@@ -365,7 +365,7 @@ describe('localStorage Key Stability', () => {
     expect(scriptContent).toContain("'nbavault_selected_team'");
   });
 
-  test('no jazzketball_ prefixed keys remain', () => {
+  test('no legacy jazzketball_ prefixed keys remain', () => {
     expect(scriptContent).not.toContain('jazzketball_');
   });
 });
