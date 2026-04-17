@@ -6089,10 +6089,10 @@ function RosterSection() {
   // League averages for comparison (2025-26 season)
   const leagueAvg = { ppg: 14.2, rpg: 5.4, apg: 3.1, fgPct: 46.0, threePct: 36.0 };
 
-  const StatWithDelta = ({ val, label, prev, showComp, compAvg }) => {
-    // Prefer YoY delta if available, otherwise show league comparison for starters
+  const StatWithDelta = ({ val, label, prev, showComp, compAvg, isRookie }) => {
+    // Prefer YoY delta if available, otherwise show league comparison (not for rookies)
     const delta = prev != null ? pctChange(val, prev) : null;
-    const comp = showComp && compAvg ? Math.round(((val - compAvg) / compAvg) * 100) : null;
+    const comp = showComp && compAvg && !isRookie ? Math.round(((val - compAvg) / compAvg) * 100) : null;
     const displayDelta = delta !== null ? delta : comp;
     const isUp = displayDelta > 0;
     const isDown = displayDelta < 0;
@@ -6143,9 +6143,9 @@ function RosterSection() {
           <p className="text-xs text-gray-400">{player.pos} | #{player.number}</p>
           {(() => { const b = getAutoBadge(player); return b ? <div className="mt-1.5"><Badge type={b} /></div> : null; })()}
           <div className={`flex justify-center gap-3 mt-2 ${large ? 'text-sm' : 'text-xs'} text-gray-400`}>
-            <StatWithDelta val={player.stats.ppg} label="PPG" prev={player.lastYear?.ppg} showComp={player.starter} compAvg={leagueAvg.ppg} />
-            <StatWithDelta val={player.stats.rpg} label="RPG" prev={player.lastYear?.rpg} showComp={player.starter} compAvg={leagueAvg.rpg} />
-            <StatWithDelta val={player.stats.apg} label="APG" prev={player.lastYear?.apg} showComp={player.starter} compAvg={leagueAvg.apg} />
+            <StatWithDelta val={player.stats.ppg} label="PPG" prev={player.lastYear?.ppg} showComp={player.starter} compAvg={leagueAvg.ppg} isRookie={player.lastYear === null} />
+            <StatWithDelta val={player.stats.rpg} label="RPG" prev={player.lastYear?.rpg} showComp={player.starter} compAvg={leagueAvg.rpg} isRookie={player.lastYear === null} />
+            <StatWithDelta val={player.stats.apg} label="APG" prev={player.lastYear?.apg} showComp={player.starter} compAvg={leagueAvg.apg} isRookie={player.lastYear === null} />
           </div>
         </div>
       </div>
