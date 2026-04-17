@@ -8121,31 +8121,59 @@ function DailyPicks() {
 
       {/* Best Bet of the Day */}
       {bestPick && (
-        <div className="rounded-2xl p-5 mb-8 border-2 border-team-secondary/40 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(var(--team-primary-rgb),0.3), rgba(var(--team-midnight-rgb),0.9))' }}>
-          <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-team-secondary text-black text-[10px] font-black">BEST BET</div>
-          <div className="flex items-center gap-4">
+        <div className="rounded-2xl p-6 mb-8 relative overflow-hidden pulse-secondary" style={{
+          background: 'linear-gradient(135deg, rgba(var(--team-secondary-rgb),0.15) 0%, rgba(var(--team-primary-rgb),0.25) 40%, rgba(var(--team-midnight-rgb),0.95) 100%)',
+          border: '2px solid var(--team-secondary)',
+          boxShadow: '0 0 30px rgba(var(--team-secondary-rgb),0.25), 0 0 60px rgba(var(--team-secondary-rgb),0.1)'
+        }}>
+          {/* Animated glow bar at top */}
+          <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'linear-gradient(90deg, transparent, var(--team-secondary), transparent)', animation: 'shimmer 3s infinite' }} />
+
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">&#128293;</span>
+              <span className="text-xs font-black uppercase tracking-widest text-team-secondary">Best Bet of the Day</span>
+            </div>
+            <span className="px-3 py-1 rounded-full bg-team-secondary text-black text-xs font-black shadow-lg shadow-team-secondary/30">TOP PICK</span>
+          </div>
+
+          <div className="flex items-center gap-4 md:gap-6">
             {bestPick.headshot && (
-              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-team-secondary/50 shrink-0" style={{ background: 'var(--team-deep)' }}>
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden shrink-0" style={{
+                border: '3px solid var(--team-secondary)',
+                boxShadow: '0 0 20px rgba(var(--team-secondary-rgb),0.4)',
+                background: 'var(--team-deep)'
+              }}>
                 <img src={bestPick.headshot} alt="" className="w-full h-full object-cover object-top" loading="lazy" />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-black text-lg text-white">{bestPick.player}</span>
-                <span className="text-xs text-gray-400">{bestPick.teamAbbr} vs {bestPick.opponent}</span>
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <span className="font-black text-xl md:text-2xl text-white">{bestPick.player}</span>
+                <span className="text-xs text-gray-400 bg-white/5 px-2 py-0.5 rounded">{bestPick.teamAbbr} vs {bestPick.opponent}</span>
               </div>
-              <div className="flex items-center gap-3 mt-1">
-                <span className="text-team-secondary font-black text-2xl">O {bestPick.line} {bestPick.statType}</span>
-                <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs font-bold">+{bestPick.edge} edge</span>
-                <span className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ background: `rgba(var(--team-secondary-rgb),${bestPick.confidence/200})`, color: 'var(--team-secondary)' }}>{bestPick.confidence}% conf</span>
+
+              <div className="flex items-center gap-3 mt-2 flex-wrap">
+                <span className="font-black text-3xl md:text-4xl" style={{ color: 'var(--team-secondary)', textShadow: '0 0 20px rgba(var(--team-secondary-rgb),0.5)' }}>
+                  O {bestPick.line} {bestPick.statType}
+                </span>
               </div>
-              <p className="text-sm text-gray-300 mt-2 leading-relaxed">{bestPick.explanation}</p>
-              {bestPick.injury && (
-                <div className="mt-2 flex items-center gap-1.5 text-xs">
-                  <span className="text-amber-400">&#9888;</span>
-                  <span className="text-amber-300 font-semibold">Injury boost: {bestPick.injury.out} is OUT</span>
-                </div>
-              )}
+
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <span className="px-3 py-1 rounded-lg bg-green-500/20 text-green-400 text-sm font-black border border-green-500/30">+{bestPick.edge} edge</span>
+                <span className="px-3 py-1 rounded-lg text-sm font-black border" style={{
+                  background: `rgba(var(--team-secondary-rgb),0.15)`,
+                  borderColor: `rgba(var(--team-secondary-rgb),0.3)`,
+                  color: 'var(--team-secondary)'
+                }}>{bestPick.confidence}% confidence</span>
+                {bestPick.injury && (
+                  <span className="px-3 py-1 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-bold border border-amber-500/30">
+                    &#9888; {bestPick.injury.out} OUT
+                  </span>
+                )}
+              </div>
+
+              <p className="text-sm text-gray-300 mt-3 leading-relaxed max-w-2xl">{bestPick.explanation}</p>
             </div>
           </div>
         </div>
