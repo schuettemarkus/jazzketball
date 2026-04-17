@@ -8174,6 +8174,32 @@ function setOddsApiKey(key) {
   localStorage.setItem(ODDS_API_KEY_STORAGE, key);
 }
 
+// Odds API team name -> our abbreviation
+const ODDS_TEAM_MAP = {
+  'Atlanta Hawks':'ATL','Boston Celtics':'BOS','Brooklyn Nets':'BKN','Charlotte Hornets':'CHA',
+  'Chicago Bulls':'CHI','Cleveland Cavaliers':'CLE','Dallas Mavericks':'DAL','Denver Nuggets':'DEN',
+  'Detroit Pistons':'DET','Golden State Warriors':'GSW','Houston Rockets':'HOU','Indiana Pacers':'IND',
+  'Los Angeles Clippers':'LAC','Los Angeles Lakers':'LAL','Memphis Grizzlies':'MEM','Miami Heat':'MIA',
+  'Milwaukee Bucks':'MIL','Minnesota Timberwolves':'MIN','New Orleans Pelicans':'NOP','New York Knicks':'NYK',
+  'Oklahoma City Thunder':'OKC','Orlando Magic':'ORL','Philadelphia 76ers':'PHI','Phoenix Suns':'PHX',
+  'Portland Trail Blazers':'POR','Sacramento Kings':'SAC','San Antonio Spurs':'SAS','Toronto Raptors':'TOR',
+  'Utah Jazz':'UTA','Washington Wizards':'WAS',
+};
+
+// Build games from Odds API events (fallback when NBA CDN has nothing)
+function buildGamesFromOddsEvents(events) {
+  return events.map(e => ({
+    gameId: e.id,
+    home: ODDS_TEAM_MAP[e.home_team] || e.home_team,
+    away: ODDS_TEAM_MAP[e.away_team] || e.away_team,
+    startTime: e.commence_time,
+    status: 1, statusText: '',
+    homeScore: 0, awayScore: 0,
+    period: 0, gameClock: '',
+    isLive: false, isFinal: false, isScheduled: true,
+  }));
+}
+
 // Map The Odds API player prop markets to our stat types
 const ODDS_MARKET_MAP = { player_points: 'PTS', player_rebounds: 'REB', player_assists: 'AST' };
 const STAT_TO_MARKET = { PTS: 'player_points', REB: 'player_rebounds', AST: 'player_assists' };
@@ -8534,18 +8560,44 @@ function DailyPicks() {
   const [oddsLines, setOddsLines] = useState({});
   const [oddsSource, setOddsSource] = useState(null); // 'live' | 'none'
 
-  // Fetch real schedule, then odds only if games exist
+  // Fetch schedule from NBA CDN, fall back to Odds API events
   useEffect(() => {
     (async () => {
-      const scheduleData = await fetchTodaysGames();
-      let data = scheduleData;
+      let data = await fetchTodaysGames();
+
+      // If NBA CDN has no games, try Odds API events as fallback
+      if (!data || data.games.length === 0) {
+        const apiKey = getOddsApiKey();
+        if (apiKey) {
+          try {
+            // Reuse cached events if available
+            const today = new Date().toISOString().split('T')[0];
+            let events = null;
+            try {
+              const cached = JSON.parse(localStorage.getItem(ODDS_EVENTS_CACHE_KEY));
+              if (cached && cached.date === today) events = cached.events;
+            } catch {}
+            if (!events) {
+              const resp = await fetch(`${ODDS_API_BASE}/events?apiKey=${apiKey}&dateFormat=iso`);
+              if (resp.ok) {
+                events = await resp.json();
+                try { localStorage.setItem(ODDS_EVENTS_CACHE_KEY, JSON.stringify({ events, date: today })); } catch {}
+              }
+            }
+            if (events && events.length > 0) {
+              data = { games: buildGamesFromOddsEvents(events), source: 'odds', date: today };
+            }
+          } catch {}
+        }
+      }
+
       if (!data || data.games.length === 0) {
         data = { games: [], source: 'none', date: new Date().toISOString().split('T')[0] };
       }
       setSchedule(data);
       setLoadingGames(false);
 
-      // Only fetch odds if there are actual games (saves 3 API calls on off-days)
+      // Fetch odds lines if there are games
       if (data.games.length > 0) {
         const lines = await fetchOddsApiLines();
         if (Object.keys(lines).length > 0) {
@@ -9089,7 +9141,7 @@ function DailyPicks() {
       <div className="glass rounded-2xl p-4 mb-6">
         <div className="flex items-center justify-center gap-2 mb-3">
           <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-            {schedule?.source === 'live' ? "Today's Games" : 'Upcoming Games'}
+            {schedule?.source === 'live' ? "Today's Games" : schedule?.source === 'odds' ? 'Upcoming Games' : 'Upcoming Games'}
           </h3>
           {schedule?.source === 'live' && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
           {schedule?.source === 'projected' && <span className="text-[9px] text-gray-600 px-1.5 py-0.5 rounded bg-gray-800">projected</span>}
@@ -9906,28 +9958,16 @@ function App() {
           {/* Logo area — same height (80px) on all tabs */}
           <div className="w-20 h-20 mx-auto mb-3 flex items-center justify-center">
             {activeTab === 'PICKS' ? (
-              <svg className="w-16 h-16" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Vault door circle */}
-                <circle cx="32" cy="32" r="28" stroke="var(--team-secondary)" strokeWidth="3" opacity="0.9" />
-                <circle cx="32" cy="32" r="22" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.4" />
-                {/* Vault handle / dial */}
-                <circle cx="32" cy="32" r="8" stroke="var(--team-secondary)" strokeWidth="2" opacity="0.8" />
-                <circle cx="32" cy="32" r="3" fill="var(--team-secondary)" opacity="0.6" />
-                {/* Tick marks around the dial */}
-                <line x1="32" y1="6" x2="32" y2="12" stroke="var(--team-secondary)" strokeWidth="2" opacity="0.6" />
-                <line x1="32" y1="52" x2="32" y2="58" stroke="var(--team-secondary)" strokeWidth="2" opacity="0.6" />
-                <line x1="6" y1="32" x2="12" y2="32" stroke="var(--team-secondary)" strokeWidth="2" opacity="0.6" />
-                <line x1="52" y1="32" x2="58" y2="32" stroke="var(--team-secondary)" strokeWidth="2" opacity="0.6" />
-                {/* Diagonal ticks */}
-                <line x1="13.6" y1="13.6" x2="17.8" y2="17.8" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.35" />
-                <line x1="46.2" y1="13.6" x2="42" y2="17.8" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.35" />
-                <line x1="13.6" y1="50.4" x2="17.8" y2="46.2" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.35" />
-                <line x1="46.2" y1="50.4" x2="42" y2="46.2" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.35" />
-                {/* Handle spokes */}
-                <line x1="32" y1="24" x2="32" y2="14" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.5" />
-                <line x1="24" y1="32" x2="14" y2="32" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.5" />
-                <line x1="40" y1="32" x2="50" y2="32" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.5" />
-              </svg>
+              <div className="flex flex-col items-center gap-1">
+                <svg className="w-10 h-10" viewBox="0 0 40 40" fill="none">
+                  <rect x="4" y="8" width="32" height="26" rx="3" stroke="var(--team-secondary)" strokeWidth="2" fill="none" opacity="0.9" />
+                  <rect x="8" y="8" width="24" height="4" rx="1" fill="var(--team-secondary)" opacity="0.15" />
+                  <circle cx="20" cy="24" r="5" stroke="var(--team-secondary)" strokeWidth="1.5" fill="none" opacity="0.7" />
+                  <circle cx="20" cy="24" r="1.5" fill="var(--team-secondary)" opacity="0.5" />
+                  <path d="M16 8V5a4 4 0 018 0v3" stroke="var(--team-secondary)" strokeWidth="2" fill="none" opacity="0.6" />
+                </svg>
+                <span className="text-[10px] font-bold text-team-secondary tracking-[0.2em] uppercase">NBA Vault</span>
+              </div>
             ) : config.franchiseId ? (
               <img src={`https://cdn.nba.com/logos/nba/${config.franchiseId}/primary/L/logo.svg`}
                 alt={`${config.fullName} logo`} className="w-20 h-20 drop-shadow-lg" loading="lazy" />
