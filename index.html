@@ -9103,7 +9103,7 @@ function DailyPicks() {
       ); })()}
 
       {/* Parlay Builder */}
-      {allPicks.length >= 2 && (() => {
+      {allPicks.filter(p => !p.locked).length >= 2 && (() => {
         // ---- Smart Parlay Correlation Logic ----
         // 1. Anchor: highest confidence pick (safe leg)
         // 2. Second leg: scored by correlation + value
@@ -9146,18 +9146,22 @@ function DailyPicks() {
           return score;
         }
 
-        // Build parlay: anchor + best correlated second leg
-        const anchor = [...allPicks].sort((a, b) => b.confidence - a.confidence)[0];
+        // Only include picks from games that haven't started yet
+        const availablePicks = allPicks.filter(p => !p.locked);
+        const anchor = [...availablePicks].sort((a, b) => b.confidence - a.confidence)[0];
         if (!anchor) return null;
 
-        const secondOptions = allPicks.filter(p => p.id !== anchor.id)
+        const secondOptions = availablePicks.filter(p => p.id !== anchor.id)
           .map(p => ({ ...p, _parlayScore: parlayScore(p, [anchor]) }))
           .sort((a, b) => b._parlayScore - a._parlayScore);
         const secondPick = secondOptions[0];
         if (!secondPick) return null;
 
         const autoLegs = [anchor.id, secondPick.id];
-        const activeLegIds = parlayLegs || autoLegs;
+        // Filter out stale/locked leg IDs, fall back to auto if invalid
+        const rawIds = parlayLegs || autoLegs;
+        const validIds = rawIds.filter(id => availablePicks.find(p => p.id === id));
+        const activeLegIds = validIds.length >= 2 ? validIds : autoLegs;
         const legs = activeLegIds.map(id => allPicks.find(p => p.id === id)).filter(Boolean);
         if (legs.length < 2) return null;
 
@@ -9167,7 +9171,7 @@ function DailyPicks() {
         const payout10 = (10 * parlayDecimal).toFixed(2);
 
         // Next best leg scored against all existing legs
-        const nextLeg = allPicks.filter(p => !activeLegIds.includes(p.id))
+        const nextLeg = availablePicks.filter(p => !activeLegIds.includes(p.id))
           .map(p => ({ ...p, _parlayScore: parlayScore(p, legs) }))
           .sort((a, b) => b._parlayScore - a._parlayScore)[0];
 
