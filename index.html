@@ -8094,7 +8094,8 @@ function DailyPicks() {
   }, [allPicks, sortBy, filterStat]);
 
   const bestPick = allPicks[0];
-  const FREE_LIMIT = 3;
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const FREE_LIMIT = isMobile ? 2 : 3;
 
   const handleEmailSubmit = (e) => {
     e.preventDefault();
