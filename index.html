@@ -9302,6 +9302,70 @@ function DailyPicks() {
         );
       })()}
 
+      {/* Tonight's Games */}
+      {allPicks.length >= 2 && (() => {
+        const gameMap = {};
+        allPicks.forEach(p => {
+          const key = [p.teamAbbr, p.opponent].sort().join('-');
+          if (!gameMap[key]) gameMap[key] = { home: null, away: null, picks: [] };
+          gameMap[key].picks.push(p);
+          if (p.isHome) gameMap[key].home = p.teamAbbr; else gameMap[key].away = p.teamAbbr;
+        });
+        const games = Object.values(gameMap).sort((a, b) => b.picks.length - a.picks.length);
+        if (games.length === 0) return null;
+        return (
+          <div className="mb-6">
+            <h3 className="text-lg font-black text-white mb-3">Tonight's Games</h3>
+            <div className={`grid gap-4 ${games.length === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
+              {games.map((g, gi) => {
+                const away = g.away || g.picks[0]?.opponent;
+                const home = g.home || g.picks[0]?.teamAbbr;
+                const gamePick = g.picks.sort((a, b) => b.edge - a.edge)[0];
+                const oppDefRank = Math.max(...g.picks.map(p => DEF_RATINGS[p.opponent] || 15));
+                const oppPace = PACE_RATINGS[g.picks[0]?.opponent] || LEAGUE_AVG_PACE;
+                const avgEdge = (g.picks.reduce((s, p) => s + p.edge, 0) / g.picks.length).toFixed(1);
+                return (
+                  <div key={gi} className="glass rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-base font-black text-white">{away} @ {home}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${oppDefRank >= 20 ? 'bg-green-500/15 text-green-400' : 'bg-white/5 text-gray-500'}`}>#{oppDefRank} DEF</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${oppPace >= LEAGUE_AVG_PACE ? 'bg-green-500/15 text-green-400' : 'bg-white/5 text-gray-500'}`}>{oppPace.toFixed(1)} PACE</span>
+                      </div>
+                    </div>
+                    {gamePick && (
+                      <div className="rounded-lg p-3 border border-team-secondary/20" style={{ background: 'rgba(var(--team-secondary-rgb),0.05)' }}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <svg className="w-3.5 h-3.5 text-team-secondary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                          <span className="text-[10px] font-black text-team-secondary uppercase tracking-wider">Pick of the Game</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {gamePick.headshot && <img src={gamePick.headshot} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" loading="lazy" />}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-white truncate">{gamePick.player}</div>
+                            <div className="text-[10px] text-gray-500">{gamePick.teamAbbr} · {gamePick.pos}</div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <div className="text-sm font-black text-team-secondary">O {gamePick.line} {gamePick.statType}</div>
+                            <div className="flex items-center gap-1.5 justify-end">
+                              <span className="text-xs text-green-400 font-bold">+{gamePick.edge}</span>
+                              <span className="text-[10px] text-gray-500">{gamePick.confidence}%</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {g.picks.length > 1 && (
+                      <div className="text-[10px] text-gray-500 mt-2 text-center">{g.picks.length} total picks · avg edge +{avgEdge}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Filters + Sort */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div className="flex gap-1.5">
@@ -9563,9 +9627,9 @@ function DailyPicks() {
           <p className="text-sm text-gray-500 mt-1">What's driving tonight's picks</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Tonight's Games — matchup breakdown */}
           {(() => {
-            // Group picks by game matchup
+            // Tonight's Games section moved above the picks table
+            return null;
             const gameMap = {};
             allPicks.forEach(p => {
               const key = [p.teamAbbr, p.opponent].sort().join('-');
@@ -9625,7 +9689,7 @@ function DailyPicks() {
               </div>
             );
           })()}
-          {/* Biggest edges */}
+          {/* Biggest edges — Tonight's Games moved above table */}
           <div className="glass rounded-2xl p-6 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1 bg-green-500 opacity-40" />
             <div className="flex items-center gap-2 mb-4">
@@ -10568,6 +10632,19 @@ function App() {
 
       {/* Footer */}
       <footer className="text-center py-8 px-4 border-t border-white/[0.06]">
+        <svg className="w-8 h-8 mx-auto mb-2" viewBox="0 0 48 48" fill="none">
+          <rect x="6" y="6" width="36" height="36" rx="4" stroke="var(--team-secondary)" strokeWidth="2" fill="none" opacity="0.5" />
+          <rect x="10" y="10" width="28" height="28" rx="2" stroke="var(--team-secondary)" strokeWidth="1" fill="none" opacity="0.2" />
+          <rect x="3" y="14" width="5" height="4" rx="1" fill="var(--team-secondary)" opacity="0.25" />
+          <rect x="3" y="22" width="5" height="4" rx="1" fill="var(--team-secondary)" opacity="0.25" />
+          <rect x="3" y="30" width="5" height="4" rx="1" fill="var(--team-secondary)" opacity="0.25" />
+          <circle cx="26" cy="24" r="7" stroke="var(--team-secondary)" strokeWidth="1.5" fill="none" opacity="0.4" />
+          <circle cx="26" cy="24" r="3" stroke="var(--team-secondary)" strokeWidth="1" fill="none" opacity="0.3" />
+          <line x1="26" y1="17" x2="26" y2="13" stroke="var(--team-secondary)" strokeWidth="1" opacity="0.3" />
+          <line x1="26" y1="31" x2="26" y2="35" stroke="var(--team-secondary)" strokeWidth="1" opacity="0.3" />
+          <line x1="19" y1="24" x2="15" y2="24" stroke="var(--team-secondary)" strokeWidth="1" opacity="0.3" />
+          <line x1="33" y1="24" x2="37" y2="24" stroke="var(--team-secondary)" strokeWidth="1" opacity="0.3" />
+        </svg>
         <p className="text-gray-500 text-sm font-semibold">NBA Vault</p>
         <div className="flex justify-center gap-4 mt-2">
           <button onClick={() => navigateTo('WIKI')} className="text-gray-500 hover:text-white text-xs transition-colors">Wiki</button>
