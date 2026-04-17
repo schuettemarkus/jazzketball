@@ -9206,7 +9206,7 @@ function DailyPicks() {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-team-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                <span className="text-sm font-black text-team-secondary uppercase tracking-wider">Vault Parlay</span>
+                <span className="text-sm font-black text-team-secondary uppercase tracking-wider">Smart Parlay Builder</span>
               </div>
               <div className="text-right">
                 <span className="text-lg font-black text-team-secondary">{parlayAmerican}</span>
@@ -9214,21 +9214,21 @@ function DailyPicks() {
               </div>
             </div>
 
-            <div className="space-y-2 mb-3">
+            <div className="space-y-2 mb-4">
               {legs.map((leg, i) => (
-                <div key={leg.id} className="flex items-center gap-2 p-2 rounded-lg" style={{ background: 'rgba(var(--team-primary-rgb),0.06)' }}>
+                <div key={leg.id} className="flex items-center gap-2 p-2.5 rounded-lg" style={{ background: 'rgba(var(--team-primary-rgb),0.06)' }}>
                   {(() => {
                     const label = legLabel(leg, i);
                     const colors = { ANCHOR: 'bg-green-500/20 text-green-400', CORRELATED: 'bg-blue-500/15 text-blue-400', VALUE: 'bg-amber-500/15 text-amber-400', HEDGE: 'bg-gray-500/15 text-gray-400' };
                     return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${colors[label] || colors.HEDGE}`}>{label}</span>;
                   })()}
-                  {leg.headshot && <img src={leg.headshot} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" loading="lazy" />}
+                  {leg.headshot && <img src={leg.headshot} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" loading="lazy" />}
                   <div className="flex-1 min-w-0">
-                    <span className="text-xs font-bold text-white truncate block">{leg.player}</span>
-                    <span className="text-[9px] text-gray-500">{leg.teamAbbr} vs {leg.opponent}</span>
+                    <span className="text-sm font-bold text-white truncate block">{leg.player}</span>
+                    <span className="text-[10px] text-gray-500">{leg.teamAbbr} vs {leg.opponent}</span>
                   </div>
-                  <span className="text-xs font-black text-team-secondary">O {leg.line} {leg.statType}</span>
-                  <span className="text-[10px] text-green-400 font-bold">+{leg.edge}</span>
+                  <span className="text-sm font-black text-team-secondary">O {leg.line} {leg.statType}</span>
+                  <span className="text-xs text-green-400 font-bold">+{leg.edge}</span>
                   {activeLegIds.length > 2 && (
                     <button onClick={() => removeLeg(leg.id)} className="text-gray-600 hover:text-red-400 text-xs transition-colors ml-1" title="Remove">x</button>
                   )}
@@ -9236,14 +9236,19 @@ function DailyPicks() {
               ))}
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 text-[10px] text-gray-500">
-                <span>{legs.length} legs</span>
-                <span>$10 wins <span className="text-white font-bold">${payout10}</span></span>
+            <div className="flex items-center justify-between rounded-lg p-3" style={{ background: 'rgba(var(--team-secondary-rgb),0.08)', border: '1px solid rgba(var(--team-secondary-rgb),0.15)' }}>
+              <div className="flex items-center gap-4">
+                <div>
+                  <span className="text-xs text-gray-400">{legs.length} legs</span>
+                </div>
+                <div>
+                  <span className="text-sm text-gray-400">$10 wins </span>
+                  <span className="text-lg font-black text-team-secondary">${payout10}</span>
+                </div>
               </div>
               {nextLeg && legs.length < 5 && (
-                <button onClick={addLeg} className="flex items-center gap-1 text-[10px] text-team-secondary hover:text-white font-bold transition-colors">
-                  <span className="text-sm">+</span> Add Leg
+                <button onClick={addLeg} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-team-secondary/15 text-team-secondary text-xs font-bold hover:bg-team-secondary/25 transition-all border border-team-secondary/20">
+                  <span className="text-base leading-none">+</span> Add Leg
                 </button>
               )}
             </div>
