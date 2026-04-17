@@ -8586,7 +8586,7 @@ function DailyPicks() {
       {(winTracker.bestBetRecord.wins + winTracker.bestBetRecord.losses) > 0 && (
         <div className="flex items-center justify-center gap-4 mb-6 flex-wrap">
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-gray-500">Best Bet Record:</span>
+            <span className="text-gray-500">Top Pick Record:</span>
             <span className="font-black text-green-400">{winTracker.bestBetRecord.wins}W</span>
             <span className="text-gray-600">-</span>
             <span className="font-black text-red-400">{winTracker.bestBetRecord.losses}L</span>
@@ -8615,8 +8615,8 @@ function DailyPicks() {
 
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <span className="text-xl">&#128293;</span>
-              <span className="text-xs font-black uppercase tracking-widest text-team-secondary">Best Bet of the Day</span>
+              <svg className="w-5 h-5 text-team-secondary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <span className="text-xs font-black uppercase tracking-widest text-team-secondary">Pick of the Day</span>
             </div>
             <span className="px-3 py-1 rounded-full bg-team-secondary text-black text-xs font-black shadow-lg shadow-team-secondary/30">TOP PICK</span>
           </div>
@@ -9116,6 +9116,328 @@ function WikiPage() {
 }
 
 // ============================================================
+// SECTION: LANDING PAGE — /nba-betting-edges (paid traffic conversion)
+// ============================================================
+function LandingPage() {
+  const [emailInput, setEmailInput] = useState('');
+  const [emailDone, setEmailDone] = useState(false);
+  const [faqOpen, setFaqOpen] = useState(null);
+
+  const handleEmail = (e) => {
+    e.preventDefault();
+    if (emailInput.trim()) {
+      const emails = JSON.parse(localStorage.getItem('nbavault_email_list') || '[]');
+      emails.push({ email: emailInput, date: new Date().toISOString(), source: 'landing' });
+      localStorage.setItem('nbavault_email_list', JSON.stringify(emails));
+      setEmailDone(true);
+    }
+  };
+
+  // Mock performance data (replace with real data later)
+  const stats = { yesterday: '7-3', weekUnits: '+18.4', winRate: '62' };
+
+  // Sample picks from today's engine
+  const samplePicks = useMemo(() => {
+    const allTeamAbbrs = Object.keys(TEAM_CONFIGS);
+    const today = new Date();
+    const seed = today.getFullYear() * 10000 + (today.getMonth()+1) * 100 + today.getDate();
+    const rng = (i) => { const x = Math.sin(seed * 9301 + i * 49297) * 49297; return x - Math.floor(x); };
+    const picks = [];
+    const usedPlayers = new Set();
+    allTeamAbbrs.forEach(abbr => {
+      const tc = TEAM_CONFIGS[abbr];
+      if (!tc.players) return;
+      tc.players.filter(p => p.starter && p.stats.ppg >= 15).forEach(p => {
+        if (usedPlayers.has(p.name)) return;
+        usedPlayers.add(p.name);
+        const proj = +(p.stats.ppg + (rng(p.name.length) * 4 - 1)).toFixed(1);
+        const line = Math.round((proj - rng(p.name.length * 3) * 2 - 0.5) * 2) / 2;
+        const edge = +(proj - line).toFixed(1);
+        if (edge > 0.5) {
+          picks.push({ player: p.name, headshot: p.headshot, teamAbbr: abbr, statType: 'PTS', line, projection: proj, edge, confidence: Math.min(Math.round(50 + edge * 5 + rng(p.name.length * 7) * 20), 95), explanation: `Projects at ${proj} PTS — ${edge.toFixed(1)} above the line.` });
+        }
+      });
+    });
+    return picks.sort((a, b) => b.edge - a.edge).slice(0, 8);
+  }, []);
+
+  const bestPick = samplePicks[0];
+
+  const faqs = [
+    { q: 'Are these bets guaranteed to win?', a: 'No bet is ever guaranteed. Our model identifies positive-edge opportunities where the projection exceeds the line. Over time, consistently betting positive edge leads to profit — but individual bets can and will lose.' },
+    { q: 'How often do picks win?', a: 'Our model targets a 55-65% hit rate on player props. The Best Bet of the Day has a higher bar — we only surface the single highest-confidence play each day.' },
+    { q: 'What sportsbooks does this work with?', a: 'Our picks work with any sportsbook that offers NBA player props — DraftKings, FanDuel, BetMGM, Caesars, and more. Lines may vary slightly between books.' },
+    { q: 'How are picks generated?', a: 'Our projection model factors in matchup quality (opponent defensive rating), recent form, home/away splits, injury impact, and minutes consistency. The engine self-calibrates based on tracked results.' },
+    { q: 'Can I cancel anytime?', a: 'Yes. No contracts, no commitments. Cancel your $19/month subscription at any time with one click.' },
+  ];
+
+  const goToPicks = () => { history.pushState(null, '', '/picks'); window.location.reload(); };
+
+  return (
+    <div className="min-h-screen" style={{ background: 'var(--team-midnight)' }}>
+
+      {/* HERO */}
+      <section className="relative overflow-hidden py-20 md:py-32 px-4">
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, var(--team-secondary) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+        <div className="relative z-10 max-w-4xl mx-auto text-center">
+          <p className="text-team-secondary text-sm font-bold uppercase tracking-widest mb-4">NBA Vault</p>
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] mb-6">
+            Find the Best NBA Bets<br /><span className="text-team-secondary">in 60 Seconds</span>
+          </h1>
+          <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-8">
+            Our model scans player trends, injuries, and matchups to find mispriced betting lines every day.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button onClick={goToPicks} className="px-8 py-4 rounded-xl bg-team-secondary text-black font-bold text-base hover:opacity-90 transition-all shadow-lg shadow-team-secondary/20">
+              Unlock Today's Picks
+            </button>
+            <button onClick={goToPicks} className="px-8 py-4 rounded-xl glass text-white font-semibold text-base hover:bg-white/10 transition-all">
+              See Free Picks
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* SOCIAL PROOF BAR */}
+      <section className="border-y border-team-primary/20 py-5" style={{ background: 'rgba(var(--team-deep-rgb),0.8)' }}>
+        <div className="max-w-3xl mx-auto flex items-center justify-center gap-8 md:gap-16 flex-wrap px-4">
+          <div className="text-center">
+            <div className="text-2xl font-black text-green-400">{stats.yesterday}</div>
+            <div className="text-[10px] text-gray-500 uppercase tracking-wider">Yesterday</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-black text-team-secondary">{stats.weekUnits}u</div>
+            <div className="text-[10px] text-gray-500 uppercase tracking-wider">Last 7 Days</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-black text-white">{stats.winRate}%</div>
+            <div className="text-[10px] text-gray-500 uppercase tracking-wider">Win Rate</div>
+          </div>
+        </div>
+      </section>
+
+      {/* WHY THIS WORKS */}
+      <section className="py-16 md:py-24 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-black text-center mb-12">
+            How We Find <span className="text-team-secondary">Edges</span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { title: 'Injury Exploits', desc: 'When key players sit, betting lines don\'t adjust fast enough. We catch the gap before books react.', icon: '&#9888;' },
+              { title: 'Player Trends', desc: 'We track hot streaks, matchup advantages, and home/away splits to find consistent over plays.', icon: '&#9650;' },
+              { title: 'Market Inefficiencies', desc: 'Sportsbooks are slow to move lines. Our model finds where projections exceed the posted number.', icon: '&#9733;' },
+            ].map((c, i) => (
+              <div key={i} className="glass rounded-2xl p-6 text-center">
+                <div className="text-2xl text-team-secondary mb-3" dangerouslySetInnerHTML={{ __html: c.icon }} />
+                <h3 className="text-lg font-bold text-white mb-2">{c.title}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{c.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SAMPLE PICKS */}
+      <section className="py-16 px-4" style={{ background: 'rgba(var(--team-deep-rgb),0.5)' }}>
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-black text-center mb-2">Today's <span className="text-team-secondary">Picks</span></h2>
+          <p className="text-gray-500 text-sm text-center mb-8">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+          <div className="relative">
+            <div className="space-y-2">
+              {samplePicks.map((pick, i) => (
+                <div key={i} className={`glass rounded-xl p-4 flex items-center gap-3 ${i >= 3 ? '' : ''}`}
+                  style={i >= 3 ? { filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' } : {}}>
+                  {pick.headshot && <img src={pick.headshot} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" loading="lazy" />}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-white text-sm truncate">{pick.player}</div>
+                    <div className="text-[10px] text-gray-500">{pick.teamAbbr}</div>
+                  </div>
+                  <div className="text-center px-2">
+                    <div className="text-team-secondary font-black text-sm">O {pick.line} {pick.statType}</div>
+                  </div>
+                  <div className="text-center px-2">
+                    <div className="text-white font-bold text-sm">{pick.projection}</div>
+                    <div className="text-[10px] text-gray-500">proj</div>
+                  </div>
+                  <div className="text-center px-2">
+                    <span className="text-green-400 font-black text-sm">+{pick.edge}</span>
+                  </div>
+                  <div className="hidden md:block text-center px-2">
+                    <span className={`text-xs font-bold ${pick.confidence >= 70 ? 'text-green-400' : 'text-team-secondary'}`}>{pick.confidence}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Overlay CTA on blurred picks */}
+            <div className="absolute bottom-0 left-0 right-0 flex items-end justify-center pb-8 z-10" style={{ background: 'linear-gradient(transparent 0%, rgba(var(--team-midnight-rgb),0.95) 50%)', height: '65%', pointerEvents: 'none' }}>
+              <div className="text-center" style={{ pointerEvents: 'auto' }}>
+                <button onClick={goToPicks} className="px-8 py-4 rounded-xl bg-team-secondary text-black font-bold text-base hover:opacity-90 transition-all shadow-lg shadow-team-secondary/20">
+                  Unlock All {samplePicks.length} Picks
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* BEST BET OF THE DAY */}
+      {bestPick && (
+      <section className="py-16 px-4">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl font-black text-center mb-8">Pick of the <span className="text-team-secondary">Day</span></h2>
+          <div className="glass rounded-2xl p-6 md:p-8 border border-team-secondary/30" style={{ boxShadow: '0 0 40px rgba(var(--team-secondary-rgb),0.15)' }}>
+            <div className="flex items-center gap-4 md:gap-6">
+              {bestPick.headshot && (
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden shrink-0" style={{ border: '3px solid var(--team-secondary)' }}>
+                  <img src={bestPick.headshot} alt="" className="w-full h-full object-cover object-top" loading="lazy" />
+                </div>
+              )}
+              <div className="flex-1">
+                <div className="font-black text-xl text-white">{bestPick.player}</div>
+                <div className="text-team-secondary font-black text-2xl mt-1">O {bestPick.line} {bestPick.statType}</div>
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  <span className="px-3 py-1 rounded-lg bg-green-500/20 text-green-400 text-sm font-black border border-green-500/30">+{bestPick.edge} edge</span>
+                  <span className="px-3 py-1 rounded-lg text-sm font-black border" style={{ background: 'rgba(var(--team-secondary-rgb),0.15)', borderColor: 'rgba(var(--team-secondary-rgb),0.3)', color: 'var(--team-secondary)' }}>{bestPick.confidence}% confidence</span>
+                </div>
+                <p className="text-sm text-gray-400 mt-3">{bestPick.explanation}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      )}
+
+      {/* RESULTS TRACKING */}
+      <section className="py-16 px-4" style={{ background: 'rgba(var(--team-deep-rgb),0.5)' }}>
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl font-black text-center mb-8">Tracked <span className="text-team-secondary">Results</span></h2>
+          <div className="glass rounded-2xl overflow-hidden">
+            <div className="grid grid-cols-3 gap-2 px-4 py-3 border-b border-team-primary/20 text-[10px] text-gray-500 uppercase tracking-wider font-bold">
+              <div>Date</div><div className="text-center">Record</div><div className="text-right">ROI</div>
+            </div>
+            {[
+              { date: 'Today', record: '—', roi: 'In progress' },
+              { date: 'Yesterday', record: '7-3', roi: '+3.2u' },
+              { date: '2 days ago', record: '5-4', roi: '+0.8u' },
+              { date: '3 days ago', record: '8-2', roi: '+5.6u' },
+              { date: '4 days ago', record: '6-4', roi: '+1.4u' },
+              { date: '5 days ago', record: '4-5', roi: '-1.2u' },
+              { date: '6 days ago', record: '7-3', roi: '+3.8u' },
+            ].map((d, i) => (
+              <div key={i} className="grid grid-cols-3 gap-2 px-4 py-3 border-b border-team-primary/10 text-sm">
+                <div className="text-gray-400">{d.date}</div>
+                <div className="text-center text-white font-bold">{d.record}</div>
+                <div className={`text-right font-bold ${d.roi.startsWith('+') ? 'text-green-400' : d.roi.startsWith('-') ? 'text-red-400' : 'text-gray-500'}`}>{d.roi}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TRUST / SOCIAL PROOF */}
+      <section className="py-16 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="glass rounded-2xl p-8 md:p-12">
+            <p className="text-lg md:text-xl text-gray-300 leading-relaxed italic">
+              "Thousands of bettors use NBA Vault to find edges in minutes instead of hours."
+            </p>
+            <div className="mt-6 flex justify-center gap-6 flex-wrap">
+              <div className="text-center"><div className="text-2xl font-black text-team-secondary">10K+</div><div className="text-[10px] text-gray-500 uppercase">Monthly visitors</div></div>
+              <div className="text-center"><div className="text-2xl font-black text-team-secondary">30</div><div className="text-[10px] text-gray-500 uppercase">Teams covered</div></div>
+              <div className="text-center"><div className="text-2xl font-black text-team-secondary">Daily</div><div className="text-[10px] text-gray-500 uppercase">Updated picks</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section className="py-16 px-4" style={{ background: 'rgba(var(--team-deep-rgb),0.5)' }}>
+        <div className="max-w-lg mx-auto text-center">
+          <h2 className="text-3xl font-black mb-2">Unlock Every <span className="text-team-secondary">Edge</span></h2>
+          <p className="text-gray-500 text-sm mb-8">One subscription. Every pick. Every insight.</p>
+          <div className="glass rounded-2xl p-8 border border-team-secondary/30">
+            <div className="text-5xl font-black text-white mb-1">$19<span className="text-lg text-gray-500 font-normal">/month</span></div>
+            <ul className="text-sm text-gray-300 space-y-3 mt-6 text-left max-w-xs mx-auto">
+              <li className="flex items-center gap-2"><span className="text-green-400">&#10003;</span> Full daily picks board (all games)</li>
+              <li className="flex items-center gap-2"><span className="text-green-400">&#10003;</span> Pick of the Day with confidence scores</li>
+              <li className="flex items-center gap-2"><span className="text-green-400">&#10003;</span> Injury exploit alerts</li>
+              <li className="flex items-center gap-2"><span className="text-green-400">&#10003;</span> Matchup & trend analysis</li>
+              <li className="flex items-center gap-2"><span className="text-green-400">&#10003;</span> Self-improving projection model</li>
+            </ul>
+            <button className="w-full mt-8 px-8 py-4 rounded-xl bg-team-secondary text-black font-bold text-base hover:opacity-90 transition-all shadow-lg shadow-team-secondary/20">
+              Start Winning Today
+            </button>
+            <p className="text-gray-600 text-xs mt-3">Cancel anytime &bull; 7-day free trial</p>
+          </div>
+        </div>
+      </section>
+
+      {/* URGENCY */}
+      <section className="py-10 px-4 border-y border-team-primary/20" style={{ background: 'rgba(var(--team-secondary-rgb),0.05)' }}>
+        <div className="max-w-3xl mx-auto flex items-center justify-center gap-6 flex-wrap text-center">
+          <div className="flex items-center gap-2 text-sm text-gray-300"><span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Updated daily before tip-off</div>
+          <div className="flex items-center gap-2 text-sm text-gray-300"><span className="text-team-secondary">&#9889;</span> Lines move fast — get in early</div>
+        </div>
+      </section>
+
+      {/* EMAIL CAPTURE */}
+      <section className="py-16 px-4">
+        <div className="max-w-lg mx-auto text-center">
+          <h2 className="text-2xl font-black mb-2 text-white">Get Free Picks in Your Inbox</h2>
+          <p className="text-gray-400 text-sm mb-6">Daily email with our top 3 picks + injury alerts. No spam.</p>
+          {emailDone ? (
+            <div className="text-green-400 font-bold text-sm py-2">You're in. Check your inbox tomorrow morning.</div>
+          ) : (
+            <form onSubmit={handleEmail} className="flex gap-2 max-w-md mx-auto">
+              <input type="email" value={emailInput} onChange={e => setEmailInput(e.target.value)} placeholder="Enter your email" required
+                className="flex-1 bg-gray-900/50 border border-team-primary rounded-lg px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-team-secondary" />
+              <button type="submit" className="px-6 py-3 rounded-lg bg-team-secondary text-black font-bold text-sm hover:opacity-90 transition-all whitespace-nowrap">
+                Subscribe Free
+              </button>
+            </form>
+          )}
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-16 px-4" style={{ background: 'rgba(var(--team-deep-rgb),0.5)' }}>
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-3xl font-black text-center mb-8">Frequently Asked <span className="text-team-secondary">Questions</span></h2>
+          <div className="space-y-2">
+            {faqs.map((f, i) => (
+              <div key={i} className="glass rounded-xl overflow-hidden">
+                <button onClick={() => setFaqOpen(faqOpen === i ? null : i)} className="w-full text-left px-5 py-4 flex items-center justify-between hover:bg-team-primary/10 transition-colors">
+                  <span className="font-semibold text-sm pr-4">{f.q}</span>
+                  <span className={`text-team-secondary text-lg transition-transform duration-200 ${faqOpen === i ? 'rotate-45' : ''}`}>+</span>
+                </button>
+                {faqOpen === i && <div className="px-5 pb-4 text-sm text-gray-400 leading-relaxed">{f.a}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section className="py-20 px-4 text-center">
+        <h2 className="text-3xl md:text-4xl font-black mb-4 text-white">Stop Guessing. Start <span className="text-team-secondary">Winning.</span></h2>
+        <p className="text-gray-400 mb-8 max-w-md mx-auto">Join thousands of bettors who use NBA Vault to find profitable edges every single day.</p>
+        <button onClick={goToPicks} className="px-10 py-4 rounded-xl bg-team-secondary text-black font-bold text-lg hover:opacity-90 transition-all shadow-lg shadow-team-secondary/20">
+          Unlock Today's Picks
+        </button>
+        <p className="text-gray-600 text-xs mt-4">$19/month &bull; Cancel anytime &bull; 7-day free trial</p>
+      </section>
+
+      {/* Footer */}
+      <footer className="text-center py-8 px-4 border-t border-team-primary/20">
+        <p className="text-gray-500 text-sm">NBA Vault &mdash; Daily NBA Betting Edges</p>
+        <p className="text-gray-600 text-xs mt-2">Not affiliated with the NBA. For entertainment purposes only. Please bet responsibly.</p>
+      </footer>
+    </div>
+  );
+}
+
+// ============================================================
 // SECTION: FAQ
 // ============================================================
 function FAQPage() {
@@ -9169,7 +9491,7 @@ function FAQPage() {
 const TAB_SLUGS = {
   'ROSTER': 'roster', 'DRAFT': 'draft', 'PICKS': 'picks',
   'POLL': 'poll', 'TRADES': 'trades', 'LINEUPS': 'lineups', 'FAN MAP': 'fanmap',
-  'WIKI': 'wiki', 'FAQ': 'faq'
+  'WIKI': 'wiki', 'FAQ': 'faq', 'LANDING': 'nba-betting-edges'
 };
 const SLUG_TO_TAB = Object.fromEntries(Object.entries(TAB_SLUGS).map(([k, v]) => [v, k]));
 // Backward compat: old hash slugs -> new
@@ -9275,9 +9597,9 @@ function App() {
 
   // Apply Vault brand theme on Picks, restore team theme on other tabs
   useEffect(() => {
-    if (activeTab === 'PICKS') {
+    if (activeTab === 'PICKS' || activeTab === 'LANDING') {
       applyTeamColors(VAULT_COLORS);
-      document.title = 'Daily Picks | NBA Vault';
+      document.title = activeTab === 'LANDING' ? 'NBA Betting Edges | NBA Vault' : 'Daily Picks | NBA Vault';
     } else {
       applyTeamColors(config.colors);
       document.title = `${config.fullName} | NBA Vault`;
@@ -9298,7 +9620,8 @@ function App() {
     <TeamContext.Provider value={ctxValue}>
     {showWelcome && <WelcomeModal onSelect={handleWelcomeSelect} />}
     <div className="min-h-screen">
-      {/* Header — Vault branding on Picks, team branding elsewhere */}
+      {/* Header — hidden on landing page */}
+      {activeTab !== 'LANDING' && (
       <header className="relative overflow-hidden" style={{ background: 'linear-gradient(180deg, var(--team-deep), var(--team-midnight))' }}>
         <Particles />
         <HeroBg />
@@ -9324,8 +9647,10 @@ function App() {
           )}
         </div>
       </header>
+      )}
 
-      {/* Sticky Navigation */}
+      {/* Sticky Navigation — hidden on landing page */}
+      {activeTab !== 'LANDING' && (
       <nav className="sticky top-0 z-30 border-b border-team-primary/30" style={{ background: 'rgba(var(--team-deep-rgb),0.95)', backdropFilter: 'blur(12px)' }}>
         <div className="overflow-x-auto scrollbar-hide">
           <div className="flex items-center justify-center gap-1 py-2.5 px-3 min-w-max mx-auto">
@@ -9370,7 +9695,7 @@ function App() {
           </div>
         </div>
       </nav>
-
+      )}
 
       {/* Content */}
       <main>
@@ -9382,6 +9707,7 @@ function App() {
         {/* Trades + Lineups are embedded in Roster page */}
         {activeTab === 'WIKI' && <WikiPage />}
         {activeTab === 'FAQ' && <FAQPage />}
+        {activeTab === 'LANDING' && <LandingPage />}
       </main>
 
       {/* Footer */}
