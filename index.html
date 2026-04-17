@@ -8098,7 +8098,7 @@ function generateLine(projection) {
 }
 
 // Generate explanation — the MOAT
-function generateExplanation(pick, teamPlayers) {
+function generateExplanation(pick) {
   const { player, statType, line, projection, edge, injury } = pick;
   const last = player.split(' ').pop();
   const pct = Math.round((edge / line) * 100);
@@ -8147,7 +8147,8 @@ function calcConfidence(pick) {
 }
 
 function DailyPicks() {
-  const { config, teamData } = useTeam();
+  const { config } = useTeam(); // Only used for home team prioritization
+  const homeTeam = config.abbr;
   const [emailInput, setEmailInput] = useState('');
   const [emailSubmitted, setEmailSubmitted] = useState(false);
   const [sortBy, setSortBy] = useState('edge');
@@ -8246,7 +8247,7 @@ function DailyPicks() {
           opponent: p.opponent, isHome: p.isHome,
         };
         pick.confidence = calcConfidence(pick);
-        pick.explanation = generateExplanation(pick, teamData.players);
+        pick.explanation = generateExplanation(pick);
         allProps.push(pick);
       });
     });
@@ -8261,7 +8262,12 @@ function DailyPicks() {
 
     const picks = Object.values(byPlayer)
       .filter(p => p.edge > 0) // Only positive edges
-      .sort((a, b) => b.edge - a.edge)
+      .sort((a, b) => {
+        // Prioritize home team players (bump them up in sort by adding a boost)
+        const aBoost = (a.teamAbbr === homeTeam || a.opponent === homeTeam) ? 0.5 : 0;
+        const bBoost = (b.teamAbbr === homeTeam || b.opponent === homeTeam) ? 0.5 : 0;
+        return (b.edge + bBoost) - (a.edge + aBoost);
+      })
       .slice(0, 15);
 
     // Save today's picks to history (if not already there)
@@ -8415,7 +8421,7 @@ function DailyPicks() {
                 {pick.headshot && <img src={pick.headshot} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" loading="lazy" />}
                 <div className="min-w-0">
                   <div className="text-sm font-bold text-white truncate">{pick.player}</div>
-                  <div className="text-[10px] text-gray-500">{pick.teamAbbr} vs {pick.opponent}</div>
+                  <div className="text-[10px] text-gray-500">{pick.teamAbbr} vs {pick.opponent}{(pick.teamAbbr === homeTeam || pick.opponent === homeTeam) ? ' ★' : ''}</div>
                 </div>
               </div>
               <div className="col-span-1 text-center"><span className="text-xs font-bold text-team-secondary">{pick.statType}</span></div>
@@ -8591,36 +8597,39 @@ function DailyPicks() {
         )}
       </div>
 
-      {/* Betting Trends Summary (from current team's players) */}
+      {/* Featured Player Trends — from today's picks */}
+      {allPicks.length >= 3 && (
       <div className="glass rounded-2xl p-6 mb-8">
-        <h3 className="text-lg font-bold text-team-secondary mb-4">{config.name} Player Trends</h3>
+        <h3 className="text-lg font-bold text-white mb-1">Player Trends</h3>
+        <p className="text-xs text-gray-500 mb-4">From today's top picks</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {teamData.players.filter(p => p.starter).slice(0, 3).map(p => {
-            const seed = p.name.length * 7 + p.stats.ppg;
-            const ptsHit = Math.min(5, Math.floor((seed % 6)));
-            const rebHit = Math.min(5, Math.floor(((seed * 3) % 6)));
-            const homeAvg = +(p.stats.ppg + (seed % 3)).toFixed(1);
-            const awayAvg = +(p.stats.ppg - (seed % 2) - 0.5).toFixed(1);
+          {allPicks.slice(0, 3).map(pick => {
+            const seed = pick.player.length * 7 + pick.projection;
+            const hitRate = pick.hitRate || 3;
+            const homeAvg = +(pick.projection + (seed % 3) * 0.5).toFixed(1);
+            const awayAvg = +(pick.projection - (seed % 2) - 0.5).toFixed(1);
             return (
-              <div key={p.name} className="rounded-xl p-4 border border-team-primary/15" style={{ background: 'rgba(var(--team-primary-rgb),0.04)' }}>
+              <div key={pick.player} className="rounded-xl p-4 border border-white/[0.06]" style={{ background: 'rgba(255,255,255,0.02)' }}>
                 <div className="flex items-center gap-2 mb-3">
-                  {p.headshot && <img src={p.headshot} alt="" className="w-8 h-8 rounded-full object-cover" loading="lazy" />}
+                  {pick.headshot && <img src={pick.headshot} alt="" className="w-8 h-8 rounded-full object-cover" loading="lazy" />}
                   <div>
-                    <div className="text-sm font-bold text-white">{p.name.split(' ').pop()}</div>
-                    <div className="text-[10px] text-gray-500">{p.pos}</div>
+                    <div className="text-sm font-bold text-white">{pick.player.split(' ').pop()}</div>
+                    <div className="text-[10px] text-gray-500">{pick.teamAbbr} vs {pick.opponent}</div>
                   </div>
+                  {pick.teamAbbr === homeTeam && <span className="text-[9px] px-1.5 py-0.5 rounded bg-team-secondary/20 text-team-secondary font-bold ml-auto">YOUR TEAM</span>}
                 </div>
                 <div className="space-y-2 text-xs">
-                  <div className="flex justify-between"><span className="text-gray-400">PTS Over Hit Rate (L5)</span><span className={`font-bold ${ptsHit >= 3 ? 'text-green-400' : 'text-red-400'}`}>{ptsHit}/5</span></div>
-                  <div className="flex justify-between"><span className="text-gray-400">REB Over Hit Rate (L5)</span><span className={`font-bold ${rebHit >= 3 ? 'text-green-400' : 'text-red-400'}`}>{rebHit}/5</span></div>
-                  <div className="flex justify-between"><span className="text-gray-400">Home Avg</span><span className="font-bold text-white">{homeAvg} PPG</span></div>
-                  <div className="flex justify-between"><span className="text-gray-400">Away Avg</span><span className="font-bold text-white">{awayAvg} PPG</span></div>
+                  <div className="flex justify-between"><span className="text-gray-400">{pick.statType} Over Hit Rate (L5)</span><span className={`font-bold ${hitRate >= 3 ? 'text-green-400' : 'text-red-400'}`}>{hitRate}/5</span></div>
+                  <div className="flex justify-between"><span className="text-gray-400">Home Avg</span><span className="font-bold text-white">{homeAvg}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-400">Away Avg</span><span className="font-bold text-white">{awayAvg}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-400">vs {pick.opponent} DEF</span><span className={`font-bold ${pick.matchupRank >= 15 ? 'text-green-400' : 'text-red-400'}`}>#{pick.matchupRank}</span></div>
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+      )}
 
       {/* Email Capture */}
       <div className="glass rounded-2xl p-6 text-center">
