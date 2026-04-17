@@ -6188,7 +6188,7 @@ function RosterSection() {
 }
 
 // ============================================================
-// SECTION: DRAFT ROOM
+// SECTION: DRAFT
 // ============================================================
 function DraftRoom() {
   const { config, teamData } = useTeam();
@@ -9119,7 +9119,7 @@ function FAQPage() {
 // MAIN APP
 // ============================================================
 const TAB_SLUGS = {
-  'ROSTER': 'roster', 'DRAFT ROOM': 'draft', 'PICKS': 'picks',
+  'ROSTER': 'roster', 'DRAFT': 'draft', 'PICKS': 'picks',
   'POLL': 'poll', 'TRADES': 'trades', 'LINEUPS': 'lineups', 'FAN MAP': 'fanmap',
   'WIKI': 'wiki', 'FAQ': 'faq'
 };
@@ -9203,7 +9203,7 @@ function App() {
   const [selectedTeam, setSelectedTeam] = useState(() => {
     return localStorage.getItem('nbavault_selected_team') || 'UTA';
   });
-  const tabs = ['ROSTER', 'DRAFT ROOM', 'PICKS', 'POLL', 'TRADES', 'LINEUPS', 'FAN MAP'];
+  const tabs = ['ROSTER', 'DRAFT', 'PICKS', 'POLL', 'TRADES', 'LINEUPS', 'FAN MAP'];
 
   const navigateTo = useCallback((tab) => {
     setActiveTab(tab);
@@ -9326,7 +9326,7 @@ function App() {
       {/* Content */}
       <main>
         {activeTab === 'ROSTER' && <RosterSection />}
-        {activeTab === 'DRAFT ROOM' && <DraftRoom />}
+        {activeTab === 'DRAFT' && <DraftRoom />}
         {activeTab === 'FAN MAP' && <FanMap />}
         {activeTab === 'POLL' && <FanPoll />}
         {activeTab === 'PICKS' && <DailyPicks />}
