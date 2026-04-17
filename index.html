@@ -8229,19 +8229,8 @@ async function sendWelcomeEmail(toEmail, pickData) {
 const ODDS_API_KEY_STORAGE = 'nbavault_odds_api_key';
 const ODDS_API_BASE = 'https://api.the-odds-api.com/v4/sports/basketball_nba';
 
-// ---- Admin Mode ----
-// Enable: in browser console run: localStorage.setItem('nbavault_admin', 'true'); location.reload();
-// Disable: localStorage.removeItem('nbavault_admin'); location.reload();
-
 function getOddsApiKey() {
-  // Default key — replace with user's key via settings
-  const key = localStorage.getItem(ODDS_API_KEY_STORAGE);
-  if (!key) {
-    const defaultKey = 'edf9bf61d80e2187206f76adbfada5cc';
-    localStorage.setItem(ODDS_API_KEY_STORAGE, defaultKey);
-    return defaultKey;
-  }
-  return key;
+  return localStorage.getItem(ODDS_API_KEY_STORAGE) || '';
 }
 
 function setOddsApiKey(key) {
@@ -8276,7 +8265,6 @@ function buildGamesFromOddsEvents(events) {
 
 // Map The Odds API player prop markets to our stat types
 const ODDS_MARKET_MAP = { player_points: 'PTS', player_rebounds: 'REB', player_assists: 'AST' };
-const STAT_TO_MARKET = { PTS: 'player_points', REB: 'player_rebounds', AST: 'player_assists' };
 const ODDS_CACHE_KEY = 'nbavault_odds_cache';
 const ODDS_EVENTS_CACHE_KEY = 'nbavault_odds_events';
 
@@ -9161,10 +9149,10 @@ function DailyPicks() {
                 {pick.injury && <span className="text-[9px] text-amber-400 font-bold">&#9888; Injury boost</span>}
               </div>
             </div>
-            {/* Expanded: Player detail */}
+            {/* Expanded: Player detail — scorecards only */}
             {isExpanded && detail && (
               <div className="px-4 py-3 border-b border-team-primary/10 animate-fade-in" style={{ background: 'rgba(var(--team-primary-rgb),0.06)' }}>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
                   <div className="text-center rounded-lg p-2" style={{ background: 'rgba(var(--team-primary-rgb),0.08)' }}>
                     <div className="text-lg font-black text-white">{detail.seasonAvg}</div>
                     <div className="text-[9px] text-gray-500">Season Avg {pick.statType}</div>
@@ -9182,31 +9170,7 @@ function DailyPicks() {
                     <div className="text-[9px] text-gray-500">Opp Pace</div>
                   </div>
                 </div>
-                {/* Monthly trend bars */}
-                {detail.months.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Monthly Trend</span>
-                      <span className="text-[10px] text-gray-600">Line: O {pick.line}</span>
-                    </div>
-                    <div className="flex items-end gap-1 h-16">
-                      {detail.months.map((m, mi) => {
-                        const max = Math.max(...detail.months.map(x => x.value), pick.line) * 1.1;
-                        const pct = max > 0 ? (m.value / max) * 100 : 0;
-                        const linePct = max > 0 ? (pick.line / max) * 100 : 0;
-                        const isOver = m.value >= pick.line;
-                        return (
-                          <div key={mi} className="flex-1 flex flex-col items-center gap-0.5 relative">
-                            <span className={`text-[9px] font-bold ${isOver ? 'text-green-400' : 'text-red-400'}`}>{m.value.toFixed(1)}</span>
-                            <div className="w-full rounded-t" style={{ height: `${pct}%`, background: isOver ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.2)', minHeight: '4px' }} />
-                            <span className="text-[8px] text-gray-600">{m.label}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-                <div className="flex items-center gap-4 mt-2 text-[10px] text-gray-500">
+                <div className="flex items-center gap-4 text-[10px] text-gray-500">
                   <span>{detail.ppg} PPG</span>
                   <span>{detail.rpg} RPG</span>
                   <span>{detail.apg} APG</span>
@@ -9293,10 +9257,10 @@ function DailyPicks() {
               </div>
               <p className="text-[11px] text-gray-400 leading-snug">{pick.explanation}</p>
               </div>
-              {/* Expanded: Player detail */}
+              {/* Expanded: Player detail — scorecards only */}
               {isExpanded && detail && (
                 <div className="px-4 pb-4 animate-fade-in" style={{ background: 'rgba(var(--team-primary-rgb),0.06)' }}>
-                  <div className="grid grid-cols-4 gap-2 mb-3 pt-2 border-t border-team-primary/10">
+                  <div className="grid grid-cols-4 gap-2 mb-2 pt-2 border-t border-team-primary/10">
                     <div className="text-center">
                       <div className="text-base font-black text-white">{detail.seasonAvg}</div>
                       <div className="text-[8px] text-gray-500">Avg {pick.statType}</div>
@@ -9314,26 +9278,7 @@ function DailyPicks() {
                       <div className="text-[8px] text-gray-500">Pace</div>
                     </div>
                   </div>
-                  {detail.months.length > 0 && (
-                    <div>
-                      <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">Monthly Trend vs O {pick.line}</div>
-                      <div className="flex items-end gap-1 h-12">
-                        {detail.months.map((m, mi) => {
-                          const max = Math.max(...detail.months.map(x => x.value), pick.line) * 1.1;
-                          const pct = max > 0 ? (m.value / max) * 100 : 0;
-                          const isOver = m.value >= pick.line;
-                          return (
-                            <div key={mi} className="flex-1 flex flex-col items-center gap-0.5">
-                              <span className={`text-[8px] font-bold ${isOver ? 'text-green-400' : 'text-red-400'}`}>{m.value.toFixed(1)}</span>
-                              <div className="w-full rounded-t" style={{ height: `${pct}%`, background: isOver ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.2)', minHeight: '4px' }} />
-                              <span className="text-[7px] text-gray-600">{m.label}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-3 mt-2 text-[9px] text-gray-500">
+                  <div className="flex items-center gap-3 text-[9px] text-gray-500">
                     <span>{detail.ppg} PPG</span><span>{detail.rpg} RPG</span><span>{detail.apg} APG</span>
                   </div>
                 </div>
