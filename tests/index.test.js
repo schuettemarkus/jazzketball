@@ -348,3 +348,57 @@ describe('Stub Data Generators', () => {
     expect(scriptContent).toContain('function getTeamData(');
   });
 });
+
+// ============================================================
+// 11. LOCALSTORAGE KEY STABILITY
+// ============================================================
+describe('localStorage Key Stability', () => {
+  test('engine storage key is nbavault_engine_v1 (never rename without migration)', () => {
+    expect(scriptContent).toContain("'nbavault_engine_v1'");
+  });
+
+  test('win tracker storage key is nbavault_win_tracker_v1 (never rename without migration)', () => {
+    expect(scriptContent).toContain("'nbavault_win_tracker_v1'");
+  });
+
+  test('team preference key is nbavault_selected_team (never rename without migration)', () => {
+    expect(scriptContent).toContain("'nbavault_selected_team'");
+  });
+
+  test('no jazzketball_ prefixed keys remain', () => {
+    expect(scriptContent).not.toContain('jazzketball_');
+  });
+});
+
+// ============================================================
+// 12. BETTING ENGINE
+// ============================================================
+describe('Betting Engine', () => {
+  test('selectBestBet function exists', () => {
+    expect(scriptContent).toContain('function selectBestBet(');
+  });
+
+  test('projectPlayer function exists', () => {
+    expect(scriptContent).toContain('function projectPlayer(');
+  });
+
+  test('calibrateWeights function exists', () => {
+    expect(scriptContent).toContain('function calibrateWeights(');
+  });
+
+  test('loadVaultEngine function exists', () => {
+    expect(scriptContent).toContain('function loadVaultEngine(');
+  });
+
+  test('loadWinTracker function exists', () => {
+    expect(scriptContent).toContain('function loadWinTracker(');
+  });
+
+  test('DEF_RATINGS has all 30 teams', () => {
+    expect(scriptContent).toContain('DEF_RATINGS');
+    const defSection = scriptContent.match(/const DEF_RATINGS = \{([^}]+)\}/);
+    expect(defSection).not.toBeNull();
+    const teams = defSection[1].match(/[A-Z]{3}:/g);
+    expect(teams.length).toBe(30);
+  });
+});
