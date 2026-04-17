@@ -5388,6 +5388,12 @@ function applyTeamColors(colors) {
   root.setProperty('--team-light-rgb', hexToRgb(colors.light));
 }
 
+// NBA Vault standalone brand theme — used on Picks page
+const VAULT_COLORS = {
+  primary: '#1A1F3D', secondary: '#D4A843', midnight: '#0B0E1A',
+  deep: '#111428', light: '#2A3060', black: '#000000'
+};
+
 const TEAM_CONFIGS = {
   ATL: { abbr: 'ATL', city: 'Atlanta', name: 'Hawks', fullName: 'Atlanta Hawks', conference: 'East',
     colors: { primary: '#E03A3E', secondary: '#C1D32F', midnight: '#1A0000', deep: '#2D0A0A', light: '#FF6B6B', black: '#000000' },
@@ -8307,6 +8313,14 @@ function calcConfidence(pick) {
   return Math.min(Math.round(score), 99);
 }
 
+function formatGameDateTime(gameTime) {
+  if (!gameTime) return '';
+  const d = new Date(gameTime);
+  const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  return `${date} · ${time}`;
+}
+
 function DailyPicks() {
   const { config } = useTeam(); // Only used for home team prioritization
   const homeTeam = config.abbr;
@@ -8587,7 +8601,7 @@ function DailyPicks() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-1">
                 <span className="font-black text-xl md:text-2xl text-white">{bestPick.player}</span>
-                <span className="text-xs text-gray-400 bg-white/5 px-2 py-0.5 rounded">{bestPick.teamAbbr} vs {bestPick.opponent}{bestPick.gameStatus ? ` · ${bestPick.gameStatus}` : bestPick.gameTime ? ` · ${new Date(bestPick.gameTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` : ''}</span>
+                <span className="text-xs text-gray-400 bg-white/5 px-2 py-0.5 rounded">{bestPick.teamAbbr} vs {bestPick.opponent}{bestPick.gameStatus ? ` · ${bestPick.gameStatus}` : bestPick.gameTime ? ` · ${formatGameDateTime(bestPick.gameTime)}` : ''}</span>
               </div>
 
               <div className="flex items-center gap-3 mt-2 flex-wrap">
@@ -8683,7 +8697,7 @@ function DailyPicks() {
                       </span>
                     )}
                   </div>
-                  <div className="text-[10px] text-gray-500">{pick.teamAbbr} vs {pick.opponent}{(pick.teamAbbr === homeTeam || pick.opponent === homeTeam) ? ' ★' : ''}{pick.gameStatus ? ` · ${pick.gameStatus}` : pick.gameTime ? ` · ${new Date(pick.gameTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` : ''}</div>
+                  <div className="text-[10px] text-gray-500">{pick.teamAbbr} vs {pick.opponent}{(pick.teamAbbr === homeTeam || pick.opponent === homeTeam) ? ' ★' : ''}{pick.gameStatus ? ` · ${pick.gameStatus}` : pick.gameTime ? ` · ${formatGameDateTime(pick.gameTime)}` : ''}</div>
                 </div>
               </div>
               <div className="col-span-1 text-center"><span className="text-xs font-bold text-team-secondary">{pick.statType}</span></div>
@@ -8722,7 +8736,7 @@ function DailyPicks() {
                 {pick.headshot && <img src={pick.headshot} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" loading="lazy" />}
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-white truncate flex items-center gap-1">{pick.player}{gameLocked && !live && <span className="text-[10px] text-gray-500">&#128274;</span>}</div>
-                  <div className="text-[10px] text-gray-500">{pick.teamAbbr} vs {pick.opponent}{pick.gameStatus ? ` · ${pick.gameStatus}` : pick.gameTime ? ` · ${new Date(pick.gameTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` : ''}</div>
+                  <div className="text-[10px] text-gray-500">{pick.teamAbbr} vs {pick.opponent}{pick.gameStatus ? ` · ${pick.gameStatus}` : pick.gameTime ? ` · ${formatGameDateTime(pick.gameTime)}` : ''}</div>
                 </div>
                 <div className="text-right shrink-0">
                   <div className="text-team-secondary font-black text-sm">O {pick.line} {pick.statType}</div>
@@ -9215,15 +9229,22 @@ function App() {
   const switchTeam = useCallback((abbr) => {
     setSelectedTeam(abbr);
     localStorage.setItem('nbavault_selected_team', abbr);
-    const c = TEAM_CONFIGS[abbr].colors;
-    applyTeamColors(c);
+    if (activeTab !== 'PICKS') {
+      applyTeamColors(TEAM_CONFIGS[abbr].colors);
+    }
     document.title = `${TEAM_CONFIGS[abbr].fullName} | NBA Vault`;
-  }, []);
+  }, [activeTab]);
 
+  // Apply Vault brand theme on Picks, restore team theme on other tabs
   useEffect(() => {
-    applyTeamColors(config.colors);
-    document.title = `${config.fullName} | NBA Vault`;
-  }, []);
+    if (activeTab === 'PICKS') {
+      applyTeamColors(VAULT_COLORS);
+      document.title = 'Daily Picks | NBA Vault';
+    } else {
+      applyTeamColors(config.colors);
+      document.title = `${config.fullName} | NBA Vault`;
+    }
+  }, [activeTab, selectedTeam]);
 
   const ctxValue = useMemo(() => ({ config, teamData, switchTeam }), [selectedTeam]);
 
