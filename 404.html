@@ -8902,7 +8902,8 @@ function DailyPicks() {
     return picks;
   }, [allPicks, sortBy, filterStat, bestPick]);
   const [winTracker, setWinTracker] = useState(loadWinTracker);
-  const [parlayLegs, setParlayLegs] = useState(null); // null = auto-select, array = user-modified
+  const [parlayLegs, setParlayLegs] = useState(null);
+  const [showParlay, setShowParlay] = useState(false);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const paywallOn = useState(() => localStorage.getItem('nbavault_paywall') === 'true')[0];
   const FREE_LIMIT = paywallOn ? 1 : 999;
@@ -9110,8 +9111,17 @@ function DailyPicks() {
         </div>
       ); })()}
 
+      {/* Parlay toggle */}
+      {allPicks.filter(p => !p.locked).length >= 2 && bestPick && (
+        <button onClick={() => setShowParlay(!showParlay)}
+          className={`w-full mb-4 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${showParlay ? 'glass text-team-secondary' : 'text-gray-500 hover:text-team-secondary hover:bg-white/[0.03]'}`}>
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+          {showParlay ? 'Hide Parlay Builder' : 'Build a Parlay with this pick'}
+        </button>
+      )}
+
       {/* Parlay Builder */}
-      {(() => {
+      {showParlay && (() => {
         const unlocked = allPicks.filter(p => !p.locked);
         if (unlocked.length < 2) return null;
         // ---- Smart Parlay Correlation Logic ----
