@@ -8171,28 +8171,50 @@ function setOddsApiKey(key) {
 // Map The Odds API player prop markets to our stat types
 const ODDS_MARKET_MAP = { player_points: 'PTS', player_rebounds: 'REB', player_assists: 'AST' };
 const STAT_TO_MARKET = { PTS: 'player_points', REB: 'player_rebounds', AST: 'player_assists' };
+const ODDS_CACHE_KEY = 'nbavault_odds_cache';
+const ODDS_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+function getOddsCache() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(ODDS_CACHE_KEY));
+    if (cached && Date.now() - cached.timestamp < ODDS_CACHE_TTL) {
+      return cached.lines;
+    }
+  } catch {}
+  return null;
+}
+
+function setOddsCache(lines) {
+  try {
+    localStorage.setItem(ODDS_CACHE_KEY, JSON.stringify({ lines, timestamp: Date.now() }));
+  } catch {}
+}
 
 async function fetchOddsApiLines() {
+  // Check cache first — avoids burning API calls on refresh/revisit
+  const cached = getOddsCache();
+  if (cached) return cached;
+
   const apiKey = getOddsApiKey();
   if (!apiKey) return {};
   try {
-    // Step 1: Get today's NBA events
+    // Step 1: Get today's NBA events (1 API call)
     const eventsResp = await fetch(`${ODDS_API_BASE}/events?apiKey=${apiKey}&dateFormat=iso`);
     if (!eventsResp.ok) return {};
     const events = await eventsResp.json();
-    if (!events.length) return {};
+    if (!events.length) { setOddsCache({}); return {}; }
 
-    // Step 2: Fetch player props for each event (max 5 to save API credits)
-    const lines = {}; // { "Player Name": { PTS: 23.5, REB: 8.5, AST: 5.5 } }
+    // Step 2: Fetch player props for up to 2 events (2 API calls)
+    // Each event with 3 markets = 3 credits, so 2 events = 6 credits max
+    const lines = {};
     const markets = 'player_points,player_rebounds,player_assists';
-    const eventsToFetch = events.slice(0, 5);
+    const eventsToFetch = events.slice(0, 2);
 
     await Promise.allSettled(eventsToFetch.map(async (event) => {
       try {
         const oddsResp = await fetch(`${ODDS_API_BASE}/events/${event.id}/odds?apiKey=${apiKey}&regions=us&markets=${markets}&oddsFormat=american`);
         if (!oddsResp.ok) return;
         const data = await oddsResp.json();
-        // Parse bookmaker odds — use first US bookmaker (DraftKings preferred)
         const bookmakers = data.bookmakers || [];
         const book = bookmakers.find(b => b.key === 'draftkings') || bookmakers.find(b => b.key === 'fanduel') || bookmakers[0];
         if (!book) return;
@@ -8210,6 +8232,8 @@ async function fetchOddsApiLines() {
       } catch (e) { /* skip failed event fetch */ }
     }));
 
+    // Cache the result for 30 minutes
+    setOddsCache(lines);
     return lines;
   } catch (e) {
     return {};
