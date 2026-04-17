@@ -43,6 +43,8 @@ tailwind.config = {
   }
 }
 </script>
+<!-- EmailJS SDK for welcome emails -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" defer></script>
 <!-- React core must be sync (components depend on it) -->
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -8125,6 +8127,38 @@ function getLiveStatus(pick, liveStats) {
 }
 
 // ---- The Odds API — Real Sportsbook Lines ----
+// ---- EmailJS — Welcome Emails ----
+// Set up at emailjs.com: create service + template, paste IDs below
+const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY'; // From EmailJS dashboard > Account > Public Key
+const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID'; // From EmailJS dashboard > Email Services
+const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID'; // From EmailJS dashboard > Email Templates
+
+let emailjsReady = false;
+function initEmailJS() {
+  if (emailjsReady || !window.emailjs || EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') return;
+  window.emailjs.init(EMAILJS_PUBLIC_KEY);
+  emailjsReady = true;
+}
+
+async function sendWelcomeEmail(toEmail, pickData) {
+  initEmailJS();
+  if (!emailjsReady) return false;
+  try {
+    await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email: toEmail,
+      pick_player: pickData?.player || 'TBD',
+      pick_line: pickData ? `O ${pickData.line} ${pickData.statType}` : 'Check nbavault.com',
+      pick_edge: pickData ? `+${pickData.edge}` : '',
+      pick_confidence: pickData ? `${pickData.confidence}%` : '',
+      pick_explanation: pickData?.explanation || 'Visit nbavault.com/picks for today\'s edges.',
+      pick_team: pickData ? `${pickData.teamAbbr} vs ${pickData.opponent}` : '',
+    });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 const ODDS_API_KEY_STORAGE = 'nbavault_odds_api_key';
 const ODDS_API_BASE = 'https://api.the-odds-api.com/v4/sports/basketball_nba';
 
@@ -8794,11 +8828,12 @@ function DailyPicks() {
   const handleEmailSubmit = (e) => {
     e.preventDefault();
     if (emailInput.trim()) {
-      // Store locally for now — replace with real backend later
       const emails = JSON.parse(localStorage.getItem('nbavault_email_list') || '[]');
       emails.push({ email: emailInput, date: new Date().toISOString() });
       localStorage.setItem('nbavault_email_list', JSON.stringify(emails));
       setEmailSubmitted(true);
+      // Send welcome email with today's Pick of the Day
+      sendWelcomeEmail(emailInput, bestPick);
     }
   };
 
@@ -9358,6 +9393,7 @@ function LandingPage() {
       emails.push({ email: emailInput, date: new Date().toISOString(), source: 'landing' });
       localStorage.setItem('nbavault_email_list', JSON.stringify(emails));
       setEmailDone(true);
+      sendWelcomeEmail(emailInput, bestPick);
     }
   };
 
