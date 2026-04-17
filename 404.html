@@ -8149,6 +8149,109 @@ function getLiveStatus(pick, liveStats) {
   };
 }
 
+// ---- The Odds API — Real Sportsbook Lines ----
+const ODDS_API_KEY_STORAGE = 'nbavault_odds_api_key';
+const ODDS_API_BASE = 'https://api.the-odds-api.com/v4/sports/basketball_nba';
+
+function getOddsApiKey() {
+  // Default key — replace with user's key via settings
+  const key = localStorage.getItem(ODDS_API_KEY_STORAGE);
+  if (!key) {
+    const defaultKey = 'edf9bf61d80e2187206f76adbfada5cc';
+    localStorage.setItem(ODDS_API_KEY_STORAGE, defaultKey);
+    return defaultKey;
+  }
+  return key;
+}
+
+function setOddsApiKey(key) {
+  localStorage.setItem(ODDS_API_KEY_STORAGE, key);
+}
+
+// Map The Odds API player prop markets to our stat types
+const ODDS_MARKET_MAP = { player_points: 'PTS', player_rebounds: 'REB', player_assists: 'AST' };
+const STAT_TO_MARKET = { PTS: 'player_points', REB: 'player_rebounds', AST: 'player_assists' };
+
+async function fetchOddsApiLines() {
+  const apiKey = getOddsApiKey();
+  if (!apiKey) return {};
+  try {
+    // Step 1: Get today's NBA events
+    const eventsResp = await fetch(`${ODDS_API_BASE}/events?apiKey=${apiKey}&dateFormat=iso`);
+    if (!eventsResp.ok) return {};
+    const events = await eventsResp.json();
+    if (!events.length) return {};
+
+    // Step 2: Fetch player props for each event (max 5 to save API credits)
+    const lines = {}; // { "Player Name": { PTS: 23.5, REB: 8.5, AST: 5.5 } }
+    const markets = 'player_points,player_rebounds,player_assists';
+    const eventsToFetch = events.slice(0, 5);
+
+    await Promise.allSettled(eventsToFetch.map(async (event) => {
+      try {
+        const oddsResp = await fetch(`${ODDS_API_BASE}/events/${event.id}/odds?apiKey=${apiKey}&regions=us&markets=${markets}&oddsFormat=american`);
+        if (!oddsResp.ok) return;
+        const data = await oddsResp.json();
+        // Parse bookmaker odds — use first US bookmaker (DraftKings preferred)
+        const bookmakers = data.bookmakers || [];
+        const book = bookmakers.find(b => b.key === 'draftkings') || bookmakers.find(b => b.key === 'fanduel') || bookmakers[0];
+        if (!book) return;
+        (book.markets || []).forEach(market => {
+          const statType = ODDS_MARKET_MAP[market.key];
+          if (!statType) return;
+          (market.outcomes || []).forEach(o => {
+            if (o.name === 'Over' && o.description && o.point != null) {
+              const playerName = o.description;
+              if (!lines[playerName]) lines[playerName] = {};
+              lines[playerName][statType] = o.point;
+            }
+          });
+        });
+      } catch (e) { /* skip failed event fetch */ }
+    }));
+
+    return lines;
+  } catch (e) {
+    return {};
+  }
+}
+
+// ---- Auto-resolve picks from final box scores ----
+function autoResolvePicks(engine, liveStats, games) {
+  const finalGames = games.filter(g => g.isFinal);
+  if (finalGames.length === 0 || Object.keys(liveStats).length === 0) return null;
+
+  let changed = false;
+  const updated = { ...engine, history: engine.history.map(h => {
+    if (h.result) return h; // Already resolved
+    const stats = liveStats[h.player];
+    if (!stats) return h;
+    const actual = stats[h.statType] || 0;
+    // Only resolve if the player's game is final (check if they have significant minutes)
+    if (stats.MIN < 5) return h; // Didn't really play
+    const result = actual >= h.line ? 'hit' : 'miss';
+    changed = true;
+    return { ...h, result, actual };
+  })};
+
+  if (!changed) return null;
+
+  // Update accuracy tiers
+  updated.history.filter(h => h.result && !engine.history.find(oh => oh.id === h.id && oh.result)).forEach(h => {
+    const tier = h.confidence >= 70 ? 'high' : h.confidence >= 50 ? 'mid' : 'low';
+    updated.accuracy[tier] = updated.accuracy[tier] || { hits: 0, total: 0 };
+    updated.accuracy[tier].total += 1;
+    if (h.result === 'hit') updated.accuracy[tier].hits += 1;
+    updated.statAccuracy[h.statType] = updated.statAccuracy[h.statType] || { hits: 0, total: 0 };
+    updated.statAccuracy[h.statType].total += 1;
+    if (h.result === 'hit') updated.statAccuracy[h.statType].hits += 1;
+  });
+
+  updated.weights = calibrateWeights(updated);
+  updated.lastCalibrated = new Date().toISOString();
+  return updated;
+}
+
 // ---- Defensive Ratings by Team (approximated from real standings) ----
 const DEF_RATINGS = {
   OKC: 3, BOS: 5, CLE: 4, DEN: 8, MIN: 6, HOU: 7, SAS: 9, GSW: 12,
@@ -8372,18 +8475,30 @@ function DailyPicks() {
   const [schedule, setSchedule] = useState(null);
   const [loadingGames, setLoadingGames] = useState(true);
   const [liveStats, setLiveStats] = useState({});
+  const [oddsLines, setOddsLines] = useState({});
+  const [oddsSource, setOddsSource] = useState(null); // 'live' | 'none'
 
-  // Fetch real schedule on mount
+  // Fetch real schedule + odds lines on mount
   useEffect(() => {
     (async () => {
-      let data = await fetchTodaysGames();
+      // Fetch schedule and odds in parallel
+      const [scheduleData, lines] = await Promise.all([
+        fetchTodaysGames(),
+        fetchOddsApiLines(),
+      ]);
+      let data = scheduleData;
       if (!data || data.games.length === 0) {
-        // No games today — try tomorrow, then day after
         data = generateFallbackGames(1);
         if (data.games.length === 0) data = generateFallbackGames(2);
       }
       setSchedule(data);
       setLoadingGames(false);
+      if (Object.keys(lines).length > 0) {
+        setOddsLines(lines);
+        setOddsSource('live');
+      } else {
+        setOddsSource('none');
+      }
     })();
   }, []);
 
@@ -8400,6 +8515,18 @@ function DailyPicks() {
     const interval = setInterval(poll, 60000); // Every 60 seconds
     return () => clearInterval(interval);
   }, [schedule]);
+
+  // Auto-resolve picks when final box scores are available
+  useEffect(() => {
+    if (!schedule || Object.keys(liveStats).length === 0) return;
+    const hasFinal = schedule.games.some(g => g.isFinal);
+    if (!hasFinal) return;
+    const resolved = autoResolvePicks(engine, liveStats, schedule.games);
+    if (resolved) {
+      setEngine(resolved);
+      saveVaultEngine(resolved);
+    }
+  }, [liveStats, schedule]);
 
   // Calibrate on mount
   useEffect(() => {
@@ -8461,14 +8588,17 @@ function DailyPicks() {
     // Project each player and find best edges
     const statTypes = ['PTS', 'REB', 'AST'];
     const allProps = [];
+    const hasRealOdds = Object.keys(oddsLines).length > 0;
 
     candidates.forEach((p, ci) => {
       const projections = projectPlayer(p, p.opponent, p.isHome, engine);
       // Pick best stat type for this player based on edge
       statTypes.forEach(st => {
         const proj = projections[st];
+        // Use real sportsbook line if available, fall back to generated
+        const realLine = oddsLines[p.name]?.[st];
         const lineSeed = daySeed + ci * 7 + statTypes.indexOf(st) * 31;
-        const line = generateLine(proj, lineSeed);
+        const line = realLine != null ? realLine : generateLine(proj, lineSeed);
         const edge = +(proj - line).toFixed(1);
         if (Math.abs(edge) < 0.3) return; // Skip tiny edges
 
@@ -8490,6 +8620,7 @@ function DailyPicks() {
           player: p.name, teamAbbr: p.teamAbbr, teamName: p.teamName,
           headshot: p.headshot, pos: p.pos,
           statType: st, line, projection: proj, edge,
+          lineSource: realLine != null ? 'live' : 'projected',
           matchupRank: oppDefRank, hitRate, hadInjuryBoost: !!injury,
           minutesConsistency: 'high', avgMinutes: 33, injury,
           opponent: p.opponent, isHome: p.isHome,
@@ -8533,7 +8664,7 @@ function DailyPicks() {
     }
 
     return { allPicks: picks, todaysGames: games };
-  }, [schedule, engine.weights]);
+  }, [schedule, engine.weights, oddsLines]);
 
   // Filter and sort
   const filteredPicks = useMemo(() => {
@@ -8579,8 +8710,21 @@ function DailyPicks() {
     }
   };
 
+  const realLineCount = allPicks.filter(p => p.lineSource === 'live').length;
+
   return (
     <section className="py-8 px-4 max-w-5xl mx-auto">
+
+      {/* Line source indicator */}
+      <div className="flex items-center justify-center gap-2 mb-4">
+        {oddsSource === 'live' ? (
+          <span className="flex items-center gap-1.5 text-[10px] text-green-400 font-semibold"><span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Live lines ({realLineCount} picks)</span>
+        ) : oddsSource === 'none' && getOddsApiKey() ? (
+          <span className="text-[10px] text-gray-500">No live lines available — using projections</span>
+        ) : (
+          <span className="text-[10px] text-gray-600">Projected lines — connect Odds API for real sportsbook lines</span>
+        )}
+      </div>
 
       {/* Win Rate Transparency Bar */}
       {(winTracker.bestBetRecord.wins + winTracker.bestBetRecord.losses) > 0 && (
@@ -8868,6 +9012,17 @@ function DailyPicks() {
           </h3>
           {schedule?.source === 'live' && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
           {schedule?.source === 'projected' && <span className="text-[9px] text-gray-600 px-1.5 py-0.5 rounded bg-gray-800">projected</span>}
+          {/* Next tip-off countdown */}
+          {(() => {
+            const upcoming = todaysGames.filter(g => g.isScheduled && g.startTime);
+            if (upcoming.length === 0 || todaysGames.some(g => g.isLive)) return null;
+            const next = upcoming.sort((a, b) => new Date(a.startTime) - new Date(b.startTime))[0];
+            const diff = new Date(next.startTime) - new Date();
+            if (diff <= 0) return null;
+            const hrs = Math.floor(diff / 3600000);
+            const mins = Math.floor((diff % 3600000) / 60000);
+            return <span className="text-[10px] text-gray-500 ml-2">Next tip-off in {hrs > 0 ? `${hrs}h ` : ''}{mins}m</span>;
+          })()}
         </div>
         <div className="flex flex-wrap justify-center gap-2">
           {todaysGames.map((g, i) => {
@@ -9142,8 +9297,33 @@ function LandingPage() {
     }
   };
 
-  // Mock performance data (replace with real data later)
-  const stats = { yesterday: '7-3', weekUnits: '+18.4', winRate: '62' };
+  // Pull from real win tracker
+  const tracker = loadWinTracker();
+  const engine_ = loadVaultEngine();
+  const totalTracked = engine_.history.filter(h => h.result).length;
+  const totalHits = engine_.history.filter(h => h.result === 'hit').length;
+  const winRate = totalTracked > 0 ? Math.round((totalHits / totalTracked) * 100) : 62;
+  // Last 7 days results
+  const last7 = engine_.history.filter(h => {
+    if (!h.result || !h.date) return false;
+    const d = new Date(h.date); const now = new Date();
+    return (now - d) / 86400000 <= 7;
+  });
+  const last7Hits = last7.filter(h => h.result === 'hit').length;
+  const last7Total = last7.length;
+  const weekUnits = last7Total > 0 ? `+${(last7Hits * 1.0 - (last7Total - last7Hits) * 1.1).toFixed(1)}` : '+0.0';
+  const yesterdayPicks = engine_.history.filter(h => {
+    if (!h.result || !h.date) return false;
+    const d = new Date(h.date); const y = new Date(); y.setDate(y.getDate() - 1);
+    return d.toDateString() === y.toDateString();
+  });
+  const yHits = yesterdayPicks.filter(h => h.result === 'hit').length;
+  const yTotal = yesterdayPicks.length;
+  const stats = {
+    yesterday: yTotal > 0 ? `${yHits}-${yTotal - yHits}` : '—',
+    weekUnits: last7Total > 0 ? `${weekUnits}u` : '—',
+    winRate: totalTracked > 0 ? `${winRate}%` : '—',
+  };
 
   // Sample picks from today's engine
   const samplePicks = useMemo(() => {
@@ -9215,11 +9395,11 @@ function LandingPage() {
             <div className="text-[10px] text-gray-500 uppercase tracking-wider">Yesterday</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-black text-team-secondary">{stats.weekUnits}u</div>
+            <div className="text-2xl font-black text-team-secondary">{stats.weekUnits}</div>
             <div className="text-[10px] text-gray-500 uppercase tracking-wider">Last 7 Days</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-black text-white">{stats.winRate}%</div>
+            <div className="text-2xl font-black text-white">{stats.winRate}</div>
             <div className="text-[10px] text-gray-500 uppercase tracking-wider">Win Rate</div>
           </div>
         </div>
@@ -9598,20 +9778,20 @@ function App() {
   const switchTeam = useCallback((abbr) => {
     setSelectedTeam(abbr);
     localStorage.setItem('nbavault_selected_team', abbr);
-    if (activeTab !== 'LANDING') {
+    if (activeTab !== 'LANDING' && activeTab !== 'PICKS') {
       applyTeamColors(TEAM_CONFIGS[abbr].colors);
     }
     document.title = `${TEAM_CONFIGS[abbr].fullName} | NBA Vault`;
   }, [activeTab]);
 
-  // Apply Vault brand theme on Landing page only, team theme everywhere else
+  // Apply Vault brand theme on Picks + Landing, team theme elsewhere
   useEffect(() => {
-    if (activeTab === 'LANDING') {
+    if (activeTab === 'PICKS' || activeTab === 'LANDING') {
       applyTeamColors(VAULT_COLORS);
-      document.title = 'NBA Betting Edges | NBA Vault';
+      document.title = activeTab === 'LANDING' ? 'NBA Betting Edges | NBA Vault' : 'Daily Picks | NBA Vault';
     } else {
       applyTeamColors(config.colors);
-      document.title = activeTab === 'PICKS' ? 'Daily Picks | NBA Vault' : `${config.fullName} | NBA Vault`;
+      document.title = `${config.fullName} | NBA Vault`;
     }
   }, [activeTab, selectedTeam]);
 
@@ -9635,20 +9815,29 @@ function App() {
         <Particles />
         <HeroBg />
         <div className="relative z-10 text-center py-8 px-4">
-          {config.franchiseId && (
-            <img src={`https://cdn.nba.com/logos/nba/${config.franchiseId}/primary/L/logo.svg`}
-              alt={`${config.fullName} logo`} className="w-20 h-20 mx-auto mb-3 drop-shadow-lg" loading="lazy" />
+          {activeTab === 'PICKS' ? (
+            <>
+              <div className="inline-flex items-center gap-2 mb-3 px-4 py-1.5 rounded-full" style={{ background: 'rgba(var(--team-secondary-rgb),0.1)', border: '1px solid rgba(var(--team-secondary-rgb),0.2)' }}>
+                <svg className="w-4 h-4 text-team-secondary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                <span className="text-xs font-bold text-team-secondary tracking-wider uppercase">NBA Vault</span>
+              </div>
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight">
+                <span className="text-team-secondary">DAILY</span> <span className="text-white">PICKS</span>
+              </h1>
+              <p className="text-xs md:text-sm text-gray-400 mt-2 max-w-md mx-auto">Real edges. Real lines. Updated daily before tip-off.</p>
+            </>
+          ) : (
+            <>
+              {config.franchiseId && (
+                <img src={`https://cdn.nba.com/logos/nba/${config.franchiseId}/primary/L/logo.svg`}
+                  alt={`${config.fullName} logo`} className="w-20 h-20 mx-auto mb-3 drop-shadow-lg" loading="lazy" />
+              )}
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight">
+                <span className="text-team-secondary">{config.city.toUpperCase()}</span> <span className="text-white">{config.name.toUpperCase()}</span>
+              </h1>
+              <p className="text-xs md:text-sm text-gray-400 tracking-widest mt-1">2026-27 &bull; NBA VAULT</p>
+            </>
           )}
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight">
-            {activeTab === 'PICKS' ? (
-              <><span className="text-team-secondary">DAILY</span> <span className="text-white">PICKS</span></>
-            ) : (
-              <><span className="text-team-secondary">{config.city.toUpperCase()}</span> <span className="text-white">{config.name.toUpperCase()}</span></>
-            )}
-          </h1>
-          <p className="text-xs md:text-sm text-gray-400 tracking-widest mt-1">
-            {activeTab === 'PICKS' ? 'Find profitable betting edges in 60 seconds' : '2026-27 \u2022 NBA VAULT'}
-          </p>
         </div>
       </header>
       )}
