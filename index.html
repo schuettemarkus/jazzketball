@@ -9589,20 +9589,20 @@ function App() {
   const switchTeam = useCallback((abbr) => {
     setSelectedTeam(abbr);
     localStorage.setItem('nbavault_selected_team', abbr);
-    if (activeTab !== 'PICKS') {
+    if (activeTab !== 'LANDING') {
       applyTeamColors(TEAM_CONFIGS[abbr].colors);
     }
     document.title = `${TEAM_CONFIGS[abbr].fullName} | NBA Vault`;
   }, [activeTab]);
 
-  // Apply Vault brand theme on Picks, restore team theme on other tabs
+  // Apply Vault brand theme on Landing page only, team theme everywhere else
   useEffect(() => {
-    if (activeTab === 'PICKS' || activeTab === 'LANDING') {
+    if (activeTab === 'LANDING') {
       applyTeamColors(VAULT_COLORS);
-      document.title = activeTab === 'LANDING' ? 'NBA Betting Edges | NBA Vault' : 'Daily Picks | NBA Vault';
+      document.title = 'NBA Betting Edges | NBA Vault';
     } else {
       applyTeamColors(config.colors);
-      document.title = `${config.fullName} | NBA Vault`;
+      document.title = activeTab === 'PICKS' ? 'Daily Picks | NBA Vault' : `${config.fullName} | NBA Vault`;
     }
   }, [activeTab, selectedTeam]);
 
@@ -9626,25 +9626,20 @@ function App() {
         <Particles />
         <HeroBg />
         <div className="relative z-10 text-center py-8 px-4">
-          {activeTab === 'PICKS' ? (
-            <>
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight">
-                <span className="text-team-secondary">DAILY</span> <span className="text-white">PICKS</span>
-              </h1>
-              <p className="text-xs md:text-sm text-gray-400 tracking-widest mt-1">Find profitable betting edges in 60 seconds</p>
-            </>
-          ) : (
-            <>
-              {config.franchiseId && (
-                <img src={`https://cdn.nba.com/logos/nba/${config.franchiseId}/primary/L/logo.svg`}
-                  alt={`${config.fullName} logo`} className="w-20 h-20 mx-auto mb-3 drop-shadow-lg" loading="lazy" />
-              )}
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight">
-                <span className="text-team-secondary">{config.city.toUpperCase()}</span> <span className="text-white">{config.name.toUpperCase()}</span>
-              </h1>
-              <p className="text-xs md:text-sm text-gray-400 tracking-widest mt-1">2026-27 &bull; NBA VAULT</p>
-            </>
+          {config.franchiseId && (
+            <img src={`https://cdn.nba.com/logos/nba/${config.franchiseId}/primary/L/logo.svg`}
+              alt={`${config.fullName} logo`} className="w-20 h-20 mx-auto mb-3 drop-shadow-lg" loading="lazy" />
           )}
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight">
+            {activeTab === 'PICKS' ? (
+              <><span className="text-team-secondary">DAILY</span> <span className="text-white">PICKS</span></>
+            ) : (
+              <><span className="text-team-secondary">{config.city.toUpperCase()}</span> <span className="text-white">{config.name.toUpperCase()}</span></>
+            )}
+          </h1>
+          <p className="text-xs md:text-sm text-gray-400 tracking-widest mt-1">
+            {activeTab === 'PICKS' ? 'Find profitable betting edges in 60 seconds' : '2026-27 \u2022 NBA VAULT'}
+          </p>
         </div>
       </header>
       )}
@@ -9718,7 +9713,7 @@ function App() {
           <span className="text-gray-700">&bull;</span>
           <button onClick={() => navigateTo('FAQ')} className="text-gray-500 hover:text-white text-xs transition-colors">FAQ</button>
         </div>
-        <p className="text-gray-700 text-[10px] mt-3">Not affiliated with the NBA. For entertainment purposes only.</p>
+        <p className="text-gray-700 text-[10px] mt-3">&copy; {new Date().getFullYear()} NBA Vault. Not affiliated with the NBA. For entertainment purposes only.</p>
       </footer>
 
       {/* AI Chat Scout - disabled for now */}
