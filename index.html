@@ -9,13 +9,13 @@
 <meta property="og:description" content="Real sportsbook lines from DraftKings & FanDuel. Player prop picks with edge calculations, matchup analysis, and a self-improving model. Free Pick of the Day." />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://nbavault.com/picks" />
-<meta property="og:image" content="https://nbavault.com/og-card.png" />
+<meta property="og:image" content="https://nbavault.com/og-card.svg" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="NBA Vault — Daily NBA Betting Edges" />
 <meta name="twitter:description" content="Real DraftKings/FanDuel lines. Pick of the Day with edge % and confidence scores. Public track record — every pick, every outcome." />
-<meta name="twitter:image" content="https://nbavault.com/og-card.png" />
+<meta name="twitter:image" content="https://nbavault.com/og-card.svg" />
 <title>NBA Vault</title>
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#4E008E" />
@@ -9478,17 +9478,16 @@ function DailyPicks() {
         <p className="text-gray-600 text-xs mt-3">No spam. Unsubscribe anytime.</p>
       </div>
 
-      {/* Public Results Dashboard — every pick, every outcome */}
+      {/* Public Results Dashboard — only show resolved picks */}
       {(() => {
         const resolved = engine.history.filter(h => h.result);
+        if (resolved.length === 0) return null;
         const hits = resolved.filter(h => h.result === 'hit');
-        const pending = engine.history.filter(h => !h.result);
-        if (resolved.length === 0 && pending.length === 0) return null;
-        const winPct = resolved.length > 0 ? Math.round((hits.length / resolved.length) * 100) : 0;
+        const winPct = Math.round((hits.length / resolved.length) * 100);
 
-        // Group by date
+        // Group resolved picks by date
         const byDate = {};
-        engine.history.forEach(h => {
+        resolved.forEach(h => {
           const d = h.date || 'Unknown';
           if (!byDate[d]) byDate[d] = [];
           byDate[d].push(h);
@@ -9497,47 +9496,35 @@ function DailyPicks() {
 
         return (
           <div className="glass rounded-2xl p-6 mt-8">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="text-lg font-bold text-white">Pick Results</h3>
-                <p className="text-[10px] text-gray-500">Every pick. Every outcome. No cherry-picking.</p>
+                <h3 className="text-lg font-bold text-white">Track Record</h3>
+                <p className="text-[10px] text-gray-500">Every resolved pick. No cherry-picking.</p>
               </div>
-              {resolved.length > 0 && (
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <div className={`text-xl font-black ${winPct >= 55 ? 'text-green-400' : winPct >= 45 ? 'text-team-secondary' : 'text-red-400'}`}>{winPct}%</div>
-                    <div className="text-[9px] text-gray-500">{hits.length}W-{resolved.length - hits.length}L</div>
-                  </div>
-                </div>
-              )}
+              <div className="text-right">
+                <div className={`text-2xl font-black ${winPct >= 55 ? 'text-green-400' : winPct >= 45 ? 'text-team-secondary' : 'text-red-400'}`}>{winPct}%</div>
+                <div className="text-[10px] text-gray-500">{hits.length}W · {resolved.length - hits.length}L · {resolved.length} picks</div>
+              </div>
             </div>
 
             {dates.slice(0, 7).map(date => {
               const dayPicks = byDate[date];
               const dayHits = dayPicks.filter(h => h.result === 'hit').length;
-              const dayResolved = dayPicks.filter(h => h.result).length;
-              const dayPending = dayPicks.filter(h => !h.result).length;
               return (
                 <div key={date} className="mb-4 last:mb-0">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs font-bold text-gray-400">{date}</span>
-                    <div className="flex items-center gap-2">
-                      {dayResolved > 0 && <span className={`text-xs font-black ${dayHits / dayResolved >= 0.55 ? 'text-green-400' : 'text-red-400'}`}>{dayHits}-{dayResolved - dayHits}</span>}
-                      {dayPending > 0 && <span className="text-[10px] text-gray-600">{dayPending} pending</span>}
-                    </div>
+                    <span className={`text-xs font-black ${dayHits / dayPicks.length >= 0.55 ? 'text-green-400' : 'text-red-400'}`}>{dayHits}-{dayPicks.length - dayHits}</span>
                   </div>
                   <div className="space-y-1">
                     {dayPicks.map(h => (
-                      <div key={h.id} className="flex items-center gap-2 text-xs py-1 px-2 rounded" style={{ background: 'rgba(var(--team-primary-rgb),0.04)' }}>
-                        <span className="font-bold text-white w-28 truncate">{h.player}</span>
-                        <span className="text-gray-500 w-16">O {h.line} {h.statType}</span>
-                        <span className="text-gray-600 w-12">Proj {h.projection}</span>
-                        <span className={`font-bold w-10 ${h.edge > 0 ? 'text-green-400' : 'text-red-400'}`}>+{h.edge}</span>
-                        {h.actual != null && <span className="text-gray-400 w-14">Got {h.actual}</span>}
-                        <span className="ml-auto">
-                          {h.result === 'hit' && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/20 text-green-400">HIT</span>}
-                          {h.result === 'miss' && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400">MISS</span>}
-                          {!h.result && <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-white/5 text-gray-500">PENDING</span>}
+                      <div key={h.id} className="flex items-center gap-2 text-xs py-1.5 px-2 rounded" style={{ background: 'rgba(var(--team-primary-rgb),0.04)' }}>
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${h.result === 'hit' ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <span className="font-bold text-white truncate" style={{ minWidth: '80px', maxWidth: '120px' }}>{h.player}</span>
+                        <span className="text-gray-500">O {h.line} {h.statType}</span>
+                        {h.actual != null && <span className="text-white font-bold">{h.actual}</span>}
+                        <span className={`ml-auto px-2 py-0.5 rounded text-[10px] font-bold ${h.result === 'hit' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                          {h.result === 'hit' ? 'HIT' : 'MISS'}
                         </span>
                       </div>
                     ))}
@@ -9545,7 +9532,7 @@ function DailyPicks() {
                 </div>
               );
             })}
-            {dates.length > 7 && <p className="text-center text-[10px] text-gray-600 mt-2">Showing last 7 days</p>}
+            {dates.length > 7 && <p className="text-center text-[10px] text-gray-600 mt-2">Showing last 7 days · {resolved.length} total picks tracked</p>}
           </div>
         );
       })()}
