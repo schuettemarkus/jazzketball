@@ -8841,12 +8841,16 @@ function DailyPicks() {
       const ast = Math.max(0, Math.round(s.apg + (rng(i + 100) - 0.5) * 3));
       const min = Math.round(30 + rng(i + 200) * 8);
       const opp = opponents[Math.floor(rng(i + 300) * opponents.length)];
+      // Historical line varies game to game (±1.5 from today's line)
+      const lineVariance = Math.round((rng(i + 400) - 0.5) * 3 * 2) / 2; // round to 0.5
+      const gameLine = Math.max(0.5, pick.line + lineVariance);
       const d = new Date(); d.setDate(d.getDate() - (5 - i) * 2 - 1);
+      const statVal = pick.statType === 'PTS' ? pts : pick.statType === 'REB' ? reb : ast;
       games.push({
         date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        opp, min, pts, reb, ast,
-        hitLine: pick.statType === 'PTS' ? pts >= pick.line : pick.statType === 'REB' ? reb >= pick.line : ast >= pick.line,
-        statVal: pick.statType === 'PTS' ? pts : pick.statType === 'REB' ? reb : ast,
+        opp, min, pts, reb, ast, gameLine,
+        hitLine: statVal >= gameLine,
+        statVal,
       });
     }
     return games;
@@ -9067,8 +9071,8 @@ function DailyPicks() {
                       <div className="text-[9px] text-gray-500">{g.date}</div>
                       <div className="text-[9px] text-gray-600 mb-1">vs {g.opp}</div>
                       <div className={`text-lg font-black ${g.hitLine ? 'text-green-400' : 'text-red-400'}`}>{g.statVal}</div>
-                      <div className="text-[9px] text-gray-600 mt-0.5">Line: {pick.line}</div>
-                      <div className={`text-[9px] font-bold ${g.hitLine ? 'text-green-400' : 'text-red-400'}`}>{g.statVal >= pick.line ? `+${(g.statVal - pick.line).toFixed(1)}` : `${(g.statVal - pick.line).toFixed(1)}`}</div>
+                      <div className="text-[9px] text-gray-600 mt-0.5">O {g.gameLine}</div>
+                      <div className={`text-[9px] font-bold ${g.hitLine ? 'text-green-400' : 'text-red-400'}`}>{g.statVal >= g.gameLine ? `+${(g.statVal - g.gameLine).toFixed(1)}` : `${(g.statVal - g.gameLine).toFixed(1)}`}</div>
                     </div>
                   ))}
                 </div>
@@ -9170,7 +9174,8 @@ function DailyPicks() {
                         <div className="text-[8px] text-gray-500">{g.date}</div>
                         <div className="text-[8px] text-gray-600">vs {g.opp}</div>
                         <div className={`text-base font-black ${g.hitLine ? 'text-green-400' : 'text-red-400'}`}>{g.statVal}</div>
-                        <div className={`text-[8px] font-bold ${g.hitLine ? 'text-green-400' : 'text-red-400'}`}>{g.statVal >= pick.line ? `+${(g.statVal - pick.line).toFixed(1)}` : `${(g.statVal - pick.line).toFixed(1)}`}</div>
+                        <div className="text-[8px] text-gray-600">O {g.gameLine}</div>
+                        <div className={`text-[8px] font-bold ${g.hitLine ? 'text-green-400' : 'text-red-400'}`}>{g.statVal >= g.gameLine ? `+${(g.statVal - g.gameLine).toFixed(1)}` : `${(g.statVal - g.gameLine).toFixed(1)}`}</div>
                       </div>
                     ))}
                   </div>
