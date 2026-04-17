@@ -8587,7 +8587,7 @@ function DailyPicks() {
         <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, var(--team-secondary) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
         <div className="relative z-10">
           <h1 className="text-5xl md:text-7xl font-black tracking-tight">
-            <span className="text-team-secondary">DAILY</span> <span className="text-white">PICKS</span>
+            <span className="text-team-secondary">Daily</span> <span className="text-white">Picks</span>
           </h1>
           <p className="text-gray-400 text-base md:text-lg mt-3 max-w-md mx-auto">Find profitable betting edges in 60 seconds</p>
           <p className="text-gray-600 text-sm mt-2">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
@@ -9308,7 +9308,8 @@ function App() {
     <TeamContext.Provider value={ctxValue}>
     {showWelcome && <WelcomeModal onSelect={handleWelcomeSelect} />}
     <div className="min-h-screen">
-      {/* Header */}
+      {/* Header — Vault branding on Picks, team branding elsewhere */}
+      {activeTab !== 'PICKS' && (
       <header className="relative overflow-hidden" style={{ background: 'linear-gradient(180deg, var(--team-deep), var(--team-midnight))' }}>
         <Particles />
         <HeroBg />
@@ -9323,6 +9324,7 @@ function App() {
           <p className="text-xs md:text-sm text-gray-400 tracking-widest mt-1">2026-27 &bull; NBA VAULT</p>
         </div>
       </header>
+      )}
 
       {/* Sticky Navigation */}
       <nav className="sticky top-0 z-30 border-b border-team-primary/30" style={{ background: 'rgba(var(--team-deep-rgb),0.95)', backdropFilter: 'blur(12px)' }}>
