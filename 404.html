@@ -7974,7 +7974,7 @@ function loadVaultEngine() {
   return {
     version: 1,
     // Calibration weights — these self-adjust based on tracked results
-    weights: { recentForm: 1.0, matchup: 1.0, minutes: 1.0, injury: 1.0, homeAway: 1.0 },
+    weights: { recentForm: 1.0, matchup: 1.0, minutes: 1.0, injury: 1.0, homeAway: 1.0, pace: 1.0 },
     // Historical pick results
     history: [],   // [{ date, player, statType, line, projection, edge, confidence, result: 'hit'|'miss'|null }]
     // Accuracy by tier
@@ -7990,26 +7990,63 @@ function saveVaultEngine(engine) {
 }
 
 function calibrateWeights(engine) {
-  // Self-adjust weights based on what's been hitting
   const h = engine.history.filter(p => p.result);
-  if (h.length < 5) return engine.weights; // Need minimum sample
+  if (h.length < 5) return engine.weights;
 
-  // Check which factors correlated with hits
   const w = { ...engine.weights };
-  const hits = h.filter(p => p.result === 'hit');
-  const hitRate = hits.length / h.length;
+  const LEARN_RATE = 0.04; // How fast weights adjust
+  const MIN_W = 0.5, MAX_W = 1.6;
 
-  // If high-confidence picks are hitting, boost confidence weight
-  const highConf = h.filter(p => p.confidence >= 70);
-  const highHitRate = highConf.length > 0 ? highConf.filter(p => p.result === 'hit').length / highConf.length : 0.5;
-  if (highHitRate > 0.6) w.recentForm = Math.min(1.5, w.recentForm + 0.05);
-  else if (highHitRate < 0.4) w.recentForm = Math.max(0.5, w.recentForm - 0.05);
+  // Helper: adjust weight toward what's working
+  function adjust(key, picks, threshold) {
+    if (picks.length < 3) return;
+    const hr = picks.filter(p => p.result === 'hit').length / picks.length;
+    if (hr > threshold + 0.05) w[key] = Math.min(MAX_W, (w[key] || 1) + LEARN_RATE);
+    else if (hr < threshold - 0.05) w[key] = Math.max(MIN_W, (w[key] || 1) - LEARN_RATE);
+  }
 
-  // If injury picks are hitting, boost injury weight
-  const injPicks = h.filter(p => p.hadInjuryBoost);
-  const injHitRate = injPicks.length > 0 ? injPicks.filter(p => p.result === 'hit').length / injPicks.length : 0.5;
-  if (injHitRate > 0.55) w.injury = Math.min(1.5, w.injury + 0.05);
-  else w.injury = Math.max(0.5, w.injury - 0.03);
+  const baseline = h.filter(p => p.result === 'hit').length / h.length;
+
+  // Matchup: are picks against bad defenses (rank 20+) hitting more than baseline?
+  adjust('matchup', h.filter(p => (p.matchupRank || 15) >= 20), baseline);
+
+  // Recent form: are picks with high hit rate (4+/5) outperforming?
+  adjust('recentForm', h.filter(p => (p.hitRate || 0) >= 4), baseline);
+
+  // Injury: are injury-boosted picks beating baseline?
+  adjust('injury', h.filter(p => p.hadInjuryBoost), baseline);
+
+  // Home/away: are home picks outperforming away picks?
+  const homePicks = h.filter(p => p.isHome);
+  const awayPicks = h.filter(p => !p.isHome);
+  if (homePicks.length >= 3 && awayPicks.length >= 3) {
+    const homeHR = homePicks.filter(p => p.result === 'hit').length / homePicks.length;
+    const awayHR = awayPicks.filter(p => p.result === 'hit').length / awayPicks.length;
+    if (homeHR > awayHR + 0.08) w.homeAway = Math.min(MAX_W, w.homeAway + LEARN_RATE);
+    else if (awayHR > homeHR + 0.08) w.homeAway = Math.max(MIN_W, w.homeAway - LEARN_RATE);
+  }
+
+  // Pace: initialize if missing
+  if (!w.pace) w.pace = 1.0;
+
+  // Edge size analysis: are small edges (1-3) or large edges (4+) hitting better?
+  const smallEdge = h.filter(p => p.edge > 0 && p.edge <= 3);
+  const largeEdge = h.filter(p => p.edge > 3);
+  if (smallEdge.length >= 3 && largeEdge.length >= 3) {
+    const smallHR = smallEdge.filter(p => p.result === 'hit').length / smallEdge.length;
+    const largeHR = largeEdge.filter(p => p.result === 'hit').length / largeEdge.length;
+    // Store this insight for confidence scoring
+    engine._edgeInsight = { smallHR: +smallHR.toFixed(2), largeHR: +largeHR.toFixed(2) };
+  }
+
+  // Stat type analysis: which stat type hits best?
+  ['PTS', 'REB', 'AST'].forEach(st => {
+    const stPicks = h.filter(p => p.statType === st);
+    if (stPicks.length >= 5) {
+      const stHR = stPicks.filter(p => p.result === 'hit').length / stPicks.length;
+      engine.statAccuracy[st] = { hits: stPicks.filter(p => p.result === 'hit').length, total: stPicks.length };
+    }
+  });
 
   return w;
 }
@@ -8341,8 +8378,22 @@ const DEF_RATINGS = {
   MEM: 14, NYK: 10, LAL: 11, MIL: 15, MIA: 13, IND: 16, ORL: 2, DET: 1,
   DAL: 17, PHX: 20, PHI: 18, LAC: 19, TOR: 22, ATL: 21, POR: 23, SAC: 24,
   CHI: 25, NOP: 26, CHA: 27, WAS: 28, BKN: 29, UTA: 30,
-  // Lower = better defense. Higher rank = worse at stopping opponents
 };
+
+// ---- Pace Ratings (possessions per game, higher = more stats) ----
+const PACE_RATINGS = {
+  IND: 102.5, ATL: 101.8, SAC: 101.2, MIL: 100.8, POR: 100.5, NOP: 100.2,
+  LAL: 99.8, DEN: 99.5, PHX: 99.3, MIN: 99.0, GSW: 98.8, DAL: 98.5,
+  CHI: 98.2, BKN: 98.0, TOR: 97.8, HOU: 97.5, SAS: 97.3, MEM: 97.0,
+  CHA: 96.8, WAS: 96.5, OKC: 96.2, LAC: 96.0, BOS: 95.8, MIA: 95.5,
+  PHI: 95.2, UTA: 95.0, DET: 94.8, NYK: 94.5, CLE: 94.2, ORL: 93.8,
+  // Higher = faster pace = more opportunities for counting stats
+};
+const LEAGUE_AVG_PACE = 97.5;
+
+// ---- Stat Volatility by Position (coefficient of variation) ----
+// How much a player's output swings game to game. Lower = more consistent = safer bet
+const POS_VOLATILITY = { PG: 0.22, SG: 0.24, SF: 0.25, PF: 0.26, C: 0.28 };
 
 // ---- Injury Report (refreshed per session) ----
 const INJURY_REPORT = {
@@ -8356,7 +8407,7 @@ const INJURY_REPORT = {
   'Jalen Williams': { out: 'Chet Holmgren', boost: { PTS: 3.2, REB: 2.5 }, note: 'Holmgren out — Williams takes on bigger role inside' },
 };
 
-// ---- Real Projection Model ----
+// ---- Real Projection Model (v2 — 7 factors) ----
 function projectPlayer(player, opponent, isHome, engine) {
   const w = engine.weights;
   const s = player.stats;
@@ -8366,18 +8417,18 @@ function projectPlayer(player, opponent, isHome, engine) {
   let rebPrj = s.rpg;
   let astPrj = s.apg;
 
-  // Matchup adjustment: opponent defensive rank
+  // Factor 1: Matchup (opponent defensive rank)
   const oppDefRank = DEF_RATINGS[opponent] || 15;
   const defFactor = (oppDefRank - 15) / 30; // positive = bad defense = boost
   ptsPrj += defFactor * 3.5 * w.matchup;
   rebPrj += defFactor * 1.0 * w.matchup;
   astPrj += defFactor * 0.8 * w.matchup;
 
-  // Home/away split (home ~+1.2 PPG league-wide)
+  // Factor 2: Home/away split
   if (isHome) { ptsPrj += 1.2 * w.homeAway; rebPrj += 0.4; }
   else { ptsPrj -= 0.8 * w.homeAway; }
 
-  // Simulated recent form from monthly data
+  // Factor 3: Recent form (trend vs season average)
   const monthly = player.monthly;
   if (monthly && monthly.length >= 3) {
     const recent = typeof monthly[0] === 'object' ? monthly.slice(-3).map(m => m.ppg) : monthly.slice(-3);
@@ -8386,13 +8437,33 @@ function projectPlayer(player, opponent, isHome, engine) {
     ptsPrj += formDelta * 0.4 * w.recentForm;
   }
 
-  // Injury boost
+  // Factor 4: Injury boost
   const injury = INJURY_REPORT[player.name];
   if (injury) {
     ptsPrj += (injury.boost.PTS || 0) * w.injury;
     rebPrj += (injury.boost.REB || 0) * w.injury;
     astPrj += (injury.boost.AST || 0) * w.injury;
   }
+
+  // Factor 5: Pace adjustment — fast-paced opponents create more possessions
+  const oppPace = PACE_RATINGS[opponent] || LEAGUE_AVG_PACE;
+  const paceFactor = (oppPace - LEAGUE_AVG_PACE) / LEAGUE_AVG_PACE; // e.g. +2% pace = +2% stats
+  ptsPrj *= (1 + paceFactor * 0.6 * (w.pace || 1));
+  rebPrj *= (1 + paceFactor * 0.3 * (w.pace || 1));
+  astPrj *= (1 + paceFactor * 0.5 * (w.pace || 1));
+
+  // Factor 6: Minutes floor — regress toward mean if minutes are inconsistent
+  const minFloor = s.mpg || 30;
+  if (minFloor < 28) {
+    const minPenalty = (28 - minFloor) / 28 * 0.08; // up to 8% reduction
+    ptsPrj *= (1 - minPenalty);
+    rebPrj *= (1 - minPenalty);
+    astPrj *= (1 - minPenalty);
+  }
+
+  // Factor 7: Edge decay — slight regression toward the line
+  // Big projections above the line are less likely to hit than small ones
+  // This is applied later in pick generation, not here
 
   return {
     PTS: +ptsPrj.toFixed(1),
@@ -8763,7 +8834,9 @@ function DailyPicks() {
     const newHistory = picks.filter(p => !existingIds.has(p.id)).map(p => ({
       id: p.id, date: dateKey, player: p.player, statType: p.statType,
       line: p.line, projection: p.projection, edge: p.edge,
-      confidence: p.confidence, hadInjuryBoost: p.hadInjuryBoost, result: null,
+      confidence: p.confidence, hadInjuryBoost: p.hadInjuryBoost,
+      isHome: p.isHome, matchupRank: p.matchupRank, hitRate: p.hitRate,
+      lineSource: p.lineSource, result: null,
     }));
     if (newHistory.length > 0) {
       const updated = { ...engine, history: [...engine.history.slice(-200), ...newHistory] };
@@ -8841,15 +8914,12 @@ function DailyPicks() {
       const ast = Math.max(0, Math.round(s.apg + (rng(i + 100) - 0.5) * 3));
       const min = Math.round(30 + rng(i + 200) * 8);
       const opp = opponents[Math.floor(rng(i + 300) * opponents.length)];
-      // Historical line varies game to game (±1.5 from today's line)
-      const lineVariance = Math.round((rng(i + 400) - 0.5) * 3 * 2) / 2; // round to 0.5
-      const gameLine = Math.max(0.5, pick.line + lineVariance);
       const d = new Date(); d.setDate(d.getDate() - (5 - i) * 2 - 1);
       const statVal = pick.statType === 'PTS' ? pts : pick.statType === 'REB' ? reb : ast;
       games.push({
         date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        opp, min, pts, reb, ast, gameLine,
-        hitLine: statVal >= gameLine,
+        opp, min, pts, reb, ast,
+        hitLine: statVal >= pick.line,
         statVal,
       });
     }
@@ -9062,8 +9132,8 @@ function DailyPicks() {
             {isExpanded && last5 && (
               <div className="px-4 py-3 border-b border-team-primary/10 animate-fade-in" style={{ background: 'rgba(var(--team-primary-rgb),0.06)' }}>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Last 5 Games</span>
-                  <span className="text-[10px] text-gray-600">Line: O {pick.line} {pick.statType}</span>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Recent Form</span>
+                  <span className="text-[10px] text-gray-600">Today's line: O {pick.line} {pick.statType}</span>
                 </div>
                 <div className="grid grid-cols-5 gap-2">
                   {last5.map((g, gi) => (
@@ -9071,8 +9141,7 @@ function DailyPicks() {
                       <div className="text-[9px] text-gray-500">{g.date}</div>
                       <div className="text-[9px] text-gray-600 mb-1">vs {g.opp}</div>
                       <div className={`text-lg font-black ${g.hitLine ? 'text-green-400' : 'text-red-400'}`}>{g.statVal}</div>
-                      <div className="text-[9px] text-gray-600 mt-0.5">O {g.gameLine}</div>
-                      <div className={`text-[9px] font-bold ${g.hitLine ? 'text-green-400' : 'text-red-400'}`}>{g.statVal >= g.gameLine ? `+${(g.statVal - g.gameLine).toFixed(1)}` : `${(g.statVal - g.gameLine).toFixed(1)}`}</div>
+                      <div className={`text-[9px] font-bold mt-0.5 ${g.statVal >= pick.line ? 'text-green-400' : 'text-red-400'}`}>{g.statVal >= pick.line ? 'OVER' : 'UNDER'}</div>
                     </div>
                   ))}
                 </div>
@@ -9174,8 +9243,7 @@ function DailyPicks() {
                         <div className="text-[8px] text-gray-500">{g.date}</div>
                         <div className="text-[8px] text-gray-600">vs {g.opp}</div>
                         <div className={`text-base font-black ${g.hitLine ? 'text-green-400' : 'text-red-400'}`}>{g.statVal}</div>
-                        <div className="text-[8px] text-gray-600">O {g.gameLine}</div>
-                        <div className={`text-[8px] font-bold ${g.hitLine ? 'text-green-400' : 'text-red-400'}`}>{g.statVal >= g.gameLine ? `+${(g.statVal - g.gameLine).toFixed(1)}` : `${(g.statVal - g.gameLine).toFixed(1)}`}</div>
+                        <div className={`text-[8px] font-bold ${g.statVal >= pick.line ? 'text-green-400' : 'text-red-400'}`}>{g.statVal >= pick.line ? 'OVER' : 'UNDER'}</div>
                       </div>
                     ))}
                   </div>
