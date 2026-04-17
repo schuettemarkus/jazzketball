@@ -8331,9 +8331,14 @@ function calcConfidence(pick) {
 function formatGameDateTime(gameTime) {
   if (!gameTime) return '';
   const d = new Date(gameTime);
-  const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
+  const isTomorrow = d.toDateString() === tomorrow.toDateString();
+  const day = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'short' });
   const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  return `${date} · ${time}`;
+  const dateNum = `${d.getMonth()+1}/${d.getDate()}`;
+  return isToday || isTomorrow ? `${day} · ${time}` : `${day} ${dateNum} · ${time}`;
 }
 
 function DailyPicks() {
@@ -8554,15 +8559,22 @@ function DailyPicks() {
   };
 
   return (
-    <section className="py-8 px-4 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h2 className="text-3xl md:text-4xl font-black">
-          <span className="text-team-secondary">DAILY</span> PICKS
-        </h2>
-        <p className="text-gray-400 text-sm mt-1">Find profitable betting edges in 60 seconds</p>
-        <p className="text-gray-600 text-xs mt-1">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
+    <section className="max-w-5xl mx-auto">
+      {/* Hero Header */}
+      <div className="relative overflow-hidden py-16 md:py-24 px-4 text-center mb-8" style={{
+        background: 'linear-gradient(180deg, rgba(var(--team-deep-rgb),1) 0%, rgba(var(--team-midnight-rgb),0.95) 50%, transparent 100%)',
+      }}>
+        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, var(--team-secondary) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+        <div className="relative z-10">
+          <h1 className="text-5xl md:text-7xl font-black tracking-tight">
+            <span className="text-team-secondary">DAILY</span> <span className="text-white">PICKS</span>
+          </h1>
+          <p className="text-gray-400 text-base md:text-lg mt-3 max-w-md mx-auto">Find profitable betting edges in 60 seconds</p>
+          <p className="text-gray-600 text-sm mt-2">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
+        </div>
       </div>
+
+      <div className="px-4">
 
       {/* Win Rate Transparency Bar */}
       {(winTracker.bestBetRecord.wins + winTracker.bestBetRecord.losses) > 0 && (
@@ -8974,6 +8986,7 @@ function DailyPicks() {
           </form>
         )}
         <p className="text-gray-600 text-xs mt-3">No spam. Unsubscribe anytime.</p>
+      </div>
       </div>
     </section>
   );
