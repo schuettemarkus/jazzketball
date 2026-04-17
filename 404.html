@@ -5999,7 +5999,8 @@ function ScoutingPanel({ player, onClose }) {
             ))}
           </div>
 
-          {/* Monthly PPG */}
+          {/* Monthly PPG — only show if real data (has month names) */}
+          {monthly.length > 0 && monthly[0].month && monthly[0].month.length > 0 ? (
           <div className="glass rounded-xl p-4">
             <h3 className="text-sm font-semibold text-team-secondary mb-2">Monthly PPG Trend</h3>
             <ResponsiveContainer width="100%" height={180}>
@@ -6012,6 +6013,12 @@ function ScoutingPanel({ player, onClose }) {
               </LineChart>
             </ResponsiveContainer>
           </div>
+          ) : (
+          <div className="glass rounded-xl p-4 text-center">
+            <h3 className="text-sm font-semibold text-team-secondary mb-2">Monthly PPG Trend</h3>
+            <p className="text-xs text-gray-500 py-6">Monthly breakdown not available for this player</p>
+          </div>
+          )}
 
           {/* Strengths & Weaknesses */}
           <div className="glass rounded-xl p-4 space-y-3">
@@ -6060,11 +6067,18 @@ function ScoutingPanel({ player, onClose }) {
           </div>
           )}
 
-          {/* Hot/Cold Streak */}
+          {/* Hot/Cold Streak — only if player has real data */}
+          {player.streak ? (
           <div className="glass rounded-xl p-4">
             <h3 className="text-sm font-semibold text-team-secondary mb-3">Last 10 Games</h3>
             <StreakDots streak={streak} />
           </div>
+          ) : (
+          <div className="glass rounded-xl p-4 text-center">
+            <h3 className="text-sm font-semibold text-team-secondary mb-2">Last 10 Games</h3>
+            <p className="text-xs text-gray-500 py-4">Game log not available</p>
+          </div>
+          )}
         </div>
       </div>
     </div>
@@ -8603,47 +8617,39 @@ function generateExplanation(pick) {
   const { player, statType, line, projection, edge, injury } = pick;
   const last = player.split(' ').pop();
   const pct = Math.round((edge / Math.max(line, 1)) * 100);
-  const hitRate = Math.min(pick.hitRate || 0, 5);
   const matchupRank = pick.matchupRank || 15;
   const isHome = pick.isHome;
+  const oppPace = PACE_RATINGS[pick.opponent] || LEAGUE_AVG_PACE;
+  const fastPace = oppPace >= 99;
 
-  // Build explanation from the PRIMARY driver of the edge
+  // Build explanation from verified data only
   if (injury) {
-    const support = hitRate >= 3 ? ` ${last} has exceeded this line recently even without the boost.` : '';
-    return `${injury.note}.${support}`;
+    return `${injury.note}. Season average of ${projection} ${statType} projects ${pct}% above the line.`;
   }
 
-  // Matchup-driven (bad defense is the main edge)
-  if (matchupRank >= 22) {
+  if (matchupRank >= 22 && edge >= 3) {
     const defLabel = matchupRank >= 27 ? 'bottom 5' : 'bottom third';
-    if (edge >= 3) return `${last} faces a ${defLabel} ${statType} defense (#${matchupRank}). Projects at ${projection} — ${edge.toFixed(1)} above the line.`;
-    return `Matchup advantage: opponent ranks #${matchupRank} defending ${statType}. ${last} projects ${pct}% above the line.`;
+    return `${last} faces a ${defLabel} ${statType} defense (#${matchupRank}).${fastPace ? ' High-pace game creates extra possessions.' : ''} Projects at ${projection} — ${edge.toFixed(1)} above the line.`;
   }
 
-  // Volume/projection-driven (big edge, the numbers speak)
+  if (matchupRank >= 22) {
+    return `Matchup advantage: opponent ranks #${matchupRank} defending ${statType}. ${last} averages ${projection} ${statType} this season, ${pct}% above the line.`;
+  }
+
   if (edge >= 4) {
-    if (isHome) return `${last} projects at ${projection} ${statType} at home — ${edge.toFixed(1)} points of edge. ${hitRate >= 3 ? `He's cleared this in ${hitRate}/5 recent games.` : 'Strong projection regardless of trend.'}`;
-    return `Model projects ${last} at ${projection} ${statType}, well above the ${line} line. ${matchupRank >= 15 ? `Favorable matchup (#${matchupRank} defense) supports the over.` : 'Volume alone drives this edge.'}`;
+    return `${last} averages ${projection} ${statType} this season — ${edge.toFixed(1)} points above the ${line} line.${isHome ? ' Home court adds a slight edge.' : ''}${matchupRank >= 15 ? ` Opponent ranks #${matchupRank} in ${statType} defense.` : ''}`;
   }
 
-  // Form-driven (recent hot streak)
-  if (hitRate >= 4) {
-    if (matchupRank >= 15) return `${last} has cleared ${line}+ ${statType} in ${hitRate} of 5 recent games against a below-average defense (#${matchupRank}).`;
-    return `Riding a hot streak — ${last} has hit the over in ${hitRate}/5 recent games. Tougher matchup (#${matchupRank}) but form is strong.`;
+  if (edge >= 2 && fastPace) {
+    return `High-pace opponent (${oppPace.toFixed(1)}) creates more possessions. ${last} averages ${projection} ${statType}, ${pct}% above the line.`;
   }
 
-  // Moderate edge — be specific about what's driving it
-  if (hitRate >= 3) {
-    return `${last} projects at ${projection} ${statType} (${pct}% above the line). Recent form is solid — cleared this number in ${hitRate}/5 stretches.${isHome ? ' Home split adds a slight edge.' : ''}`;
+  if (edge >= 2) {
+    return `${last} averages ${projection} ${statType} this season, ${pct}% above the ${line} line.${isHome ? ' Playing at home.' : ''}${matchupRank >= 15 ? ` Opponent ranks #${matchupRank} in ${statType} defense.` : ''}`;
   }
 
-  // Low confidence — honest and transparent
-  if (hitRate <= 1) {
-    return `${last} projects at ${projection} ${statType} but recent form is inconsistent (${hitRate}/5). The edge is there on paper — proceed with caution.`;
-  }
-
-  // Default moderate
-  return `${last} projects at ${projection} ${statType}, ${edge.toFixed(1)} above the line.${isHome ? ' Playing at home tonight.' : ''} ${matchupRank >= 15 ? `Opponent ranks #${matchupRank} in ${statType} defense.` : 'Solid matchup-neutral projection.'}`;
+  // Small edge — be transparent
+  return `${last} averages ${projection} ${statType} — a modest ${pct}% above the line.${matchupRank >= 20 ? ` Soft matchup (#${matchupRank} defense) adds value.` : ' Proceed with caution on thin edges.'}`;
 }
 
 // Confidence score: 1-100 (calibrated so 80+ is rare, 90+ is exceptional)
@@ -8847,15 +8853,12 @@ function DailyPicks() {
         const oppDefRank = DEF_RATINGS[p.opponent] || 15;
         const injury = INJURY_REPORT[p.name] || null;
 
-        // Hit rate: how often player exceeds the LINE (not just their avg)
-        const monthly = p.monthly;
-        let hitRate = 2; // Default: mediocre
-        if (monthly && monthly.length >= 3) {
-          const vals = typeof monthly[0] === 'object' ? monthly.map(m => m.ppg) : monthly;
-          const last5 = vals.slice(-5);
-          // Compare against the actual line, not the average
-          hitRate = Math.min(last5.filter(v => v > line * 0.95).length, 5);
-        }
+        // Edge confidence: how far season avg is above the line (real data only)
+        const statKey = st === 'PTS' ? 'ppg' : st === 'REB' ? 'rpg' : 'apg';
+        const seasonAvg = p.stats[statKey] || 0;
+        const avgVsLine = seasonAvg > 0 && line > 0 ? (seasonAvg - line) / line : 0;
+        // Convert to a 0-5 scale for backward compat with confidence scoring
+        const hitRate = Math.max(0, Math.min(5, Math.round(avgVsLine * 10 + 2.5)));
 
         const pick = {
           id: `${dateKey}-${p.name}-${st}`,
