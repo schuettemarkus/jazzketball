@@ -8580,22 +8580,7 @@ function DailyPicks() {
   };
 
   return (
-    <section className="max-w-5xl mx-auto">
-      {/* Hero Header */}
-      <div className="relative overflow-hidden py-16 md:py-24 px-4 text-center mb-8" style={{
-        background: 'linear-gradient(180deg, rgba(var(--team-deep-rgb),1) 0%, rgba(var(--team-midnight-rgb),0.95) 50%, transparent 100%)',
-      }}>
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, var(--team-secondary) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
-        <div className="relative z-10">
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight">
-            <span className="text-team-secondary">Daily</span> <span className="text-white">Picks</span>
-          </h1>
-          <p className="text-gray-400 text-base md:text-lg mt-3 max-w-md mx-auto">Find profitable betting edges in 60 seconds</p>
-          <p className="text-gray-600 text-sm mt-2">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
-        </div>
-      </div>
-
-      <div className="px-4">
+    <section className="py-8 px-4 max-w-5xl mx-auto">
 
       {/* Win Rate Transparency Bar */}
       {(winTracker.bestBetRecord.wins + winTracker.bestBetRecord.losses) > 0 && (
@@ -9008,7 +8993,6 @@ function DailyPicks() {
         )}
         <p className="text-gray-600 text-xs mt-3">No spam. Unsubscribe anytime.</p>
       </div>
-      </div>
     </section>
   );
 }
@@ -9300,22 +9284,31 @@ function App() {
     {showWelcome && <WelcomeModal onSelect={handleWelcomeSelect} />}
     <div className="min-h-screen">
       {/* Header — Vault branding on Picks, team branding elsewhere */}
-      {activeTab !== 'PICKS' && (
       <header className="relative overflow-hidden" style={{ background: 'linear-gradient(180deg, var(--team-deep), var(--team-midnight))' }}>
         <Particles />
         <HeroBg />
         <div className="relative z-10 text-center py-8 px-4">
-          {config.franchiseId && (
-            <img src={`https://cdn.nba.com/logos/nba/${config.franchiseId}/primary/L/logo.svg`}
-              alt={`${config.fullName} logo`} className="w-20 h-20 mx-auto mb-3 drop-shadow-lg" loading="lazy" />
+          {activeTab === 'PICKS' ? (
+            <>
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight">
+                <span className="text-team-secondary">DAILY</span> <span className="text-white">PICKS</span>
+              </h1>
+              <p className="text-xs md:text-sm text-gray-400 tracking-widest mt-1">Find profitable betting edges in 60 seconds</p>
+            </>
+          ) : (
+            <>
+              {config.franchiseId && (
+                <img src={`https://cdn.nba.com/logos/nba/${config.franchiseId}/primary/L/logo.svg`}
+                  alt={`${config.fullName} logo`} className="w-20 h-20 mx-auto mb-3 drop-shadow-lg" loading="lazy" />
+              )}
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight">
+                <span className="text-team-secondary">{config.city.toUpperCase()}</span> <span className="text-white">{config.name.toUpperCase()}</span>
+              </h1>
+              <p className="text-xs md:text-sm text-gray-400 tracking-widest mt-1">2026-27 &bull; NBA VAULT</p>
+            </>
           )}
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight">
-            <span className="text-team-secondary">{config.city.toUpperCase()}</span> <span className="text-white">{config.name.toUpperCase()}</span>
-          </h1>
-          <p className="text-xs md:text-sm text-gray-400 tracking-widest mt-1">2026-27 &bull; NBA VAULT</p>
         </div>
       </header>
-      )}
 
       {/* Sticky Navigation */}
       <nav className="sticky top-0 z-30 border-b border-team-primary/30" style={{ background: 'rgba(var(--team-deep-rgb),0.95)', backdropFilter: 'blur(12px)' }}>
