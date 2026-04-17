@@ -8657,28 +8657,6 @@ function DailyPicks() {
     saveVaultEngine(updated);
   }, []);
 
-  // Record a pick result
-  const recordResult = useCallback((pickId, result) => {
-    setEngine(prev => {
-      const updated = { ...prev, history: prev.history.map(h => h.id === pickId ? { ...h, result } : h) };
-      // Update accuracy tiers
-      const p = updated.history.find(h => h.id === pickId);
-      if (p) {
-        const tier = p.confidence >= 70 ? 'high' : p.confidence >= 50 ? 'mid' : 'low';
-        updated.accuracy[tier].total += 1;
-        if (result === 'hit') updated.accuracy[tier].hits += 1;
-        updated.statAccuracy[p.statType] = updated.statAccuracy[p.statType] || { hits: 0, total: 0 };
-        updated.statAccuracy[p.statType].total += 1;
-        if (result === 'hit') updated.statAccuracy[p.statType].hits += 1;
-      }
-      // Re-calibrate weights
-      updated.weights = calibrateWeights(updated);
-      updated.lastCalibrated = new Date().toISOString();
-      saveVaultEngine(updated);
-      return updated;
-    });
-  }, []);
-
   // Generate picks from real schedule data
   const { allPicks, todaysGames } = useMemo(() => {
     if (!schedule) return { allPicks: [], todaysGames: [] };
@@ -9209,7 +9187,7 @@ function DailyPicks() {
           </div>
           <button onClick={() => setShowTracker(!showTracker)}
             className="text-xs text-gray-400 hover:text-white transition-colors">
-            {showTracker ? 'Hide Tracker' : 'Track Results'}
+            {showTracker ? 'Hide History' : 'View History'}
           </button>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -9244,7 +9222,7 @@ function DailyPicks() {
         </div>
         {showTracker && engine.history.length > 0 && (
           <div className="mt-4 pt-4 border-t border-team-primary/20">
-            <h4 className="text-xs font-bold text-gray-500 mb-3">Recent Picks — Mark Results</h4>
+            <h4 className="text-xs font-bold text-gray-500 mb-3">Recent Picks</h4>
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {engine.history.slice(-15).reverse().map(h => (
                 <div key={h.id} className="flex items-center gap-3 text-xs rounded-lg p-2" style={{ background: 'rgba(var(--team-primary-rgb),0.04)' }}>
@@ -9252,17 +9230,17 @@ function DailyPicks() {
                     <span className="font-bold text-white">{h.player}</span>
                     <span className="text-gray-500 ml-1">O {h.line} {h.statType}</span>
                     <span className={`ml-1 font-bold ${h.edge > 0 ? 'text-green-400' : 'text-red-400'}`}>+{h.edge}</span>
+                    {h.actual != null && <span className="text-gray-500 ml-1">({h.actual} actual)</span>}
                   </div>
-                  <div className="flex gap-1 shrink-0">
-                    {h.result ? (
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${h.result === 'hit' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                        {h.result.toUpperCase()}
-                      </span>
-                    ) : (
-                      <>
-                        <button onClick={() => recordResult(h.id, 'hit')} className="px-2 py-0.5 rounded bg-green-500/20 text-green-400 text-[10px] font-bold hover:bg-green-500/30">HIT</button>
-                        <button onClick={() => recordResult(h.id, 'miss')} className="px-2 py-0.5 rounded bg-red-500/20 text-red-400 text-[10px] font-bold hover:bg-red-500/30">MISS</button>
-                      </>
+                  <div className="shrink-0">
+                    {h.result === 'hit' && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/20 text-green-400">HIT</span>
+                    )}
+                    {h.result === 'miss' && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400">MISS</span>
+                    )}
+                    {!h.result && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-white/5 text-gray-500">PENDING</span>
                     )}
                   </div>
                 </div>
