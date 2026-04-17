@@ -9104,26 +9104,72 @@ function DailyPicks() {
 
       {/* Parlay Builder */}
       {allPicks.length >= 2 && (() => {
-        // Auto-select 2 legs if not user-modified: safe (highest confidence) + risky (highest edge, different game)
-        const sorted = [...allPicks].sort((a, b) => b.confidence - a.confidence);
-        const safePick = sorted[0];
-        const riskyPick = sorted.filter(p => p.opponent !== safePick?.opponent && p.teamAbbr !== safePick?.teamAbbr)
-          .sort((a, b) => b.edge - a.edge)[0] || sorted[1];
-        const autoLegs = [safePick?.id, riskyPick?.id].filter(Boolean);
-        const activeLegIds = parlayLegs || autoLegs;
+        // ---- Smart Parlay Correlation Logic ----
+        // 1. Anchor: highest confidence pick (safe leg)
+        // 2. Second leg: scored by correlation + value
+        //    - Same game, same team = positive correlation (both benefit from team scoring)
+        //    - Same game, different team = moderate correlation (high-pace game lifts both)
+        //    - Different game = uncorrelated (independent, fair odds)
+        //    - Anti-correlated: same game, same stat (REB), opposing teams = penalized
+        // 3. Additional legs: maximize decorrelation (different games) while maintaining edge
 
+        function parlayScore(pick, existingLegs) {
+          let score = pick.confidence * 0.4 + pick.edge * 6;
+          const sameGame = existingLegs.filter(l => l.opponent === pick.opponent || l.opponent === pick.teamAbbr || l.teamAbbr === pick.opponent || l.teamAbbr === pick.teamAbbr);
+
+          if (sameGame.length > 0) {
+            const sg = sameGame[0];
+            const sameTeam = sg.teamAbbr === pick.teamAbbr;
+            const sameStatType = sg.statType === pick.statType;
+
+            if (sameTeam && pick.statType === 'PTS' && sg.statType === 'AST') {
+              score += 8; // Positive correlation: scorer + playmaker on same team
+            } else if (sameTeam && !sameStatType) {
+              score += 4; // Same team, different stats — mildly correlated
+            } else if (!sameTeam && sameStatType === false) {
+              // Different teams, different stats in same game — pace correlation
+              const gamePace = ((PACE_RATINGS[pick.teamAbbr] || 97.5) + (PACE_RATINGS[pick.opponent] || 97.5)) / 2;
+              if (gamePace > 99) score += 5; // High-pace game boosts both
+            } else if (!sameTeam && sameStatType && pick.statType === 'REB') {
+              score -= 10; // Anti-correlation: opposing rebounders compete
+            }
+          } else {
+            // Different game — independent, which is fine for parlays
+            score += 2;
+          }
+
+          // Penalize very low confidence picks in parlays (one weak leg kills the whole thing)
+          if (pick.confidence < 40) score -= 8;
+          // Bonus for live lines (more reliable edge)
+          if (pick.lineSource === 'live') score += 3;
+
+          return score;
+        }
+
+        // Build parlay: anchor + best correlated second leg
+        const anchor = [...allPicks].sort((a, b) => b.confidence - a.confidence)[0];
+        if (!anchor) return null;
+
+        const secondOptions = allPicks.filter(p => p.id !== anchor.id)
+          .map(p => ({ ...p, _parlayScore: parlayScore(p, [anchor]) }))
+          .sort((a, b) => b._parlayScore - a._parlayScore);
+        const secondPick = secondOptions[0];
+        if (!secondPick) return null;
+
+        const autoLegs = [anchor.id, secondPick.id];
+        const activeLegIds = parlayLegs || autoLegs;
         const legs = activeLegIds.map(id => allPicks.find(p => p.id === id)).filter(Boolean);
         if (legs.length < 2) return null;
 
-        const legOdds = legs.map(() => 1.91); // -110 American = 1.91 decimal per leg
+        const legOdds = legs.map(() => 1.91); // -110 per leg
         const parlayDecimal = legOdds.reduce((acc, o) => acc * o, 1);
         const parlayAmerican = parlayDecimal >= 2 ? `+${Math.round((parlayDecimal - 1) * 100)}` : `-${Math.round(100 / (parlayDecimal - 1))}`;
         const payout10 = (10 * parlayDecimal).toFixed(2);
 
-        // Next best leg: different game, balance confidence + edge
-        const usedGames = new Set(legs.flatMap(l => [l.teamAbbr, l.opponent]));
-        const nextLeg = allPicks.filter(p => !activeLegIds.includes(p.id) && !usedGames.has(p.teamAbbr) && !usedGames.has(p.opponent))
-          .sort((a, b) => (b.confidence * 0.6 + b.edge * 8) - (a.confidence * 0.6 + a.edge * 8))[0];
+        // Next best leg scored against all existing legs
+        const nextLeg = allPicks.filter(p => !activeLegIds.includes(p.id))
+          .map(p => ({ ...p, _parlayScore: parlayScore(p, legs) }))
+          .sort((a, b) => b._parlayScore - a._parlayScore)[0];
 
         const addLeg = () => {
           if (nextLeg) setParlayLegs([...activeLegIds, nextLeg.id]);
@@ -9132,6 +9178,14 @@ function DailyPicks() {
           const updated = activeLegIds.filter(l => l !== id);
           if (updated.length >= 2) setParlayLegs(updated);
         };
+
+        // Determine leg labels based on correlation analysis
+        function legLabel(leg, idx) {
+          if (idx === 0) return 'ANCHOR';
+          const sameGame = legs.slice(0, idx).some(l => l.opponent === leg.opponent || l.opponent === leg.teamAbbr || l.teamAbbr === leg.opponent || l.teamAbbr === leg.teamAbbr);
+          if (sameGame) return 'CORRELATED';
+          return leg.edge >= 3 ? 'VALUE' : 'HEDGE';
+        }
 
         return (
           <div className="glass rounded-2xl p-5 mb-6 border border-team-secondary/20">
@@ -9149,9 +9203,11 @@ function DailyPicks() {
             <div className="space-y-2 mb-3">
               {legs.map((leg, i) => (
                 <div key={leg.id} className="flex items-center gap-2 p-2 rounded-lg" style={{ background: 'rgba(var(--team-primary-rgb),0.06)' }}>
-                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${i === 0 ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/15 text-amber-400'}`}>
-                    {i === 0 ? 'SAFE' : i === 1 ? 'RISK' : `LEG ${i + 1}`}
-                  </span>
+                  {(() => {
+                    const label = legLabel(leg, i);
+                    const colors = { ANCHOR: 'bg-green-500/20 text-green-400', CORRELATED: 'bg-blue-500/15 text-blue-400', VALUE: 'bg-amber-500/15 text-amber-400', HEDGE: 'bg-gray-500/15 text-gray-400' };
+                    return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${colors[label] || colors.HEDGE}`}>{label}</span>;
+                  })()}
                   {leg.headshot && <img src={leg.headshot} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" loading="lazy" />}
                   <div className="flex-1 min-w-0">
                     <span className="text-xs font-bold text-white truncate block">{leg.player}</span>
