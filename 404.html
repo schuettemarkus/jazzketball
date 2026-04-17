@@ -8391,63 +8391,69 @@ function generateExplanation(pick) {
   const { player, statType, line, projection, edge, injury } = pick;
   const last = player.split(' ').pop();
   const pct = Math.round((edge / Math.max(line, 1)) * 100);
-  const hitRate = Math.min(pick.hitRate || 0, 5); // always capped at 5
+  const hitRate = Math.min(pick.hitRate || 0, 5);
   const matchupRank = pick.matchupRank || 15;
+  const isHome = pick.isHome;
 
-  const parts = [];
-
-  // Lead with the strongest signal — pick ONE primary driver
+  // Build explanation from the PRIMARY driver of the edge
   if (injury) {
-    // Injury boost is the primary edge
-    parts.push(injury.note);
-    if (hitRate >= 3) {
-      parts.push(`Even without the boost, ${last} has cleared this line in ${hitRate} of his last 5 stretches.`);
-    }
-  } else if (hitRate >= 4 && matchupRank >= 15) {
-    // Strong form + soft matchup
-    parts.push(`${last} has cleared the ${statType} over in ${hitRate} of his last 5 stretches.`);
-    parts.push(`Tonight's opponent ranks #${matchupRank} in ${statType} defense — below average.`);
-  } else if (hitRate >= 4) {
-    // Strong form, tough matchup — be honest
-    parts.push(`${last} has hit this over in ${hitRate} of 5 recent stretches.`);
-    parts.push(matchupRank <= 10 ? `Tougher matchup tonight (#${matchupRank} defense), but the volume is there.` : `Projection sits ${pct}% above the line.`);
-  } else if (matchupRank >= 20) {
-    // Matchup-driven edge
-    parts.push(`Opponent ranks #${matchupRank} in ${statType} defense — bottom third of the league.`);
-    parts.push(`${last} projects at ${projection} ${statType}, ${edge.toFixed(1)} above the line.`);
-  } else if (edge >= 3) {
-    // Large projection gap
-    parts.push(`${last} is projected at ${projection} ${statType} — ${edge.toFixed(1)} above the line.`);
-    parts.push(hitRate >= 3 ? `He's cleared this threshold ${hitRate} of 5 recent stretches.` : `Minutes have been consistent at ${pick.avgMinutes || 33}+ MPG.`);
-  } else {
-    // Moderate edge — be transparent
-    parts.push(`${last} projects at ${projection} ${statType}, ${pct}% above the line.`);
-    if (hitRate >= 3) {
-      parts.push(`Cleared this number in ${hitRate} of 5 recent stretches.`);
-    } else if (hitRate <= 1) {
-      parts.push('Recent trend is inconsistent — lower confidence pick.');
-    } else {
-      parts.push(pick.isHome ? 'Home-court split provides a slight bump.' : 'Road game, but projection still favors the over.');
-    }
+    const support = hitRate >= 3 ? ` ${last} has exceeded this line recently even without the boost.` : '';
+    return `${injury.note}.${support}`;
   }
 
-  return parts.join(' ');
+  // Matchup-driven (bad defense is the main edge)
+  if (matchupRank >= 22) {
+    const defLabel = matchupRank >= 27 ? 'bottom 5' : 'bottom third';
+    if (edge >= 3) return `${last} faces a ${defLabel} ${statType} defense (#${matchupRank}). Projects at ${projection} — ${edge.toFixed(1)} above the line.`;
+    return `Matchup advantage: opponent ranks #${matchupRank} defending ${statType}. ${last} projects ${pct}% above the line.`;
+  }
+
+  // Volume/projection-driven (big edge, the numbers speak)
+  if (edge >= 4) {
+    if (isHome) return `${last} projects at ${projection} ${statType} at home — ${edge.toFixed(1)} points of edge. ${hitRate >= 3 ? `He's cleared this in ${hitRate}/5 recent games.` : 'Strong projection regardless of trend.'}`;
+    return `Model projects ${last} at ${projection} ${statType}, well above the ${line} line. ${matchupRank >= 15 ? `Favorable matchup (#${matchupRank} defense) supports the over.` : 'Volume alone drives this edge.'}`;
+  }
+
+  // Form-driven (recent hot streak)
+  if (hitRate >= 4) {
+    if (matchupRank >= 15) return `${last} has cleared ${line}+ ${statType} in ${hitRate} of 5 recent games against a below-average defense (#${matchupRank}).`;
+    return `Riding a hot streak — ${last} has hit the over in ${hitRate}/5 recent games. Tougher matchup (#${matchupRank}) but form is strong.`;
+  }
+
+  // Moderate edge — be specific about what's driving it
+  if (hitRate >= 3) {
+    return `${last} projects at ${projection} ${statType} (${pct}% above the line). Recent form is solid — cleared this number in ${hitRate}/5 stretches.${isHome ? ' Home split adds a slight edge.' : ''}`;
+  }
+
+  // Low confidence — honest and transparent
+  if (hitRate <= 1) {
+    return `${last} projects at ${projection} ${statType} but recent form is inconsistent (${hitRate}/5). The edge is there on paper — proceed with caution.`;
+  }
+
+  // Default moderate
+  return `${last} projects at ${projection} ${statType}, ${edge.toFixed(1)} above the line.${isHome ? ' Playing at home tonight.' : ''} ${matchupRank >= 15 ? `Opponent ranks #${matchupRank} in ${statType} defense.` : 'Solid matchup-neutral projection.'}`;
 }
 
-// Confidence score: 1-100
+// Confidence score: 1-100 (calibrated so 80+ is rare, 90+ is exceptional)
 function calcConfidence(pick) {
-  let score = 50;
-  // Edge magnitude (bigger edge = more confident)
-  score += Math.min(pick.edge * 4, 25);
-  // Hit rate bonus
-  score += (pick.hitRate || 0) * 5;
-  // Matchup bonus (lower rank = worse defense = better for over)
-  if (pick.matchupRank && pick.matchupRank <= 10) score += 10;
-  // Minutes consistency bonus
-  if (pick.minutesConsistency === 'high') score += 8;
-  // Injury boost
-  if (pick.injury) score += 12;
-  return Math.min(Math.round(score), 99);
+  let score = 35; // Lower base — confidence must be earned
+  // Edge magnitude: diminishing returns past 3 pts
+  const edgeBoost = pick.edge <= 3 ? pick.edge * 5 : 15 + (pick.edge - 3) * 1.5;
+  score += Math.min(edgeBoost, 22);
+  // Hit rate: only meaningful if 4+ of 5
+  if ((pick.hitRate || 0) >= 4) score += 8;
+  else if ((pick.hitRate || 0) >= 3) score += 4;
+  // Matchup: only big boost for truly bad defenses (rank 22+)
+  if (pick.matchupRank >= 22) score += 8;
+  else if (pick.matchupRank >= 15) score += 3;
+  // Injury boost — significant but not dominant
+  if (pick.injury) score += 7;
+  // Real line bonus — more trustworthy when using actual sportsbook data
+  if (pick.lineSource === 'live') score += 5;
+  // Penalty for small sample / low-volume players
+  if (pick.line < 10) score -= 5;
+  // Clamp to realistic range
+  return Math.max(25, Math.min(Math.round(score), 92));
 }
 
 function formatGameDateTime(gameTime) {
@@ -8600,19 +8606,21 @@ function DailyPicks() {
         const lineSeed = daySeed + ci * 7 + statTypes.indexOf(st) * 31;
         const line = realLine != null ? realLine : generateLine(proj, lineSeed);
         const edge = +(proj - line).toFixed(1);
-        if (Math.abs(edge) < 0.3) return; // Skip tiny edges
+        if (Math.abs(edge) < 0.5) return; // Skip tiny edges
+        // Sanity check: edge should not exceed 40% of the line (likely bad data)
+        if (line > 0 && Math.abs(edge) / line > 0.4) return;
 
         const oppDefRank = DEF_RATINGS[p.opponent] || 15;
         const injury = INJURY_REPORT[p.name] || null;
 
-        // Hit rate from last 5 monthly periods (how often player exceeds 90% of avg)
+        // Hit rate: how often player exceeds the LINE (not just their avg)
         const monthly = p.monthly;
-        let hitRate = 3;
+        let hitRate = 2; // Default: mediocre
         if (monthly && monthly.length >= 3) {
           const vals = typeof monthly[0] === 'object' ? monthly.map(m => m.ppg) : monthly;
           const last5 = vals.slice(-5);
-          const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-          hitRate = Math.min(last5.filter(v => v > avg * 0.9).length, 5);
+          // Compare against the actual line, not the average
+          hitRate = Math.min(last5.filter(v => v > line * 0.95).length, 5);
         }
 
         const pick = {
@@ -8714,17 +8722,6 @@ function DailyPicks() {
 
   return (
     <section className="py-8 px-4 max-w-5xl mx-auto">
-
-      {/* Line source indicator */}
-      <div className="flex items-center justify-center gap-2 mb-4">
-        {oddsSource === 'live' ? (
-          <span className="flex items-center gap-1.5 text-[10px] text-green-400 font-semibold"><span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Live lines ({realLineCount} picks)</span>
-        ) : oddsSource === 'none' && getOddsApiKey() ? (
-          <span className="text-[10px] text-gray-500">No live lines available — using projections</span>
-        ) : (
-          <span className="text-[10px] text-gray-600">Projected lines — connect Odds API for real sportsbook lines</span>
-        )}
-      </div>
 
       {/* Win Rate Transparency Bar */}
       {(winTracker.bestBetRecord.wins + winTracker.bestBetRecord.losses) > 0 && (
@@ -8904,16 +8901,23 @@ function DailyPicks() {
           );
         })}
       </div>
-      {/* Unlock overlay — positioned over blurred rows */}
+      {/* Unlock overlay — email capture */}
       {filteredPicks.length > FREE_LIMIT && (
         <div className="absolute bottom-0 left-0 right-0 flex items-end justify-center pb-6 z-10" style={{ background: 'linear-gradient(transparent 0%, rgba(var(--team-midnight-rgb),0.9) 40%, rgba(var(--team-midnight-rgb),1) 100%)', height: '60%', pointerEvents: 'none' }}>
-          <div className="text-center" style={{ pointerEvents: 'auto' }}>
-            <h3 className="text-lg font-black text-white mb-2">Unlock All {filteredPicks.length} Picks</h3>
-            <p className="text-gray-400 text-sm mb-3 max-w-sm mx-auto">Full board with edge calculations, confidence scores, and injury-boosted plays.</p>
-            <button className="px-8 py-3 rounded-xl bg-team-secondary text-black font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-team-secondary/20">
-              Unlock All Picks — $19/month
-            </button>
-            <p className="text-gray-600 text-xs mt-2">Cancel anytime &bull; 7-day free trial</p>
+          <div className="text-center max-w-sm mx-auto" style={{ pointerEvents: 'auto' }}>
+            <h3 className="text-lg font-black text-white mb-1">Unlock All {filteredPicks.length} Picks</h3>
+            <p className="text-gray-400 text-xs mb-3">Get every edge, every day. Enter your email to join the waitlist.</p>
+            {emailSubmitted ? (
+              <div className="text-green-400 text-sm font-bold py-2">You're on the list. Paid access launching soon.</div>
+            ) : (
+              <form onSubmit={handleEmailSubmit} className="flex gap-2">
+                <input type="email" value={emailInput} onChange={e => setEmailInput(e.target.value)} placeholder="Your email" required
+                  className="flex-1 bg-gray-900/80 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-team-secondary" />
+                <button type="submit" className="px-5 py-2.5 rounded-lg bg-team-secondary text-black font-bold text-sm hover:opacity-90 transition-all whitespace-nowrap">
+                  Get Access
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}
@@ -8971,16 +8975,23 @@ function DailyPicks() {
           );
         })}
       </div>
-      {/* Unlock overlay — mobile */}
+      {/* Unlock overlay — mobile email capture */}
       {filteredPicks.length > FREE_LIMIT && (
-        <div className="absolute bottom-0 left-0 right-0 flex items-end justify-center pb-6 z-10" style={{ background: 'linear-gradient(transparent 0%, rgba(var(--team-midnight-rgb),0.9) 40%, rgba(var(--team-midnight-rgb),1) 100%)', height: '70%', pointerEvents: 'none' }}>
-          <div className="text-center" style={{ pointerEvents: 'auto' }}>
-            <h3 className="text-lg font-black text-white mb-2">Unlock All {filteredPicks.length} Picks</h3>
-            <p className="text-gray-400 text-sm mb-3 max-w-xs mx-auto">Full board with edge calculations and confidence scores.</p>
-            <button className="px-8 py-3 rounded-xl bg-team-secondary text-black font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-team-secondary/20">
-              Unlock All Picks — $19/month
-            </button>
-            <p className="text-gray-600 text-xs mt-2">Cancel anytime &bull; 7-day free trial</p>
+        <div className="absolute bottom-0 left-0 right-0 flex items-end justify-center pb-6 z-10 px-4" style={{ background: 'linear-gradient(transparent 0%, rgba(var(--team-midnight-rgb),0.9) 40%, rgba(var(--team-midnight-rgb),1) 100%)', height: '70%', pointerEvents: 'none' }}>
+          <div className="text-center w-full max-w-sm" style={{ pointerEvents: 'auto' }}>
+            <h3 className="text-base font-black text-white mb-1">Unlock All {filteredPicks.length} Picks</h3>
+            <p className="text-gray-400 text-xs mb-3">Join the waitlist for full access.</p>
+            {emailSubmitted ? (
+              <div className="text-green-400 text-sm font-bold py-2">You're on the list.</div>
+            ) : (
+              <form onSubmit={handleEmailSubmit} className="flex gap-2">
+                <input type="email" value={emailInput} onChange={e => setEmailInput(e.target.value)} placeholder="Your email" required
+                  className="flex-1 bg-gray-900/80 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-team-secondary min-w-0" />
+                <button type="submit" className="px-4 py-2.5 rounded-lg bg-team-secondary text-black font-bold text-sm hover:opacity-90 transition-all whitespace-nowrap shrink-0">
+                  Get Access
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}
@@ -9047,7 +9058,14 @@ function DailyPicks() {
       {/* Engine Performance & Tracker */}
       <div className="glass rounded-2xl p-5 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-team-secondary">Vault Engine</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-bold text-team-secondary">Vault Engine</h3>
+            {oddsSource === 'live' ? (
+              <span className="flex items-center gap-1 text-[9px] text-green-400 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20"><span className="w-1 h-1 rounded-full bg-green-500" />Live lines</span>
+            ) : (
+              <span className="text-[9px] text-gray-600 px-2 py-0.5 rounded-full bg-gray-800">Projected</span>
+            )}
+          </div>
           <button onClick={() => setShowTracker(!showTracker)}
             className="text-xs text-gray-400 hover:text-white transition-colors">
             {showTracker ? 'Hide Tracker' : 'Track Results'}
@@ -9818,10 +9836,28 @@ function App() {
           {/* Logo area — same height (80px) on all tabs */}
           <div className="w-20 h-20 mx-auto mb-3 flex items-center justify-center">
             {activeTab === 'PICKS' ? (
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full" style={{ background: 'rgba(var(--team-secondary-rgb),0.1)', border: '1px solid rgba(var(--team-secondary-rgb),0.2)' }}>
-                <svg className="w-4 h-4 text-team-secondary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                <span className="text-xs font-bold text-team-secondary tracking-wider uppercase">NBA Vault</span>
-              </div>
+              <svg className="w-16 h-16" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Vault door circle */}
+                <circle cx="32" cy="32" r="28" stroke="var(--team-secondary)" strokeWidth="3" opacity="0.9" />
+                <circle cx="32" cy="32" r="22" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.4" />
+                {/* Vault handle / dial */}
+                <circle cx="32" cy="32" r="8" stroke="var(--team-secondary)" strokeWidth="2" opacity="0.8" />
+                <circle cx="32" cy="32" r="3" fill="var(--team-secondary)" opacity="0.6" />
+                {/* Tick marks around the dial */}
+                <line x1="32" y1="6" x2="32" y2="12" stroke="var(--team-secondary)" strokeWidth="2" opacity="0.6" />
+                <line x1="32" y1="52" x2="32" y2="58" stroke="var(--team-secondary)" strokeWidth="2" opacity="0.6" />
+                <line x1="6" y1="32" x2="12" y2="32" stroke="var(--team-secondary)" strokeWidth="2" opacity="0.6" />
+                <line x1="52" y1="32" x2="58" y2="32" stroke="var(--team-secondary)" strokeWidth="2" opacity="0.6" />
+                {/* Diagonal ticks */}
+                <line x1="13.6" y1="13.6" x2="17.8" y2="17.8" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.35" />
+                <line x1="46.2" y1="13.6" x2="42" y2="17.8" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.35" />
+                <line x1="13.6" y1="50.4" x2="17.8" y2="46.2" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.35" />
+                <line x1="46.2" y1="50.4" x2="42" y2="46.2" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.35" />
+                {/* Handle spokes */}
+                <line x1="32" y1="24" x2="32" y2="14" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.5" />
+                <line x1="24" y1="32" x2="14" y2="32" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.5" />
+                <line x1="40" y1="32" x2="50" y2="32" stroke="var(--team-secondary)" strokeWidth="1.5" opacity="0.5" />
+              </svg>
             ) : config.franchiseId ? (
               <img src={`https://cdn.nba.com/logos/nba/${config.franchiseId}/primary/L/logo.svg`}
                 alt={`${config.fullName} logo`} className="w-20 h-20 drop-shadow-lg" loading="lazy" />
