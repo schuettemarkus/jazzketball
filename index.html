@@ -8894,9 +8894,10 @@ function DailyPicks() {
 
   const bestPick = useMemo(() => selectBestBet(allPicks), [allPicks]);
   const [winTracker, setWinTracker] = useState(loadWinTracker);
+  const [parlayLegs, setParlayLegs] = useState(null); // null = auto-select, array = user-modified
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const isAdmin = useState(() => localStorage.getItem('nbavault_admin') === 'true')[0];
-  const FREE_LIMIT = isAdmin ? 999 : 1; // Admin sees all picks
+  const paywallOn = useState(() => localStorage.getItem('nbavault_paywall') === 'true')[0];
+  const FREE_LIMIT = paywallOn ? 1 : 999;
 
   const recordBestBetResult = useCallback((result) => {
     setWinTracker(prev => {
@@ -9100,6 +9101,85 @@ function DailyPicks() {
           </div>
         </div>
       ); })()}
+
+      {/* Parlay Builder */}
+      {allPicks.length >= 2 && (() => {
+        // Auto-select 2 legs if not user-modified: safe (highest confidence) + risky (highest edge, different game)
+        const sorted = [...allPicks].sort((a, b) => b.confidence - a.confidence);
+        const safePick = sorted[0];
+        const riskyPick = sorted.filter(p => p.opponent !== safePick?.opponent && p.teamAbbr !== safePick?.teamAbbr)
+          .sort((a, b) => b.edge - a.edge)[0] || sorted[1];
+        const autoLegs = [safePick?.id, riskyPick?.id].filter(Boolean);
+        const activeLegIds = parlayLegs || autoLegs;
+
+        const legs = activeLegIds.map(id => allPicks.find(p => p.id === id)).filter(Boolean);
+        if (legs.length < 2) return null;
+
+        const legOdds = legs.map(() => 1.91); // -110 American = 1.91 decimal per leg
+        const parlayDecimal = legOdds.reduce((acc, o) => acc * o, 1);
+        const parlayAmerican = parlayDecimal >= 2 ? `+${Math.round((parlayDecimal - 1) * 100)}` : `-${Math.round(100 / (parlayDecimal - 1))}`;
+        const payout10 = (10 * parlayDecimal).toFixed(2);
+
+        // Next best leg: different game, balance confidence + edge
+        const usedGames = new Set(legs.flatMap(l => [l.teamAbbr, l.opponent]));
+        const nextLeg = allPicks.filter(p => !activeLegIds.includes(p.id) && !usedGames.has(p.teamAbbr) && !usedGames.has(p.opponent))
+          .sort((a, b) => (b.confidence * 0.6 + b.edge * 8) - (a.confidence * 0.6 + a.edge * 8))[0];
+
+        const addLeg = () => {
+          if (nextLeg) setParlayLegs([...activeLegIds, nextLeg.id]);
+        };
+        const removeLeg = (id) => {
+          const updated = activeLegIds.filter(l => l !== id);
+          if (updated.length >= 2) setParlayLegs(updated);
+        };
+
+        return (
+          <div className="glass rounded-2xl p-5 mb-6 border border-team-secondary/20">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-team-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                <span className="text-sm font-black text-team-secondary uppercase tracking-wider">Vault Parlay</span>
+              </div>
+              <div className="text-right">
+                <span className="text-lg font-black text-team-secondary">{parlayAmerican}</span>
+                <span className="text-[10px] text-gray-500 ml-1">odds</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 mb-3">
+              {legs.map((leg, i) => (
+                <div key={leg.id} className="flex items-center gap-2 p-2 rounded-lg" style={{ background: 'rgba(var(--team-primary-rgb),0.06)' }}>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${i === 0 ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/15 text-amber-400'}`}>
+                    {i === 0 ? 'SAFE' : i === 1 ? 'RISK' : `LEG ${i + 1}`}
+                  </span>
+                  {leg.headshot && <img src={leg.headshot} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" loading="lazy" />}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-bold text-white truncate block">{leg.player}</span>
+                    <span className="text-[9px] text-gray-500">{leg.teamAbbr} vs {leg.opponent}</span>
+                  </div>
+                  <span className="text-xs font-black text-team-secondary">O {leg.line} {leg.statType}</span>
+                  <span className="text-[10px] text-green-400 font-bold">+{leg.edge}</span>
+                  {parlayLegs.length > 2 && (
+                    <button onClick={() => removeLeg(leg.id)} className="text-gray-600 hover:text-red-400 text-xs transition-colors ml-1" title="Remove">x</button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                <span>{legs.length} legs</span>
+                <span>$10 wins <span className="text-white font-bold">${payout10}</span></span>
+              </div>
+              {nextLeg && legs.length < 5 && (
+                <button onClick={addLeg} className="flex items-center gap-1 text-[10px] text-team-secondary hover:text-white font-bold transition-colors">
+                  <span className="text-sm">+</span> Add Leg
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Filters + Sort */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
@@ -10162,8 +10242,8 @@ function App() {
     clearTimeout(r.timer);
     if (r.count >= 3) {
       r.count = 0;
-      const isAdmin = localStorage.getItem('nbavault_admin') === 'true';
-      if (isAdmin) { localStorage.removeItem('nbavault_admin'); } else { localStorage.setItem('nbavault_admin', 'true'); }
+      const pw = localStorage.getItem('nbavault_paywall') === 'true';
+      if (pw) { localStorage.removeItem('nbavault_paywall'); } else { localStorage.setItem('nbavault_paywall', 'true'); }
       window.location.reload();
     }
     r.timer = setTimeout(() => { r.count = 0; }, 600);
