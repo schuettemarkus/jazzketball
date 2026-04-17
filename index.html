@@ -8670,15 +8670,13 @@ function App() {
             {tabs.map(tab => (
               <button key={tab} onClick={() => navigateTo(tab)}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 whitespace-nowrap ${
-                  tab === 'PICKS'
-                    ? (activeTab === tab
-                        ? 'bg-green-500 text-black shadow-lg shadow-green-500/30'
-                        : 'bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30 shadow-sm shadow-green-500/20')
-                    : (activeTab === tab
-                        ? 'bg-team-secondary text-black shadow-lg shadow-team-secondary/20'
-                        : 'text-gray-400 hover:text-white hover:bg-team-primary/30')
+                  activeTab === tab
+                    ? 'bg-team-secondary text-black shadow-lg shadow-team-secondary/20'
+                    : tab === 'PICKS'
+                      ? 'text-white bg-white/10 hover:bg-white/15'
+                      : 'text-gray-400 hover:text-white hover:bg-team-primary/30'
                 }`}>
-                {tab === 'PICKS' ? '\uD83D\uDD25 PICKS' : tab}
+                {tab}{tab === 'PICKS' && activeTab !== tab && <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />}
               </button>
             ))}
           </div>
