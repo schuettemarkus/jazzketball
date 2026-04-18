@@ -8603,19 +8603,24 @@ function InteractiveDraftSim() {
           <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
             The lottery will determine draft order based on real odds. Then step through each pick — scout prospects, compare players, and make the call for the {config.fullName}.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button onClick={startLottery}
-              className="px-8 py-3 rounded-xl bg-team-secondary text-black font-bold text-sm hover:opacity-90 transition-all">
-              Start Lottery
-            </button>
-          </div>
-          <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-            {lotteryTeams.slice(0, 8).map((t, i) => (
-              <div key={i} className={`glass rounded-lg p-2.5 text-center ${t.team === teamLotteryName ? 'border border-team-secondary/30' : ''}`}>
-                <div className="text-xs font-bold text-gray-300 truncate">{t.team}</div>
-                <div className="text-[10px] text-gray-500">{t.record} · {t.odds}%</div>
-              </div>
-            ))}
+          <button onClick={startLottery}
+            className="px-10 py-4 rounded-xl bg-team-secondary text-black font-black text-base hover:opacity-90 transition-all shadow-lg shadow-team-secondary/30 mb-2">
+            Start Lottery
+          </button>
+          <div className="mt-6 max-w-lg mx-auto space-y-1">
+            {lotteryTeams.map((t, i) => {
+              const isTeam = t.team === teamLotteryName;
+              return (
+                <div key={i} className={`flex items-center gap-3 rounded-lg px-3 py-2 ${isTeam ? 'bg-team-secondary/15 border border-team-secondary/30' : 'bg-white/[0.02]'}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${isTeam ? 'bg-team-secondary text-black' : 'bg-gray-800 text-gray-400'}`}>{i + 1}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-xs font-bold truncate ${isTeam ? 'text-team-secondary' : 'text-gray-300'}`}>{t.team}</div>
+                  </div>
+                  <span className="text-[10px] text-gray-500 shrink-0">{t.record}</span>
+                  <span className={`text-[10px] font-bold shrink-0 ${isTeam ? 'text-team-secondary' : 'text-gray-400'}`}>{t.odds}%</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
