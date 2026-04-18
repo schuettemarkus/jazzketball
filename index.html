@@ -5854,6 +5854,8 @@ function Badge({ type }) {
     'ALL-STAR': 'bg-yellow-500 text-black',
     'DPOY': 'bg-red-600 text-white',
     'MVP': 'bg-amber-500 text-black',
+    'MVP CANDIDATE': 'bg-amber-500/80 text-black',
+    'ELITE': 'bg-team-secondary text-black',
     'RETURNING': 'bg-blue-600 text-white',
     'NEW ACQUISITION': 'bg-orange-500 text-white',
     'CAPTAIN': 'bg-team-secondary text-black',
@@ -5879,8 +5881,8 @@ function getAutoBadge(player) {
   if (player.badge) return player.badge;
   const s = player.stats;
   if (!s) return null;
-  if (s.ppg >= 28) return 'MVP';
-  if (s.ppg >= 22 && player.starter) return 'ALL-STAR';
+  if (s.ppg >= 30) return 'MVP CANDIDATE';
+  if (s.ppg >= 25 && player.starter) return 'ELITE';
   if (s.apg >= 7) return 'FLOOR GENERAL';
   if (s.threePct >= 39 && s.ppg >= 10) return 'SHARPSHOOTER';
   if (s.rpg >= 10 && player.starter) return 'ANCHOR';
