@@ -9915,13 +9915,15 @@ const ODDS_TEAM_MAP = {
 
 // Build games from Odds API events (fallback when NBA CDN has nothing)
 function buildGamesFromOddsEvents(events) {
-  const todayStr = new Date().toISOString().split('T')[0];
+  const now = Date.now();
   return events
     .filter(e => {
-      // Only include events from TODAY
       if (!e.commence_time) return false;
-      const eventDate = new Date(e.commence_time).toISOString().split('T')[0];
-      if (eventDate !== todayStr) return false;
+      const eventTime = new Date(e.commence_time).getTime();
+      // Include games from today and upcoming (up to 2 days ahead)
+      // Exclude games that ended more than 5 hours ago
+      if (eventTime < now - 5 * 60 * 60 * 1000) return false;
+      if (eventTime > now + 48 * 60 * 60 * 1000) return false;
       const home = ODDS_TEAM_MAP[e.home_team];
       const away = ODDS_TEAM_MAP[e.away_team];
       return home && away && home !== away;
@@ -10379,37 +10381,46 @@ function DailyPicks() {
   const [oddsLines, setOddsLines] = useState({});
   const [oddsSource, setOddsSource] = useState(null); // 'live' | 'none'
 
-  // Fetch schedule from NBA CDN, fall back to Odds API events
+  // Fetch schedule: NBA CDN for today + Odds API for upcoming
   useEffect(() => {
     (async () => {
       let data = await fetchTodaysGames();
       if (data) console.log('[NBA Vault] Schedule:', data.games.length, 'games from', data.source);
       else console.log('[NBA Vault] Schedule fetch failed — trying Odds API fallback');
 
-      // If NBA CDN has no games, try Odds API events as fallback
-      if (!data || data.games.length === 0) {
-        const apiKey = getOddsApiKey();
-        if (apiKey) {
+      // Supplement with Odds API events for upcoming games
+      const apiKey = getOddsApiKey();
+      if (apiKey) {
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          let events = null;
           try {
-            // Reuse cached events if available
-            const today = new Date().toISOString().split('T')[0];
-            let events = null;
-            try {
-              const cached = JSON.parse(localStorage.getItem(ODDS_EVENTS_CACHE_KEY));
-              if (cached && cached.date === today) events = cached.events;
-            } catch {}
-            if (!events) {
-              const resp = await fetch(`${ODDS_API_BASE}/events?apiKey=${apiKey}&dateFormat=iso`);
-              if (resp.ok) {
-                events = await resp.json();
-                try { localStorage.setItem(ODDS_EVENTS_CACHE_KEY, JSON.stringify({ events, date: today })); } catch {}
+            const cached = JSON.parse(localStorage.getItem(ODDS_EVENTS_CACHE_KEY));
+            if (cached && cached.date === today) events = cached.events;
+          } catch {}
+          if (!events) {
+            const resp = await fetch(`${ODDS_API_BASE}/events?apiKey=${apiKey}&dateFormat=iso`);
+            if (resp.ok) {
+              events = await resp.json();
+              try { localStorage.setItem(ODDS_EVENTS_CACHE_KEY, JSON.stringify({ events, date: today })); } catch {}
+            }
+          }
+          if (events && events.length > 0) {
+            const upcomingGames = buildGamesFromOddsEvents(events);
+            if (!data || data.games.length === 0) {
+              // No NBA CDN data — use Odds API as primary source
+              data = { games: upcomingGames, source: 'odds', date: today };
+            } else {
+              // Merge: add upcoming games not already in today's schedule
+              const existingKeys = new Set(data.games.map(g => [g.home, g.away].sort().join('-')));
+              const newGames = upcomingGames.filter(g => !existingKeys.has([g.home, g.away].sort().join('-')));
+              if (newGames.length > 0) {
+                data = { ...data, games: [...data.games, ...newGames] };
+                console.log('[NBA Vault] Added', newGames.length, 'upcoming games from Odds API');
               }
             }
-            if (events && events.length > 0) {
-              data = { games: buildGamesFromOddsEvents(events), source: 'odds', date: today };
-            }
-          } catch {}
-        }
+          }
+        } catch {}
       }
 
       if (!data || data.games.length === 0) {
