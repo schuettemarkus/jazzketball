@@ -7754,40 +7754,67 @@ function TradeCenter() {
     });
   };
 
+  // Generate trade report card for one side
+  function teamReportCard(teamAbbr, teamName, sentPlayers, recvPlayers, sentPks, recvPks, teamRoster) {
+    const myNeeds = getNeeds(teamRoster);
+    const fillsNeed = recvPlayers.some(p => {
+      return myNeeds.some(n => {
+        if (n.type.includes('Scor') && p.stats.ppg >= 18) return true;
+        if (n.type.includes('Playmak') && (p.stats.apg || 0) >= 5) return true;
+        if (n.type.includes('Rim') && (p.stats.rpg || 0) >= 7 && p.pos.includes('C')) return true;
+        if (n.type.includes('3PT') && (p.stats.threePct || 0) >= 36) return true;
+        if (n.type.includes('Wing') && (p.pos.includes('SF') || p.pos.includes('SG'))) return true;
+        return false;
+      });
+    });
+    const sentVal = sentPlayers.reduce((s, p) => s + estimateValue(p), 0) + sentPks.length * 20;
+    const recvVal = recvPlayers.reduce((s, p) => s + estimateValue(p), 0) + recvPks.length * 20;
+    const netVal = recvVal - sentVal;
+    const ppgChange = recvPlayers.reduce((s, p) => s + p.stats.ppg, 0) - sentPlayers.reduce((s, p) => s + p.stats.ppg, 0);
+    const rpgChange = recvPlayers.reduce((s, p) => s + (p.stats.rpg || 0), 0) - sentPlayers.reduce((s, p) => s + (p.stats.rpg || 0), 0);
+    const apgChange = recvPlayers.reduce((s, p) => s + (p.stats.apg || 0), 0) - sentPlayers.reduce((s, p) => s + (p.stats.apg || 0), 0);
+
+    let grade, gradeColor;
+    const score = (netVal > 0 ? 55 : netVal > -10 ? 48 : 35) + (fillsNeed ? 10 : 0) + (recvPks.length * 5) - (sentPks.length * 5);
+    if (score >= 65) { grade = 'A'; gradeColor = 'text-green-400'; }
+    else if (score >= 55) { grade = 'B+'; gradeColor = 'text-green-400'; }
+    else if (score >= 48) { grade = 'B'; gradeColor = 'text-team-secondary'; }
+    else if (score >= 40) { grade = 'C+'; gradeColor = 'text-yellow-400'; }
+    else if (score >= 30) { grade = 'C'; gradeColor = 'text-yellow-400'; }
+    else { grade = 'D'; gradeColor = 'text-red-400'; }
+
+    return { teamAbbr, teamName, grade, gradeColor, fillsNeed, netVal, ppgChange, rpgChange, apgChange, needs: myNeeds.slice(0, 3), sentVal, recvVal };
+  }
+
   // Execute trade and save to history
   function executeTrade() {
     const sendPlayers = players.filter(p => teamOut.includes(p.name));
     const recvPlayers = partnerTeam?.players?.filter(p => partnerOut.includes(p.name)) || [];
     const fairness = tradeFairness(sendPlayers, recvPlayers, draftPicks.sending, draftPicks.receiving);
-    const needs = getNeeds();
-    const fillsNeed = recvPlayers.some(p => {
-      return needs.some(n => {
-        if (n.type === 'Scoring' && p.stats.ppg >= 20) return true;
-        if (n.type === 'Playmaker' && p.stats.apg >= 5) return true;
-        if (n.type === 'Rim Protector' && p.stats.rpg >= 7) return true;
-        return false;
-      });
-    });
-    const grade = tradeGrade(fairness, fillsNeed);
+
+    // Build report cards for both sides
+    const myReport = teamReportCard(config.abbr, config.name, sendPlayers, recvPlayers, draftPicks.sending, draftPicks.receiving, players);
+    const theirReport = teamReportCard(partnerTeam.abbr, partnerTeam.name, recvPlayers, sendPlayers, draftPicks.receiving, draftPicks.sending, partnerTeam.players);
 
     const trade = {
       id: Date.now(),
       date: new Date().toLocaleDateString(),
-      sent: sendPlayers.map(p => ({ name: p.name, pos: p.pos, ppg: p.stats.ppg, headshot: p.headshot })),
-      received: recvPlayers.map(p => ({ name: p.name, pos: p.pos, ppg: p.stats.ppg, headshot: p.headshot, team: partnerTeam.abbr })),
+      sent: sendPlayers.map(p => ({ name: p.name, pos: p.pos, ppg: p.stats.ppg, rpg: p.stats.rpg || 0, apg: p.stats.apg || 0, headshot: p.headshot })),
+      received: recvPlayers.map(p => ({ name: p.name, pos: p.pos, ppg: p.stats.ppg, rpg: p.stats.rpg || 0, apg: p.stats.apg || 0, headshot: p.headshot, team: partnerTeam.abbr })),
       sentPicks: draftPicks.sending,
       receivedPicks: draftPicks.receiving,
       partner: partnerTeam?.abbr,
       partnerName: partnerTeam?.fullName,
       fairness,
-      grade,
-      fillsNeed,
+      grade: myReport,
+      fillsNeed: myReport.fillsNeed,
+      myReport,
+      theirReport,
     };
 
     saveHistory([trade, ...tradeHistory]);
     setExpandedTrade(trade.id);
     setView('history');
-    // Reset builder
     setTeamOut([]);
     setPartnerOut([]);
     setDraftPicks({ sending: [], receiving: [] });
@@ -8113,7 +8140,7 @@ function TradeCenter() {
                   <div className={`glass rounded-xl p-4 cursor-pointer transition-all hover:bg-white/[0.03] ${expandedTrade === t.id ? 'border border-team-secondary/20' : ''}`}
                     onClick={() => setExpandedTrade(expandedTrade === t.id ? null : t.id)}>
                     <div className="flex items-center gap-3">
-                      <span className={`text-xl font-black ${t.grade.color}`}>{t.grade.grade}</span>
+                      <span className={`text-xl font-black ${t.myReport?.gradeColor || t.grade?.color || 'text-gray-500'}`}>{t.myReport?.grade || t.grade?.grade || '?'}</span>
                       <div className="flex-1">
                         <div className="text-xs font-bold text-white">{config.abbr} ↔ {t.partner}</div>
                         <div className="text-[10px] text-gray-500">{t.date} · {t.fairness.label}</div>
@@ -8129,16 +8156,17 @@ function TradeCenter() {
                     </div>
                   </div>
                   {expandedTrade === t.id && (
-                    <div className="glass rounded-b-xl p-4 -mt-1 border-t border-white/[0.04] animate-fade-in">
-                      <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-b-xl p-5 -mt-1 border-t border-white/[0.04] animate-fade-in" style={{ background: 'rgba(var(--team-primary-rgb),0.03)' }}>
+                      {/* Trade details */}
+                      <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                          <div className="text-[10px] text-red-400 font-bold mb-2">SENT</div>
+                          <div className="text-[10px] text-red-400 font-bold mb-2">{config.abbr} SENDS</div>
                           {t.sent.map((p, i) => (
                             <div key={i} className="flex items-center gap-2 mb-1.5">
-                              {p.headshot && <img src={p.headshot} alt="" className="w-7 h-7 rounded-full object-cover" loading="lazy" />}
+                              {p.headshot && <img src={p.headshot} alt="" className="w-8 h-8 rounded-full object-cover" loading="lazy" />}
                               <div>
                                 <div className="text-xs font-bold text-white">{p.name}</div>
-                                <div className="text-[10px] text-gray-500">{p.pos} · {p.ppg} PPG</div>
+                                <div className="text-[10px] text-gray-500">{p.pos} · {p.ppg} PPG · {p.rpg || 0} RPG · {p.apg || 0} APG</div>
                               </div>
                             </div>
                           ))}
@@ -8147,13 +8175,13 @@ function TradeCenter() {
                           ))}
                         </div>
                         <div>
-                          <div className="text-[10px] text-green-400 font-bold mb-2">RECEIVED</div>
+                          <div className="text-[10px] text-green-400 font-bold mb-2">{config.abbr} RECEIVES</div>
                           {t.received.map((p, i) => (
                             <div key={i} className="flex items-center gap-2 mb-1.5">
-                              {p.headshot && <img src={p.headshot} alt="" className="w-7 h-7 rounded-full object-cover" loading="lazy" />}
+                              {p.headshot && <img src={p.headshot} alt="" className="w-8 h-8 rounded-full object-cover" loading="lazy" />}
                               <div>
                                 <div className="text-xs font-bold text-white">{p.name}</div>
-                                <div className="text-[10px] text-gray-500">{p.pos} · {p.ppg} PPG · from {p.team}</div>
+                                <div className="text-[10px] text-gray-500">{p.pos} · {p.ppg} PPG · {p.rpg || 0} RPG · {p.apg || 0} APG</div>
                               </div>
                             </div>
                           ))}
@@ -8162,9 +8190,62 @@ function TradeCenter() {
                           ))}
                         </div>
                       </div>
+
+                      {/* Report Cards — both teams side by side */}
+                      {t.myReport && t.theirReport && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4 border-t border-white/[0.06]">
+                          {[t.myReport, t.theirReport].map((report, ri) => (
+                            <div key={ri} className={`rounded-xl p-4 ${ri === 0 ? 'border border-team-secondary/20' : 'glass'}`} style={ri === 0 ? { background: 'rgba(var(--team-secondary-rgb),0.04)' } : {}}>
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="text-xs font-black text-white">{report.teamAbbr} Report Card</div>
+                                <div className={`text-2xl font-black ${report.gradeColor}`}>{report.grade}</div>
+                              </div>
+                              {/* Stat impact */}
+                              <div className="grid grid-cols-3 gap-2 mb-3">
+                                {[
+                                  { label: 'PPG', val: report.ppgChange },
+                                  { label: 'RPG', val: report.rpgChange },
+                                  { label: 'APG', val: report.apgChange },
+                                ].map((s, si) => (
+                                  <div key={si} className="text-center glass rounded-lg p-1.5">
+                                    <div className={`text-sm font-black ${s.val > 0 ? 'text-green-400' : s.val < 0 ? 'text-red-400' : 'text-gray-500'}`}>
+                                      {s.val > 0 ? '+' : ''}{s.val.toFixed(1)}
+                                    </div>
+                                    <div className="text-[9px] text-gray-500">{s.label}</div>
+                                  </div>
+                                ))}
+                              </div>
+                              {/* Needs addressed */}
+                              <div className="mb-2">
+                                <div className="text-[10px] text-gray-500 mb-1">Team Needs:</div>
+                                <div className="flex flex-wrap gap-1">
+                                  {(report.needs || []).map((n, ni) => (
+                                    <span key={ni} className={`text-[9px] px-1.5 py-0.5 rounded ${n.priority === 'high' ? 'bg-red-500/10 text-red-400' : n.priority === 'medium' ? 'bg-yellow-500/10 text-yellow-400' : 'bg-white/[0.04] text-gray-500'}`}>
+                                      {n.type}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                              {report.fillsNeed && (
+                                <div className="text-[10px] text-green-400 bg-green-500/10 rounded px-2 py-1 mt-1 text-center font-bold">Addresses a key need</div>
+                              )}
+                              {!report.fillsNeed && (
+                                <div className="text-[10px] text-gray-500 bg-white/[0.02] rounded px-2 py-1 mt-1 text-center">Doesn't address primary needs</div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Fairness summary */}
                       <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.04]">
                         <span className={`text-xs font-bold ${t.fairness.color}`}>{t.fairness.label} ({t.fairness.pct}%)</span>
-                        {t.fillsNeed && <span className="text-[10px] text-green-400 bg-green-500/10 px-2 py-0.5 rounded">Fills a need</span>}
+                        <div className="h-1.5 w-24 bg-gray-800 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full transition-all" style={{
+                            width: `${t.fairness.pct}%`,
+                            background: t.fairness.pct >= 55 ? '#22c55e' : t.fairness.pct >= 45 ? 'var(--team-secondary)' : '#ef4444'
+                          }} />
+                        </div>
                       </div>
                     </div>
                   )}
