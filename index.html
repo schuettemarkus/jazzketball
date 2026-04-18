@@ -9807,7 +9807,8 @@ function isGameLocked(game) {
 
 // ---- Live Box Score Fetcher ----
 async function fetchLiveBoxScores(games) {
-  const liveGames = games.filter(g => g.isLive && g.gameId);
+  // Fetch box scores for live AND final games (final needed for auto-resolve)
+  const liveGames = games.filter(g => (g.isLive || g.isFinal) && g.gameId);
   if (liveGames.length === 0) return {};
   const results = {};
   await Promise.allSettled(liveGames.map(async (game) => {
@@ -10427,23 +10428,33 @@ function DailyPicks() {
     })();
   }, []);
 
-  // Poll live box scores — only during game hours (5PM-1AM ET)
+  // Poll live box scores + refresh schedule — during game hours (5PM-1AM ET)
   useEffect(() => {
-    if (!schedule || schedule.source !== 'live') return;
-    const hasLive = schedule.games.some(g => g.isLive);
-    if (!hasLive) {
-      // No live games — check if any are upcoming within 30 min
-      const soonest = schedule.games.filter(g => g.isScheduled && g.startTime)
-        .map(g => new Date(g.startTime) - new Date()).filter(d => d > 0);
-      if (soonest.length === 0 || Math.min(...soonest) > 30 * 60 * 1000) return;
-    }
+    if (!schedule) return;
     const etHour = new Date().toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false });
     const hour = parseInt(etHour);
-    // Only poll between 5PM and 1AM ET
     if (hour >= 2 && hour < 17) return;
+
+    const hasLiveOrScheduled = schedule.games.some(g => g.isLive || g.isScheduled);
+    if (!hasLiveOrScheduled) return;
+
     const poll = async () => {
+      // Fetch live box scores
       const stats = await fetchLiveBoxScores(schedule.games);
       if (Object.keys(stats).length > 0) setLiveStats(stats);
+
+      // Re-fetch schedule to pick up isFinal status changes
+      const freshSchedule = await fetchTodaysGames();
+      if (freshSchedule && freshSchedule.games.length > 0) {
+        const hadFinal = schedule.games.some(g => g.isFinal);
+        const hasFinalNow = freshSchedule.games.some(g => g.isFinal);
+        if (hasFinalNow && !hadFinal) {
+          // A game just ended — update schedule so autoResolve triggers
+          setSchedule(freshSchedule);
+        } else if (freshSchedule.games.some(g => g.isLive) !== schedule.games.some(g => g.isLive)) {
+          setSchedule(freshSchedule);
+        }
+      }
     };
     poll();
     const interval = setInterval(poll, 60000);
