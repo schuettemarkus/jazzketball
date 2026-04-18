@@ -8634,6 +8634,9 @@ function InteractiveDraftSim() {
             {lotteryOrder.slice(0, 14).map((t, i) => {
               const revealed = i >= (14 - lotteryRevealed);
               const isTeam = t.team === teamLotteryName;
+              // Compare lottery result (i) to pre-draft odds position
+              const preDraftIdx = lotteryTeams.findIndex(lt => lt.team === t.team);
+              const movement = preDraftIdx >= 0 ? preDraftIdx - i : 0; // positive = moved up
               return (
                 <div key={i} className={`flex items-center gap-3 rounded-xl px-4 py-2.5 transition-all duration-500 ${
                   revealed ? (isTeam ? 'bg-team-secondary/20 border border-team-secondary shadow-lg shadow-team-secondary/20' : 'glass') : 'bg-gray-900/30 border border-white/[0.03]'
@@ -8647,6 +8650,15 @@ function InteractiveDraftSim() {
                     </div>
                     {revealed && <div className="text-[10px] text-gray-500">{t.record} · {t.odds}% odds</div>}
                   </div>
+                  {revealed && movement !== 0 && (
+                    <div className={`flex items-center gap-0.5 shrink-0 text-[11px] font-black ${movement > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      <span>{movement > 0 ? '▲' : '▼'}</span>
+                      <span>{Math.abs(movement)}</span>
+                    </div>
+                  )}
+                  {revealed && movement === 0 && (
+                    <div className="text-[10px] text-gray-600 shrink-0">—</div>
+                  )}
                   {revealed && <div className="text-[10px] text-gray-400 shrink-0 hidden sm:block">{t.need}</div>}
                 </div>
               );
