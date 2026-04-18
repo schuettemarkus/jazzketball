@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/schuettemarkus/nbavault#readme",
   "devDependencies": {
+    "@babel/parser": "^7.29.2",
     "jest": "^30.3.0"
   }
 }

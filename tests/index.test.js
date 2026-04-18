@@ -6,6 +6,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { parse } = require('@babel/parser');
 
 const HTML_PATH = path.join(__dirname, '..', 'index.html');
 let html;
@@ -56,6 +57,21 @@ describe('File Structure', () => {
     const bracketsOpen = (scriptContent.match(/\[/g) || []).length;
     const bracketsClose = (scriptContent.match(/\]/g) || []).length;
     expect(bracketsOpen).toBe(bracketsClose);
+  });
+
+  test('JSX/Babel script parses without syntax errors', () => {
+    expect(scriptContent.length).toBeGreaterThan(0);
+    let parseError = null;
+    try {
+      parse(scriptContent, {
+        sourceType: 'script',
+        plugins: ['jsx'],
+        errorRecovery: false,
+      });
+    } catch (e) {
+      parseError = `Line ${e.loc?.line}: ${e.message}`;
+    }
+    expect(parseError).toBeNull();
   });
 });
 
