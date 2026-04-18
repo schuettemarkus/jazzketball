@@ -8746,8 +8746,8 @@ function InteractiveDraftSim() {
                           <div className="text-[9px] text-gray-500">Team Fit</div>
                         </div>
                         <button onClick={() => makeUserPick(p)}
-                          className="px-4 py-2 rounded-lg bg-team-secondary text-black font-bold text-xs hover:opacity-90 transition-all mt-1">
-                          Draft
+                          className="px-6 py-3 rounded-xl bg-team-secondary text-black font-black text-sm hover:opacity-90 transition-all shadow-lg shadow-team-secondary/30 mt-2">
+                          Draft {p.name.split(' ').pop()}
                         </button>
                         {i < available.length - 1 && (
                           <button onClick={() => setCompareMode([p, available[i + 1 < available.length ? i + 1 : 0]])}
