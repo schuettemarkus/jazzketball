@@ -8239,13 +8239,13 @@ function InteractiveDraftSim() {
     setPhase('lottery');
     setLotteryRevealed(0);
     // Dramatic reveal: progressively slower — builds tension toward #1
-    // Picks 14-10: 1.1s, Picks 9-5: 2.2s, Picks 4-2: 3.3s, Pick 1: 4.4s
+    // Picks 14-10: 0.9s, Picks 9-5: 1.8s, Picks 4-2: 2.7s, Pick 1: 3.6s
     let i = 14;
     const reveal = () => {
       if (i <= 0) return;
       i--;
       setLotteryRevealed(14 - i);
-      const delay = i === 0 ? 4400 : i <= 4 ? 3300 : i <= 9 ? 2200 : 1100;
+      const delay = i === 0 ? 3600 : i <= 4 ? 2700 : i <= 9 ? 1800 : 900;
       setTimeout(reveal, delay);
     };
     setTimeout(reveal, 1000);
