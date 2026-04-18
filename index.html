@@ -9724,8 +9724,8 @@ const NBA_SCOREBOARD_URL = 'https://cdn.nba.com/static/json/liveData/scoreboard/
 // CORS proxies — fallback chain in case one is down/blocked
 const CORS_PROXIES = [
   'https://corsproxy.io/?',
+  'https://api.codetabs.com/v1/proxy?quest=',
   'https://api.allorigins.win/raw?url=',
-  'https://cors-anywhere.herokuapp.com/',
 ];
 let activeCorsProxy = CORS_PROXIES[0];
 
@@ -9915,13 +9915,16 @@ const ODDS_TEAM_MAP = {
 
 // Build games from Odds API events (fallback when NBA CDN has nothing)
 function buildGamesFromOddsEvents(events) {
+  const todayStr = new Date().toISOString().split('T')[0];
   return events
     .filter(e => {
-      // Only include events that haven't started yet or are in progress
-      if (e.commence_time && new Date(e.commence_time) < new Date(Date.now() - 4 * 60 * 60 * 1000)) return false;
+      // Only include events from TODAY
+      if (!e.commence_time) return false;
+      const eventDate = new Date(e.commence_time).toISOString().split('T')[0];
+      if (eventDate !== todayStr) return false;
       const home = ODDS_TEAM_MAP[e.home_team];
       const away = ODDS_TEAM_MAP[e.away_team];
-      return home && away && home !== away; // Both teams must map and be different
+      return home && away && home !== away;
     })
     .map(e => ({
       gameId: e.id,
@@ -10380,6 +10383,8 @@ function DailyPicks() {
   useEffect(() => {
     (async () => {
       let data = await fetchTodaysGames();
+      if (data) console.log('[NBA Vault] Schedule:', data.games.length, 'games from', data.source);
+      else console.log('[NBA Vault] Schedule fetch failed — trying Odds API fallback');
 
       // If NBA CDN has no games, try Odds API events as fallback
       if (!data || data.games.length === 0) {
