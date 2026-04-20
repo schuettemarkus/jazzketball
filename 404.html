@@ -9963,12 +9963,13 @@ async function submitEmailSubscription(subscriberEmail, pickData, source) {
 
   // Send to FormSubmit.co — delivers notification to site owner
   try {
-    await fetch(FORMSUBMIT_URL, {
+    const resp = await fetch(FORMSUBMIT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({
         email: subscriberEmail,
         _subject: `New NBA Vault subscriber: ${subscriberEmail}`,
+        _replyto: subscriberEmail,
         source: source || 'vault',
         vault_lock: pickData ? `${pickData.player} O ${pickData.line} ${pickData.statType} (+${pickData.edge} edge)` : 'No picks today',
         timestamp: new Date().toISOString(),
@@ -9976,13 +9977,16 @@ async function submitEmailSubscription(subscriberEmail, pickData, source) {
         _captcha: 'false',
       }),
     });
-    return true;
+    const result = await resp.json().catch(() => null);
+    if (result) console.log('[NBA Vault] Email subscription:', result.success === 'true' ? 'sent' : result.message);
+    return result?.success === 'true';
   } catch (e) {
-    // localStorage backup already saved — form still "works" for the user
+    console.warn('[NBA Vault] Email submission failed:', e.message);
     return false;
   }
 }
 
+// ---- The Odds API (500 req/mo free — create new key at the-odds-api.com) ----
 const ODDS_API_KEY_STORAGE = 'nbavault_odds_api_key';
 const ODDS_API_BASE = 'https://api.the-odds-api.com/v4/sports/basketball_nba';
 
@@ -10596,7 +10600,7 @@ function DailyPicks() {
       setSchedule(data);
       setLoadingGames(false);
 
-      // Fetch odds lines if there are games
+      // Fetch odds lines from The Odds API
       if (data.games.length > 0) {
         const lines = await fetchOddsApiLines();
         if (Object.keys(lines).length > 0) {
