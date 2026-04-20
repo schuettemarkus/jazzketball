@@ -11038,15 +11038,19 @@ function DailyPicks() {
             {/* Player image — large, bottom-aligned */}
             {bestPick.headshot && (
               <div className="relative w-full md:w-44 lg:w-48 shrink-0 flex items-end justify-center" style={{
-                background: `radial-gradient(ellipse at center bottom, rgba(var(--team-secondary-rgb),0.2) 0%, rgba(var(--team-primary-rgb),0.08) 50%, transparent 80%)`,
-                minHeight: '160px', margin: '-1px 0 -1px -1px',
+                minHeight: '160px', margin: '-2px 0 -2px -2px',
+                background: `radial-gradient(ellipse at center bottom, rgba(var(--team-secondary-rgb),0.3) 0%, rgba(var(--team-secondary-rgb),0.08) 60%, transparent 100%)`,
               }}>
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-28 h-28 rounded-full" style={{
-                  background: 'var(--team-secondary)', filter: 'blur(35px)', opacity: 0.3
+                {/* Ambient glow behind player */}
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full" style={{
+                  background: 'var(--team-secondary)', filter: 'blur(40px)', opacity: 0.35
+                }} />
+                <div className="absolute inset-0" style={{
+                  background: `radial-gradient(circle at 50% 80%, rgba(var(--team-secondary-rgb),0.15) 0%, transparent 60%)`,
                 }} />
                 <img src={bestPick.headshot} alt={bestPick.player}
                   className="relative z-10 w-36 h-36 md:w-40 md:h-40 lg:w-44 lg:h-44 object-cover object-top"
-                  style={{ filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.5))' }}
+                  style={{ filter: 'drop-shadow(0 0 25px rgba(var(--team-secondary-rgb),0.4)) drop-shadow(0 4px 15px rgba(0,0,0,0.5))' }}
                   loading="lazy" />
               </div>
             )}
