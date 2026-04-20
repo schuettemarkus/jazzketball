@@ -9972,9 +9972,9 @@ function buildGamesFromOddsEvents(events) {
     .filter(e => {
       if (!e.commence_time) return false;
       const eventTime = new Date(e.commence_time).getTime();
-      // Include games from today and upcoming (up to 2 days ahead)
-      // Exclude games that ended more than 5 hours ago
-      if (eventTime < now - 5 * 60 * 60 * 1000) return false;
+      // Only include FUTURE games (not started yet) or games starting within last hour
+      // This prevents yesterday's completed games from leaking in
+      if (eventTime < now - 60 * 60 * 1000) return false;
       if (eventTime > now + 48 * 60 * 60 * 1000) return false;
       const home = ODDS_TEAM_MAP[e.home_team];
       const away = ODDS_TEAM_MAP[e.away_team];
@@ -10044,7 +10044,7 @@ async function fetchOddsApiLines() {
       if (!eventsResp.ok) return {};
       events = await eventsResp.json();
       // Cache event IDs for the rest of the day
-      try { localStorage.setItem(ODDS_EVENTS_CACHE_KEY, JSON.stringify({ events, date: today })); } catch {}
+      try { localStorage.setItem(ODDS_EVENTS_CACHE_KEY, JSON.stringify({ events, date: today, timestamp: Date.now() })); } catch {}
     }
     if (!events.length) { setOddsCache({}); return {}; }
 
@@ -10515,16 +10515,19 @@ function DailyPicks() {
       if (apiKey) {
         try {
           const today = new Date().toISOString().split('T')[0];
+          const nowHour = new Date().getHours();
           let events = null;
           try {
             const cached = JSON.parse(localStorage.getItem(ODDS_EVENTS_CACHE_KEY));
-            if (cached && cached.date === today) events = cached.events;
+            // Refresh cache if it's from a different day OR if it's been more than 4 hours
+            const cacheAge = cached ? (Date.now() - (cached.timestamp || 0)) : Infinity;
+            if (cached && cached.date === today && cacheAge < 4 * 60 * 60 * 1000) events = cached.events;
           } catch {}
           if (!events) {
             const resp = await fetch(`${ODDS_API_BASE}/events?apiKey=${apiKey}&dateFormat=iso`);
             if (resp.ok) {
               events = await resp.json();
-              try { localStorage.setItem(ODDS_EVENTS_CACHE_KEY, JSON.stringify({ events, date: today })); } catch {}
+              try { localStorage.setItem(ODDS_EVENTS_CACHE_KEY, JSON.stringify({ events, date: today, timestamp: Date.now() })); } catch {}
             }
           }
           if (events && events.length > 0) {
@@ -10642,9 +10645,17 @@ function DailyPicks() {
 
     // Filter out invalid games: same team vs itself, or missing team data
     // Keep today's final games — they still need picks shown + auto-resolved
+    // Only generate picks for games that are today or future
+    // Prevents phantom picks from yesterday's Odds API events leaking in
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
     const validGames = games.filter(g => {
       if (!g.home || !g.away || g.home === g.away) return false;
       if (!TEAM_CONFIGS[g.home]?.players || !TEAM_CONFIGS[g.away]?.players) return false;
+      // If game has a start time, verify it's today or future
+      if (g.startTime) {
+        const gameTime = new Date(g.startTime).getTime();
+        if (gameTime < todayStart) return false; // Yesterday's game — skip
+      }
       return true;
     });
 
