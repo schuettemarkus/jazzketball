@@ -9986,16 +9986,42 @@ async function submitEmailSubscription(subscriberEmail, pickData, source) {
   }
 }
 
-// ---- The Odds API (500 req/mo free — create new key at the-odds-api.com) ----
-const ODDS_API_KEY_STORAGE = 'nbavault_odds_api_key';
+// ---- The Odds API — dual-key rotation (1,000 req/mo total) ----
+const ODDS_API_KEYS = [
+  'b3c7b36dc5eeb5bcbaa4ca6accb7b6bd',  // primary
+  'edf9bf61d80e2187206f76adbfada5cc',  // fallback
+];
+const ODDS_API_EXHAUSTED_KEY = 'nbavault_odds_exhausted_keys';
 const ODDS_API_BASE = 'https://api.the-odds-api.com/v4/sports/basketball_nba';
 
 function getOddsApiKey() {
-  return localStorage.getItem(ODDS_API_KEY_STORAGE) || 'edf9bf61d80e2187206f76adbfada5cc';
+  // Track which keys are exhausted this month
+  try {
+    const exhausted = JSON.parse(localStorage.getItem(ODDS_API_EXHAUSTED_KEY) || '{}');
+    const month = new Date().toISOString().slice(0, 7); // "2026-04"
+    // Reset exhausted list on new month
+    if (exhausted.month !== month) {
+      localStorage.setItem(ODDS_API_EXHAUSTED_KEY, JSON.stringify({ month, keys: [] }));
+      return ODDS_API_KEYS[0];
+    }
+    const dead = exhausted.keys || [];
+    const available = ODDS_API_KEYS.find(k => !dead.includes(k));
+    return available || null;
+  } catch {
+    return ODDS_API_KEYS[0];
+  }
 }
 
-function setOddsApiKey(key) {
-  localStorage.setItem(ODDS_API_KEY_STORAGE, key);
+function markKeyExhausted(key) {
+  try {
+    const month = new Date().toISOString().slice(0, 7);
+    const exhausted = JSON.parse(localStorage.getItem(ODDS_API_EXHAUSTED_KEY) || '{}');
+    if (exhausted.month !== month) exhausted.keys = [];
+    exhausted.month = month;
+    if (!exhausted.keys.includes(key)) exhausted.keys.push(key);
+    localStorage.setItem(ODDS_API_EXHAUSTED_KEY, JSON.stringify(exhausted));
+    console.log(`[NBA Vault] Odds API key exhausted, ${ODDS_API_KEYS.length - exhausted.keys.length} key(s) remaining`);
+  } catch {}
 }
 
 // Odds API team name -> our abbreviation
@@ -10073,9 +10099,9 @@ async function fetchOddsApiLines() {
   if (cached) return cached;
 
   const apiKey = getOddsApiKey();
-  if (!apiKey) return {};
+  if (!apiKey) { console.log('[NBA Vault] All Odds API keys exhausted for this month'); return {}; }
   try {
-    // Try to reuse cached event IDs from today (saves 1 API call)
+    // Try to reuse cached event IDs from today (saves 1 API call — events endpoint is free)
     let events = null;
     const today = new Date().toISOString().split('T')[0];
     try {
@@ -10084,23 +10110,30 @@ async function fetchOddsApiLines() {
     } catch {}
 
     if (!events) {
-      // Step 1: Get today's NBA events (1 API call)
       const eventsResp = await fetch(`${ODDS_API_BASE}/events?apiKey=${apiKey}&dateFormat=iso`);
       if (!eventsResp.ok) return {};
       events = await eventsResp.json();
-      // Cache event IDs for the rest of the day
       try { localStorage.setItem(ODDS_EVENTS_CACHE_KEY, JSON.stringify({ events, date: today, timestamp: Date.now() })); } catch {}
     }
     if (!events.length) { setOddsCache({}); return {}; }
 
-    // Step 2: Fetch player props for up to 2 events
+    // Fetch player props for up to 2 events — detect exhausted keys and rotate
     const lines = {};
     const markets = 'player_points,player_rebounds,player_assists';
     const eventsToFetch = events.slice(0, 2);
+    let currentKey = apiKey;
 
     await Promise.allSettled(eventsToFetch.map(async (event) => {
       try {
-        const oddsResp = await fetch(`${ODDS_API_BASE}/events/${event.id}/odds?apiKey=${apiKey}&regions=us&markets=${markets}&oddsFormat=american`);
+        let oddsResp = await fetch(`${ODDS_API_BASE}/events/${event.id}/odds?apiKey=${currentKey}&regions=us&markets=${markets}&oddsFormat=american`);
+        // If key is exhausted (401/429), rotate to next key and retry
+        if (oddsResp.status === 401 || oddsResp.status === 429) {
+          markKeyExhausted(currentKey);
+          const nextKey = getOddsApiKey();
+          if (!nextKey || nextKey === currentKey) return;
+          currentKey = nextKey;
+          oddsResp = await fetch(`${ODDS_API_BASE}/events/${event.id}/odds?apiKey=${currentKey}&regions=us&markets=${markets}&oddsFormat=american`);
+        }
         if (!oddsResp.ok) return;
         const data = await oddsResp.json();
         const bookmakers = data.bookmakers || [];
