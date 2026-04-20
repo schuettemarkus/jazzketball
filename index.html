@@ -11269,20 +11269,20 @@ function DailyPicks() {
                                 <div className="flex items-center gap-3">
                                   {gamePick.headshot && <img src={gamePick.headshot} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" loading="lazy" />}
                                   <div className="flex-1 min-w-0">
-                                    <div className="text-sm font-bold text-white truncate flex items-center gap-1.5">
-                                      {gamePick.player}
+                                    <div className="text-sm font-bold text-white truncate">{gamePick.player}</div>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-[10px] text-gray-500">{gamePick.teamAbbr} · {gamePick.pos}</span>
                                       {live && (live.status === 'hit' || live.status === 'winning') && (
-                                        <span className="text-[8px] px-1 py-0.5 rounded-full bg-green-500/20 text-green-400 font-bold border border-green-500/30">
+                                        <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400 font-bold border border-green-500/30 whitespace-nowrap">
                                           {live.status === 'hit' ? 'HITTING' : 'ON PACE'} {live.current}
                                         </span>
                                       )}
                                       {live?.status === 'behind' && (
-                                        <span className="text-[8px] px-1 py-0.5 rounded-full bg-white/5 text-gray-500 font-medium">
-                                          {live.current} {gamePick.statType}
+                                        <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-white/5 text-gray-500 font-medium whitespace-nowrap">
+                                          BEHIND {live.current}
                                         </span>
                                       )}
                                     </div>
-                                    <div className="text-[10px] text-gray-500">{gamePick.teamAbbr} · {gamePick.pos}</div>
                                   </div>
                                   <div className="text-right shrink-0">
                                     <div className="text-sm font-black text-team-secondary"><span className="text-[9px] font-black uppercase tracking-wider px-1 py-0.5 rounded bg-team-secondary/20 mr-1 align-middle">OVR</span>{gamePick.line} {gamePick.statType}</div>
@@ -11355,9 +11355,11 @@ function DailyPicks() {
               <div className="col-span-3 flex items-center gap-2 min-w-0">
                 {pick.headshot && <img src={pick.headshot} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" loading="lazy" />}
                 <div className="min-w-0">
-                  <div className="text-sm font-bold text-white truncate flex items-center gap-1">
+                  <div className="text-sm font-bold text-white truncate">
                     {pick.player}
-                    {gameLocked && !live && <span className="text-[10px] text-gray-500" title="Game started">&#128274;</span>}
+                    {gameLocked && !live && <span className="text-[10px] text-gray-500 ml-1" title="Game started">&#128274;</span>}
+                  </div>
+                  <div className="flex items-center gap-1">
                     {live && (live.status === 'hit' || live.status === 'winning') && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400 font-bold border border-green-500/30 whitespace-nowrap">
                         {live.status === 'hit' ? 'HITTING' : 'ON PACE'} {live.current} {pick.statType}
@@ -11365,7 +11367,7 @@ function DailyPicks() {
                     )}
                     {live?.status === 'behind' && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/5 text-gray-500 font-medium whitespace-nowrap">
-                        {live.current} {pick.statType}
+                        BEHIND {live.current} {pick.statType}
                       </span>
                     )}
                   </div>
