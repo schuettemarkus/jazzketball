@@ -9749,11 +9749,11 @@ function saveVaultEngine(engine) {
 
 function calibrateWeights(engine) {
   const h = (engine.history || []).filter(p => p.result);
-  if (h.length < 5) return engine.weights;
+  if (h.length < 3) return engine.weights;
 
   const w = { ...engine.weights };
-  const LEARN_RATE = 0.04; // How fast weights adjust
-  const MIN_W = 0.5, MAX_W = 1.6;
+  const LEARN_RATE = 0.10; // How fast weights adjust (was 0.04 — too slow to adapt)
+  const MIN_W = 0.4, MAX_W = 1.8;
 
   // Helper: adjust weight toward what's working
   function adjust(key, picks, threshold) {
@@ -10112,10 +10112,10 @@ async function fetchOddsApiLines() {
     }
     if (!events.length) { setOddsCache({}); return {}; }
 
-    // Fetch player props for up to 2 events — detect exhausted keys and rotate
+    // Fetch player props for all events — detect exhausted keys and rotate
     const lines = {};
     const markets = 'player_points,player_rebounds,player_assists';
-    const eventsToFetch = events.slice(0, 2);
+    const eventsToFetch = events;
     let currentKey = apiKey;
 
     await Promise.allSettled(eventsToFetch.map(async (event) => {
@@ -10305,13 +10305,13 @@ function projectPlayer(player, opponent, isHome, engine) {
   rebPrj += defFactor * 1.0 * w.matchup;
   astPrj += defFactor * 0.8 * w.matchup;
 
-  // Factor 2: Home/away split (NBA averages: home +1.2 PTS, +0.4 REB, +0.3 AST)
+  // Factor 2: Home/away split (symmetric — NBA avg ~1.0 PTS swing)
   if (isHome) {
-    ptsPrj += 1.2 * w.homeAway;
-    rebPrj += 0.4 * w.homeAway;
-    astPrj += 0.3 * w.homeAway;
+    ptsPrj += 1.0 * w.homeAway;
+    rebPrj += 0.3 * w.homeAway;
+    astPrj += 0.2 * w.homeAway;
   } else {
-    ptsPrj -= 0.8 * w.homeAway;
+    ptsPrj -= 1.0 * w.homeAway;
     rebPrj -= 0.3 * w.homeAway;
     astPrj -= 0.2 * w.homeAway;
   }
@@ -10358,15 +10358,15 @@ function projectPlayer(player, opponent, isHome, engine) {
     astPrj *= (1 - minPenalty);
   }
 
-  // Factor 7: Edge decay — regress large projections toward season avg
-  // Sportsbooks are efficient. The further our projection drifts from the base,
-  // the more likely we're over-stacking adjustments. Apply dampening above 15% deviation.
+  // Factor 7: Edge decay — soft regression for extreme projections
+  // Only dampens projections >25% above season avg (was 15% — too aggressive).
+  // Uses 30% decay rate (was 50%) so real edges from matchup/injury aren't crushed.
   function decayToward(proj, base) {
     const deviation = (proj - base) / Math.max(base, 1);
-    if (Math.abs(deviation) > 0.15) {
-      const excess = Math.abs(deviation) - 0.15;
-      const dampen = 1 - excess * 0.5; // 50% decay on excess beyond 15%
-      return base + (proj - base) * Math.max(dampen, 0.6);
+    if (Math.abs(deviation) > 0.25) {
+      const excess = Math.abs(deviation) - 0.25;
+      const dampen = 1 - excess * 0.3; // 30% decay on excess beyond 25%
+      return base + (proj - base) * Math.max(dampen, 0.7);
     }
     return proj;
   }
@@ -10740,7 +10740,7 @@ function DailyPicks() {
         if (!tc || !tc.players) return;
         const isHome = teamAbbr === game.home;
         const opponent = isHome ? game.away : game.home;
-        tc.players.filter(p => p.starter && p.stats.ppg >= 15).forEach(p => {
+        tc.players.filter(p => (p.starter && p.stats.ppg >= 12) || (p.stats.mpg >= 24 && p.stats.ppg >= 10)).forEach(p => {
           candidates.push({ ...p, teamAbbr, teamName: tc.name, isHome, opponent, game });
         });
       });
