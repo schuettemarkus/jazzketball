@@ -478,8 +478,10 @@ describe('Null Safety', () => {
     expect(scriptContent).toContain("if (!stats || !pick.locked) return null");
   });
 
-  test('generateExplanation handles zero line without division error', () => {
-    expect(scriptContent).toContain("Math.max(line, 1)");
+  test('generateExplanation returns plain English insights', () => {
+    expect(scriptContent).toContain("function generateExplanation(pick)");
+    // New explanations are short, plain English — no division needed
+    expect(scriptContent).toContain("Moderate edge above the posted line");
   });
 });
 
