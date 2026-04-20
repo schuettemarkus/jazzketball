@@ -11037,16 +11037,17 @@ function DailyPicks() {
           <div className="flex flex-col md:flex-row">
             {/* Player image — large, bottom-aligned */}
             {bestPick.headshot && (
-              <div className="relative w-full md:w-48 lg:w-56 shrink-0 overflow-hidden" style={{
-                background: `radial-gradient(ellipse at center bottom, rgba(var(--team-secondary-rgb),0.25) 0%, rgba(var(--team-primary-rgb),0.12) 50%, rgba(var(--team-midnight-rgb),0.95) 100%)`,
+              <div className="relative w-full md:w-52 lg:w-60 shrink-0 overflow-hidden" style={{
+                background: 'linear-gradient(180deg, var(--team-deep) 0%, var(--team-midnight) 100%)',
               }}>
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 h-36 rounded-full" style={{
-                  background: 'var(--team-secondary)', filter: 'blur(40px)', opacity: 0.25
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-40 h-40 rounded-full" style={{
+                  background: 'var(--team-secondary)', filter: 'blur(45px)', opacity: 0.2
                 }} />
                 <img src={bestPick.headshot} alt={bestPick.player}
-                  className="relative z-10 w-full h-auto object-cover object-top"
-                  style={{ filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.5))' }}
+                  className="relative z-10 w-full h-full object-cover object-top"
+                  style={{ objectPosition: 'top center', minHeight: '200px' }}
                   loading="lazy" />
+                <div className="absolute bottom-0 left-0 right-0 h-12" style={{ background: 'linear-gradient(transparent, rgba(var(--team-midnight-rgb),0.8))' }} />
               </div>
             )}
 
