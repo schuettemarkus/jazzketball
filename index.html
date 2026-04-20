@@ -11907,22 +11907,22 @@ function DailyPicks() {
                         <span className="text-xs font-bold text-gray-300">{date}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        {dayResolved.length > 0 && <span className={`text-xs font-black ${dayHits / dayResolved.length >= 0.5 ? 'text-green-400' : 'text-gray-400'}`}>{dayHits}-{dayResolved.length - dayHits}</span>}
-                        {dayPending > 0 && <span className="text-[10px] text-gray-600">{dayPending} pending</span>}
+                        {dayResolved.length > 0 && <span className={`text-xs font-black ${dayHits / dayResolved.length >= 0.5 ? 'text-green-400' : 'text-red-400'}`}>{dayHits}-{dayResolved.length - dayHits}</span>}
+                        {dayPending > 0 && <span className="text-[10px] text-yellow-400 font-bold">{dayPending} pending</span>}
                       </div>
                     </summary>
                     <div className="divide-y divide-white/[0.03]">
                       {dayPicks.map(h => (
-                        <div key={h.id} className={`flex items-center gap-2 text-xs py-2 px-4 ${h.result === 'hit' ? 'bg-green-500/[0.03]' : ''}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${h.result === 'hit' ? 'bg-green-500' : h.result === 'miss' ? 'bg-gray-500' : 'bg-gray-600'}`} />
+                        <div key={h.id} className={`flex items-center gap-2 text-xs py-2 px-4 ${h.result === 'hit' ? 'bg-green-500/[0.03]' : h.result === 'miss' ? 'bg-red-500/[0.02]' : !h.result ? 'bg-yellow-500/[0.02]' : ''}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${h.result === 'hit' ? 'bg-green-500' : h.result === 'miss' ? 'bg-red-500' : 'bg-yellow-500'}`} />
                           <span className="font-bold text-white truncate" style={{ minWidth: '80px', maxWidth: '120px' }}>{h.player}</span>
                           <span className="text-gray-500"><span className="text-[8px] font-bold uppercase px-1 py-px rounded bg-white/[0.06] text-gray-400 mr-0.5">OVR</span>{h.line} {h.statType}</span>
                           {h.actual != null && <span className="text-white font-bold">{h.actual}</span>}
                           {h.wasBlowout && <span className="text-[8px] text-orange-400/60">BLO</span>}
                           <span className="ml-auto">
                             {h.result === 'hit' && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/15 text-green-400">HIT</span>}
-                            {h.result === 'miss' && <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-white/5 text-gray-500">MISS</span>}
-                            {!h.result && <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-white/5 text-gray-500">PENDING</span>}
+                            {h.result === 'miss' && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/15 text-red-400">MISS</span>}
+                            {!h.result && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/15 text-yellow-400">PENDING</span>}
                           </span>
                         </div>
                       ))}
