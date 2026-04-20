@@ -5710,9 +5710,13 @@ function getTeamData(config, field) {
         const posMatch = teamNeeds.some(n => (p.pos || '').includes(n));
         const baseFit = posMatch ? 7 : 4;
         const fit = Math.min(10, Math.max(3, baseFit + ((p.rank * 7 + config.abbr.charCodeAt(0)) % 5) - 2));
-        const fitText = fit >= 8 ? `${p.name} is an excellent fit for the ${config.fullName}. His skill set addresses key roster needs and he would contribute immediately.`
-          : fit >= 6 ? `${p.name} could develop into a solid contributor for the ${config.fullName}. The fit is decent but the team may have higher priorities.`
-          : `The fit with the ${config.fullName} is limited. ${p.name}'s skill set overlaps with existing roster pieces.`;
+        const needStr = teamNeeds.join('/');
+        const starters = (config.players || []).filter(pl => pl.starter);
+        const topPlayer = starters.sort((a, b) => b.stats.ppg - a.stats.ppg)[0];
+        const topName = topPlayer ? topPlayer.name.split(' ').pop() : 'the core';
+        const fitText = fit >= 8 ? `${p.name} fills a direct need at ${needStr} for the ${config.fullName}. His skill set complements ${topName} and he could earn rotation minutes under ${config.coach} immediately.`
+          : fit >= 6 ? `${p.name} is a solid option for the ${config.fullName}. While not a perfect positional match, his upside and versatility give ${config.coach} flexibility. Could develop alongside ${topName}.`
+          : `The fit with the ${config.fullName} is limited. ${p.name} overlaps with existing roster pieces and the team's primary needs are at ${needStr}. Better served picking for need.`;
         return { ...p, teamFit: fit, teamFitAnalysis: fitText };
       });
     }
@@ -8975,7 +8979,7 @@ function InteractiveDraftSim() {
             {available.slice(0, 5).map((p, i) => {
               const grade = getDraftGrade(p, teamPickNum);
               const { needs } = getTeamNeeds(config.abbr);
-              const fitScore = p.jazzFit || p.teamFit || 5;
+              const fitScore = p.teamFit || p.jazzFit || 5;
               return (
                 <div key={p.rank} className="glass rounded-xl overflow-hidden">
                   <div className="p-4">
@@ -9022,7 +9026,7 @@ function InteractiveDraftSim() {
                     </div>
 
                     {/* Fit analysis — hidden on very small screens */}
-                    <p className="text-xs text-gray-400 leading-relaxed line-clamp-2 hidden sm:block">{p.jazzFitAnalysis || p.teamFitAnalysis}</p>
+                    <p className="text-xs text-gray-400 leading-relaxed line-clamp-2 hidden sm:block">{p.teamFitAnalysis || p.jazzFitAnalysis}</p>
 
                     {/* Draft button — full width on mobile */}
                     <button onClick={() => makeUserPick(p)}
@@ -9069,7 +9073,7 @@ function InteractiveDraftSim() {
                 <div className="text-[10px] text-gray-400">{getDraftGrade(userSelection, teamPickNum).label}</div>
               </div>
               <div className="text-center px-5 py-3 rounded-xl" style={{ background: 'rgba(var(--team-secondary-rgb),0.1)' }}>
-                <div className="text-3xl font-black text-team-secondary">{userSelection.jazzFit || userSelection.teamFit || 7}/10</div>
+                <div className="text-3xl font-black text-team-secondary">{userSelection.teamFit || userSelection.jazzFit || 7}/10</div>
                 <div className="text-[10px] text-gray-400">Team Fit</div>
               </div>
               <div className="text-center px-5 py-3 rounded-xl" style={{ background: 'rgba(var(--team-secondary-rgb),0.1)' }}>
@@ -9098,7 +9102,7 @@ function InteractiveDraftSim() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="glass rounded-xl p-5">
               <h3 className="text-sm font-black text-team-secondary mb-3">{config.name} Fit Report</h3>
-              <p className="text-sm text-gray-300 leading-relaxed mb-4">{userSelection.jazzFitAnalysis || userSelection.teamFitAnalysis}</p>
+              <p className="text-sm text-gray-300 leading-relaxed mb-4">{userSelection.teamFitAnalysis || userSelection.jazzFitAnalysis}</p>
               <div className="space-y-1.5">
                 <h4 className="text-xs font-bold text-green-400">STRENGTHS</h4>
                 {userSelection.strengths.map((s, i) => (
