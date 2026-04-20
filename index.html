@@ -9949,11 +9949,8 @@ function getLiveStatus(pick, liveStats) {
 }
 
 // ---- The Odds API — Real Sportsbook Lines ----
-// ---- Email Subscription via FormSubmit.co ----
-// No account needed. Replace email below with yours.
-// First submission triggers a one-click verification email, then all subs go to your inbox.
-const FORMSUBMIT_HASH = '3c48e4d6b056da6ded9caceae7ab306f';
-const FORMSUBMIT_URL = `https://formsubmit.co/ajax/${FORMSUBMIT_HASH}`;
+// ---- Email Subscription via Web3Forms (free, works on static sites) ----
+const WEB3FORMS_KEY = '87feda6a-036a-4cce-823f-b51d6e098290';
 
 async function submitEmailSubscription(subscriberEmail, pickData, source) {
   // Always save locally as backup
@@ -9961,25 +9958,23 @@ async function submitEmailSubscription(subscriberEmail, pickData, source) {
   emails.push({ email: subscriberEmail, date: new Date().toISOString(), source: source || 'vault' });
   localStorage.setItem('nbavault_email_list', JSON.stringify(emails));
 
-  // Send via FormSubmit using form-encoded POST (more reliable than JSON on static hosts)
   try {
-    const formData = new FormData();
-    formData.append('email', subscriberEmail);
-    formData.append('_subject', `New NBA Vault subscriber: ${subscriberEmail}`);
-    formData.append('_replyto', subscriberEmail);
-    formData.append('source', source || 'vault');
-    formData.append('vault_lock', pickData ? `${pickData.player} O ${pickData.line} ${pickData.statType} (+${pickData.edge} edge)` : 'No picks today');
-    formData.append('_template', 'table');
-    formData.append('_captcha', 'false');
-
-    const resp = await fetch(FORMSUBMIT_URL, {
+    const resp = await fetch('https://api.web3forms.com/submit', {
       method: 'POST',
-      headers: { 'Accept': 'application/json' },
-      body: formData,
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        access_key: WEB3FORMS_KEY,
+        subject: `New NBA Vault subscriber: ${subscriberEmail}`,
+        from_name: 'NBA Vault',
+        email: subscriberEmail,
+        source: source || 'vault',
+        vault_lock: pickData ? `${pickData.player} O ${pickData.line} ${pickData.statType} (+${pickData.edge} edge)` : 'No picks today',
+        timestamp: new Date().toISOString(),
+      }),
     });
     const result = await resp.json().catch(() => null);
-    console.log('[NBA Vault] Email subscription:', result?.success === 'true' ? 'sent' : (result?.message || 'unknown'));
-    return result?.success === 'true';
+    console.log('[NBA Vault] Email subscription:', result?.success ? 'sent' : (result?.message || 'unknown'));
+    return !!result?.success;
   } catch (e) {
     console.warn('[NBA Vault] Email submission failed:', e.message);
     return false;
